@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Evaluación Café La Cabaña</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js CDN para gráficas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+    <header>
+        <h1>Reportes de Evaluaciones</h1>
+        <p>Sistema de evaluación mensual de Sucursales y Franquicias para Café La Cabaña</p>
+    </header>
+    
+    <nav>
+        <button class="tab-btn" data-section="dashboard">Dashboard</button>
+        <button class="tab-btn" data-section="evaluaciones">Evaluaciones</button>
+        <button class="tab-btn" data-section="matriz">Matriz</button>
+        <button class="tab-btn" data-section="graficas">Gráficas</button>
+    </nav>
+    <main>
+        <section id="dashboard" class="tab-section">
+            <div class="mes-selector-container">
+                <label for="mes-selector">Mes de evaluación:</label>
+                <select id="mes-selector"></select>
+            </div>
+            <!-- KPIs y resumen general -->
+        </section>
+        <section id="evaluaciones" class="tab-section" style="display:none"></section>
+        <section id="matriz" class="tab-section" style="display:none">
+            <!-- Matriz de evaluación -->
+        </section>
+        <section id="graficas" class="tab-section" style="display:none">
+            <canvas id="graficaResultados" width="600" height="300"></canvas>
+        </section>
+    </main>
+    <script src="data/sucursales.js"></script>
+    <script src="data/franquicias.js"></script>
+    <script src="data/parametros.js"></script>
+    <script src="script.js"></script>
+    <!-- Modal para nueva evaluación -->
+    <div id="modal-nueva-evaluacion">
+      <div class="modal-box">
+        <button onclick="cerrarModalEvaluacion()" class="close-btn">&times;</button>
+        <h2>Nueva evaluación</h2>
+        <label for="select-entidad-evaluacion">Sucursal/Franquicia:</label>
+        <select id="select-entidad-evaluacion" style="width:100%;margin-bottom:16px;">
+          <option value="">Selecciona una opción</option>
+          <!-- Opciones generadas por JS -->
+        </select>
+        <div id="parametros-evaluacion-container"></div>
+        <div id="total-puntos-evaluacion" style="margin:18px 0 0 0;font-weight:600;font-size:1.08em;color:#0077cc;">Total de puntos: 0</div>
+        <button id="btn-guardar-evaluacion" style="margin-top:16px;display:none;">Guardar evaluación</button>
+      </div>
+    </div>
+</body>
+</html>
