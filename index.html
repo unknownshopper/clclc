@@ -40,6 +40,54 @@
     <script src="data/franquicias.js"></script>
     <script src="data/parametros.js"></script>
     <script src="script.js"></script>
+    <style>
+        /* Estilos para la tabla de evaluaciones */
+        .evaluaciones-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .evaluaciones-table th,
+        .evaluaciones-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        
+        .evaluaciones-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        /* Estilos para las celdas de KPI */
+        .kpi-alto {
+            background-color: #b7e1cd;
+            color: #0b5394;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .kpi-medio {
+            background-color: #ffe599;
+            color: #7f6000;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .kpi-bajo {
+            background-color: #f4cccc;
+            color: #990000;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .kpi-na {
+            background-color: #f3f3f3;
+            color: #666666;
+            text-align: center;
+            font-style: italic;
+        }
+    </style>
     <!-- Modal para nueva evaluación -->
     <div id="modal-nueva-evaluacion">
       <div class="modal-box">
