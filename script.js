@@ -43,6 +43,62 @@ if (!mesesDisponibles.includes(mesSeleccionado)) {
     mesSeleccionado = mesesDisponibles[0]; // fallback a primer mes disponible si no hay datos del actual
 }
 
+// === INICIALIZACIÓN DE DATOS DE EJEMPLO PARA JUNIO Y JULIO ===
+function inicializarDatosEjemploEvaluaciones() {
+    // Espera a que todo esté cargado
+    if (!window.sucursales || !window.franquicias || !window.parametros || !window.parametrosExcluidosPorSucursal || !window.parametrosExcluidosPorFranquicia) {
+        setTimeout(inicializarDatosEjemploEvaluaciones, 100);
+        return;
+    }
+    if (!window.evaluaciones) window.evaluaciones = { sucursales: {}, franquicias: {} };
+
+    function getParametrosValidos(entidadId, tipo) {
+        let excluidos = [];
+        if (tipo === 'sucursal') {
+            excluidos = window.parametrosExcluidosPorSucursal[entidadId] || [];
+        }
+        if (tipo === 'franquicia') {
+            excluidos = window.parametrosExcluidosPorFranquicia[entidadId] || [];
+        }
+        // Compara por nombre de parámetro
+        return (window.parametros || []).filter(p => !excluidos.includes(p.nombre));
+    }
+
+    function generarEvaluacion(entidadId, tipo) {
+        const params = getParametrosValidos(entidadId, tipo);
+        const evaluacion = { id: entidadId };
+        params.forEach(param => {
+            // Simula cumplimiento aleatorio (85% de los parámetros marcados)
+            evaluacion[param.id] = Math.random() < 0.85 ? param.peso : 0;
+        });
+        return evaluacion;
+    }
+
+    const mesesEjemplo = ['2024-06', '2024-07'];
+
+    // Sucursales
+    window.sucursales.forEach(suc => {
+        const sucId = suc.id;
+        if (!window.evaluaciones.sucursales[sucId]) window.evaluaciones.sucursales[sucId] = {};
+        mesesEjemplo.forEach(mes => {
+            window.evaluaciones.sucursales[sucId][mes] = generarEvaluacion(sucId, 'sucursal');
+        });
+    });
+
+    // Franquicias
+    window.franquicias.forEach(franq => {
+        const franqId = franq.id;
+        if (!window.evaluaciones.franquicias[franqId]) window.evaluaciones.franquicias[franqId] = {};
+        mesesEjemplo.forEach(mes => {
+            window.evaluaciones.franquicias[franqId][mes] = generarEvaluacion(franqId, 'franquicia');
+        });
+    });
+
+    console.log('Datos de ejemplo de evaluaciones para junio y julio generados.');
+}
+
+inicializarDatosEjemploEvaluaciones();
+
 // --- Mostrar nombre de mes en selector ---
 function poblarSelectorMes() {
     const selector = document.getElementById('mes-selector');
@@ -192,18 +248,24 @@ function poblarParametrosEvaluacion(entidadId) {
     // Obtener parámetros excluidos para la entidad
     const excluidos = (window.parametrosExcluidosPorSucursal && window.parametrosExcluidosPorSucursal[entidadId]) || [];
     // Filtrar parámetros según exclusión
-    const parametros = (window.definirParametros || window.parametros || []).filter(p => !excluidos.includes(p.nombre));
-    let html = '<h4>Parámetros de evaluación:</h4><ul>';
+    const parametros = (window.parametros || []).filter(p => !excluidos.includes(p.nombre));
+    let html = '<h4>Parámetros de evaluación:</h4><div class="parametros-scroll">';
     parametros.forEach((p, i) => {
-        html += `<li>
+        html += `
+        <div class="parametro-item" style="margin-bottom:16px;">
           <label>
-            <span style='color:#888;font-weight:400;margin-right:8px;'>${i + 1}.</span>
-            <input type="checkbox" class="parametro-checkbox" data-peso="${p.peso}" name="parametro-evaluacion" value="${p.nombre}" checked>
-            ${p.nombre} <span style='color:#0077cc;font-size:0.97em;font-weight:500;'>(+${p.peso})</span>
+            <input type="checkbox"
+                   class="parametro-checkbox"
+                   data-param-id="${p.id}"
+                   data-peso="${p.peso}"
+                   data-tipo="${p.tipo}"
+                   value="1">
+            ${i + 1}. ${p.nombre} <span style='color:#0077cc;font-size:0.97em;font-weight:500;'>(+${p.peso})</span>
           </label>
-        </li>`;
+        </div>
+      `;
     });
-    html += '</ul>';
+    html += '</div>';
     document.getElementById('parametros-evaluacion-container').innerHTML = html;
     document.getElementById('btn-guardar-evaluacion').style.display = 'inline-block';
     actualizarTotalPuntosEvaluacion();
@@ -252,7 +314,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById(btn.dataset.section).style.display = 'block';
             if (btn.dataset.section === 'graficas') renderGrafica();
             if (btn.dataset.section === 'evaluaciones') renderEvaluaciones();
-            if (btn.dataset.section === 'matriz') renderMatriz();
+            if (btn.dataset.section === 'matriz') renderMatrizUnificada();
             if (btn.dataset.section === 'dashboard') renderDashboard();
         });
     });
@@ -261,110 +323,66 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // --- Matriz de evaluación (dinámica: muestra TODOS los parámetros definidos) ---
-function renderMatriz() {
+function renderMatrizUnificada() {
     const todosLosParametros = Array.isArray(window.parametros) ? window.parametros : [];
+    const sucursalesList = Array.isArray(window.sucursales) ? window.sucursales : [];
+    const franquiciasList = Array.isArray(window.franquicias) ? window.franquicias : [];
+    const evaluacionesSuc = Array.isArray(window.evaluacionesSucursales) ? window.evaluacionesSucursales : [];
+    const evaluacionesFranq = Array.isArray(window.evaluacionesFranquicias) ? window.evaluacionesFranquicias : [];
 
-    // --- Sucursales ---
-    let html = `<h2>Matriz de Evaluación (Sucursales)</h2><table><thead><tr><th>Parámetro</th>`;
-    sucursales.forEach(s => html += `<th>${s.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</th>`);
-    html += `</tr></thead><tbody>`;
+    // Soportar tanto array de strings como de objetos
+    function getId(obj) {
+        return typeof obj === "string" ? obj : (obj.id || obj.nombre || "");
+    }
+    function getNombre(obj) {
+        let nombre = typeof obj === "string" ? obj : (obj.nombre || obj.id || "");
+        return nombre.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    const labels = [
+        ...sucursalesList.map(s => ({ id: getId(s), nombre: getNombre(s), tipo: 'Sucursal' })),
+        ...franquiciasList.map(f => ({ id: getId(f), nombre: getNombre(f), tipo: 'Franquicia' }))
+    ];
+
+    // Unifica nombres para columnas
+    let html = '<table class="matriz"><thead><tr>';
+    html += '<th>Parámetro</th>';
+    labels.forEach(l => html += `<th>${l.nombre}</th>`);
+    html += '</tr></thead><tbody>';
+
     todosLosParametros.forEach(param => {
         html += `<tr><td>${param.nombre}</td>`;
-        sucursales.forEach(suc => {
-            const excluidos = window.obtenerParametrosExcluidos ? window.obtenerParametrosExcluidos(suc) : [];
-            if (excluidos.includes(param.nombre)) {
-                html += `<td style="background-color: #222; color: #fff">&nbsp;</td>`;
-            } else {
-                const evalSuc = evaluacionesSucursales.find(e => e.id === suc);
-                const calif = evalSuc ? evalSuc[param.id] ?? null : null;
-                const valor = calif !== null ? Math.round((calif / 100) * (param.peso || 1)) : '-';
-                html += `<td>${valor}</td>`;
+        labels.forEach(l => {
+            // Determina si está excluido
+            let excluido = false;
+            if (l.tipo === 'Sucursal' && typeof window.obtenerParametrosExcluidos === 'function') {
+                const excl = window.obtenerParametrosExcluidos(l.id) || [];
+                excluido = excl.includes(param.nombre);
             }
-        });
-        html += `</tr>`;
-    });
-    // Fila de suma y porcentaje
-    html += `<tr style='font-weight:bold;background:#eef'><td>Total obtenido</td>`;
-    sucursales.forEach(suc => {
-        const excluidos = window.obtenerParametrosExcluidos ? window.obtenerParametrosExcluidos(suc) : [];
-        const evalSuc = evaluacionesSucursales.find(e => e.id === suc);
-        let suma = 0, max = 0;
-        todosLosParametros.forEach(param => {
-            if (!excluidos.includes(param.nombre)) {
-                const calif = evalSuc ? evalSuc[param.id] ?? null : null;
-                suma += calif !== null ? Math.round((calif / 100) * (param.peso || 1)) : 0;
-                max += (param.peso || 1);
+            if (l.tipo === 'Franquicia' && typeof window.obtenerParametrosExcluidosFranquicia === 'function') {
+                const excl = window.obtenerParametrosExcluidosFranquicia(l.id) || [];
+                excluido = excl.includes(param.nombre);
             }
-        });
-        html += `<td>${suma}</td>`;
-    });
-    html += `</tr><tr style='font-weight:bold;background:#eef'><td>% logrado</td>`;
-    sucursales.forEach(suc => {
-        const excluidos = window.obtenerParametrosExcluidos ? window.obtenerParametrosExcluidos(suc) : [];
-        const evalSuc = evaluacionesSucursales.find(e => e.id === suc);
-        let suma = 0, max = 0;
-        todosLosParametros.forEach(param => {
-            if (!excluidos.includes(param.nombre)) {
-                const calif = evalSuc ? evalSuc[param.id] ?? null : null;
-                suma += calif !== null ? Math.round((calif / 100) * (param.peso || 1)) : 0;
-                max += (param.peso || 1);
+            if (excluido) {
+                html += '<td class="excluido"></td>';
+                return;
             }
+         // Busca evaluación real por MES desde window.evaluaciones
+let calif = null;
+const mes = window.mesSeleccionado;
+if (l.tipo === 'Sucursal') {
+    const evalSuc = window.evaluaciones?.sucursales?.[l.id]?.[mes] || {};
+    calif = evalSuc[param.id];
+} else {
+    const evalFranq = window.evaluaciones?.franquicias?.[l.id]?.[mes] || {};
+    calif = evalFranq[param.id];
+}
+html += `<td>${calif !== null && calif !== undefined ? calif : '-'}</td>`;
         });
-        html += `<td>${max > 0 ? ((suma / max) * 100).toFixed(1) + '%' : '-'}</td>`;
+        html += '</tr>';
     });
-    html += `</tr></tbody></table>`;
-
-    // --- Franquicias ---
-    html += `<h2 style='margin-top:2em'>Matriz de Evaluación (Franquicias)</h2><table><thead><tr><th>Parámetro</th>`;
-    franquicias.forEach(f => html += `<th>${f.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</th>`);
-    html += `</tr></thead><tbody>`;
-    todosLosParametros.forEach(param => {
-        html += `<tr><td>${param.nombre}</td>`;
-        franquicias.forEach(franq => {
-            const excluidos = window.obtenerParametrosExcluidosFranquicia ? window.obtenerParametrosExcluidosFranquicia(franq) : [];
-            if (excluidos.includes(param.nombre)) {
-                html += `<td style="background-color: #222; color: #fff">&nbsp;</td>`;
-            } else {
-                const evalFranq = evaluacionesFranquicias.find(e => e.id === franq);
-                const calif = evalFranq ? evalFranq[param.id] ?? null : null;
-                const valor = calif !== null ? Math.round((calif / 100) * (param.peso || 1)) : '-';
-                html += `<td>${valor}</td>`;
-            }
-        });
-        html += `</tr>`;
-    });
-    // Fila de suma y porcentaje
-    html += `<tr style='font-weight:bold;background:#eef'><td>Total obtenido</td>`;
-    franquicias.forEach(franq => {
-        const excluidos = window.obtenerParametrosExcluidosFranquicia ? window.obtenerParametrosExcluidosFranquicia(franq) : [];
-        const evalFranq = evaluacionesFranquicias.find(e => e.id === franq);
-        let suma = 0, max = 0;
-        todosLosParametros.forEach(param => {
-            if (!excluidos.includes(param.nombre)) {
-                const calif = evalFranq ? evalFranq[param.id] ?? null : null;
-                suma += calif !== null ? Math.round((calif / 100) * (param.peso || 1)) : 0;
-                max += (param.peso || 1);
-            }
-        });
-        html += `<td>${suma}</td>`;
-    });
-    html += `</tr><tr style='font-weight:bold;background:#eef'><td>% logrado</td>`;
-    franquicias.forEach(franq => {
-        const excluidos = window.obtenerParametrosExcluidosFranquicia ? window.obtenerParametrosExcluidosFranquicia(franq) : [];
-        const evalFranq = evaluacionesFranquicias.find(e => e.id === franq);
-        let suma = 0, max = 0;
-        todosLosParametros.forEach(param => {
-            if (!excluidos.includes(param.nombre)) {
-                const calif = evalFranq ? evalFranq[param.id] ?? null : null;
-                suma += calif !== null ? Math.round((calif / 100) * (param.peso || 1)) : 0;
-                max += (param.peso || 1);
-            }
-        });
-        html += `<td>${max > 0 ? ((suma / max) * 100).toFixed(1) + '%' : '-'}</td>`;
-    });
-    html += `</tr></tbody></table>`;
-
-    document.getElementById('matriz').innerHTML = html;
+    html += '</tbody></table>';
+    document.getElementById('tabla-matriz-container').innerHTML = html;
 }
 
 // --- Gráfica de resultados ---
@@ -647,6 +665,8 @@ function editarEvaluacion(id, tipo) {
             parametrosPorCategoria[param.categoria].push(param);
         }
     });
+
+    parametrosHTML += `<h4 style="margin-bottom:10px;">Parámetros</h4><div class="parametros-scroll">`;
     
     // Generar campos para cada categoría y sus parámetros
     Object.keys(parametrosPorCategoria).forEach(categoria => {
@@ -729,7 +749,7 @@ function editarEvaluacion(id, tipo) {
             // Actualizar vistas
             actualizarPuntos();
             renderDashboard();
-            renderMatriz();
+            renderMatrizUnificada();
             renderGraficas();
             renderEvaluaciones();
             
@@ -796,7 +816,7 @@ function destruirEvaluacion(id, tipo) {
             // Actualizar vistas
             actualizarPuntos();
             renderDashboard();
-            renderMatriz();
+            renderMatrizUnificada();
             renderGraficas();
             renderEvaluaciones();
             
@@ -1008,7 +1028,7 @@ function inicializarDatosEvaluaciones() {
     try {
         actualizarPuntos();
         renderDashboard();
-        renderMatriz();
+        renderMatrizUnificada();
         renderGraficas();
         renderEvaluaciones();
     } catch (error) {

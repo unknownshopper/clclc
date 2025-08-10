@@ -30,31 +30,46 @@ nav {
     background: #1b2736;
 }
 main {
-    max-width: 900px;
-    margin: 2em auto;
+    max-width: 1200px;
+    margin: 32px auto 0 auto;
+    padding: 24px;
     background: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 8px #0001;
-    padding: 2em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 .tab-section {
     display: block;
 }
-table {
+#tabla-matriz-container {
+    overflow-x: auto;
+    margin: 0 auto;
+}
+.matriz {
     width: 100%;
+    min-width: 900px;
     border-collapse: collapse;
-    margin: 1.5em 0;
-}
-th, td {
-    border: 1px solid #d0d0d0;
-    padding: 0.7em 0.5em;
-    text-align: center;
-}
-th {
-    background: #f2f2f2;
-}
-tr:nth-child(even) {
     background: #f9f9f9;
+    margin: 0 auto 32px auto;
+}
+.matriz th, .matriz td {
+    border: 1px solid #d1d5db;
+    padding: 6px 10px;
+    text-align: center;
+    font-size: 14px;
+}
+.matriz th {
+    background: #e5e7eb;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.matriz tr:nth-child(even) {
+    background: #f3f4f6;
+}
+.matriz td.excluido {
+    background: #222;
+    color: #fff;
 }
 .kpi-box {
     display: inline-block;
@@ -114,6 +129,8 @@ tr:nth-child(even) {
   position: relative;
   box-shadow: 0 12px 36px rgba(30,41,59,0.24), 0 2px 8px rgba(0,0,0,0.10);
   animation: modalFadeIn 0.38s cubic-bezier(.38,.21,.37,1.08);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 @keyframes modalFadeIn {
   from { transform: translateY(60px) scale(0.94); opacity: 0; }
@@ -172,6 +189,11 @@ tr:nth-child(even) {
   margin-right: 12px;
   transform: scale(1.25);
   cursor: pointer;
+}
+.parametros-scroll {
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-right: 6px;
 }
 #btn-guardar-evaluacion {
   background: linear-gradient(90deg,#0077cc 70%,#005fa3 100%);
