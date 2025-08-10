@@ -247,43 +247,138 @@ function mostrarParametrosEvaluacion() {
 function poblarParametrosEvaluacion(entidadId) {
     // Obtener parámetros excluidos para la entidad
     const excluidos = (window.parametrosExcluidosPorSucursal && window.parametrosExcluidosPorSucursal[entidadId]) || [];
+    
     // Filtrar parámetros según exclusión
-    const parametros = (window.parametros || []).filter(p => !excluidos.includes(p.nombre));
-    let html = '<h4>Parámetros de evaluación:</h4><div class="parametros-scroll">';
-    parametros.forEach((p, i) => {
+    const parametrosFiltrados = (window.parametros || []).filter(p => !excluidos.includes(p.nombre));
+    
+    // Agrupar parámetros por categoría
+    const parametrosPorCategoria = {};
+    parametrosFiltrados.forEach(param => {
+        if (!parametrosPorCategoria[param.categoria]) {
+            parametrosPorCategoria[param.categoria] = [];
+        }
+        parametrosPorCategoria[param.categoria].push(param);
+    });
+    
+    // Generar HTML para los parámetros agrupados por categoría
+    let html = '<h4 style="margin-bottom:10px;">Parámetros de evaluación:</h4><div class="parametros-scroll">';
+    
+    // Generar campos para cada categoría y sus parámetros
+    Object.keys(parametrosPorCategoria).forEach(categoria => {
         html += `
-        <div class="parametro-item" style="margin-bottom:16px;">
-          <label>
-            <input type="checkbox"
-                   class="parametro-checkbox"
-                   data-param-id="${p.id}"
-                   data-peso="${p.peso}"
-                   data-tipo="${p.tipo}"
-                   value="1">
-            ${i + 1}. ${p.nombre} <span style='color:#0077cc;font-size:0.97em;font-weight:500;'>(+${p.peso})</span>
-          </label>
-        </div>
-      `;
+        <div class="categoria-container" style="margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h3 style="margin:0;">${categoria}</h3>
+                <button type="button" class="btn-seleccionar-todo" data-categoria="${categoria}" 
+                    style="background-color:#4CAF50;color:white;border:none;padding:5px 10px;cursor:pointer;border-radius:4px;"
+                    onclick="seleccionarTodosCategoria(this)">
+                    Seleccionar todos
+                </button>
+            </div>`;
+        
+        parametrosPorCategoria[categoria].forEach(param => {
+            html += `
+            <div class="parametro-item" style="margin-bottom:16px;">
+                <div style="display:flex;align-items:center;">
+                    <input type="checkbox" 
+                           class="parametro-checkbox"
+                           id="param-${param.id}" 
+                           name="param-${param.id}" 
+                           data-param-id="${param.id}" 
+                           data-peso="${param.peso}" 
+                           data-tipo="${param.tipo}"
+                           style="margin-right:8px;"
+                           onchange="actualizarValorParametro(this)">
+                    <label for="param-${param.id}" title="${param.descripcion || ''}" style="font-weight:bold;">
+                        ${param.nombre} ${param.tipo === 'binario' ? '' : `(${param.peso} pts)`}
+                    </label>
+                </div>
+                <input type="hidden" id="valor-param-${param.id}" value="0">
+            </div>`;
+        });
+        
+        html += `</div>`; // Cierre de categoria-container
     });
-    html += '</div>';
-    document.getElementById('parametros-evaluacion-container').innerHTML = html;
-    document.getElementById('btn-guardar-evaluacion').style.display = 'inline-block';
+    
+    html += `</div>`; // Cierre de parametros-scroll
+    
+    // Agregar campo para observaciones
+    html += `
+    <div style="margin:20px 0;">
+        <label for="observaciones-evaluacion" style="display:block;margin-bottom:8px;font-weight:bold;">Observaciones:</label>
+        <textarea id="observaciones-evaluacion" style="width:100%;min-height:80px;padding:8px;"
+            placeholder="Ingrese aquí sus observaciones sobre esta evaluación..."></textarea>
+    </div>`;
+    
+    // Actualizar el contenedor de parámetros
+    const container = document.getElementById('parametros-evaluacion-container');
+    container.innerHTML = html;
+    
+    // Mostrar el botón de guardar
+    const btnGuardar = document.getElementById('btn-guardar-evaluacion');
+    btnGuardar.style.display = 'inline-block';
+    
+    // Configurar el manejador de eventos para el botón de guardar
+    btnGuardar.onclick = function() {
+        // Obtener el tipo y ID de la entidad seleccionada
+        const selectEntidad = document.getElementById('select-entidad-evaluacion');
+        const valorSeleccionado = selectEntidad.value;
+        if (!valorSeleccionado) {
+            alert('Por favor selecciona una entidad primero');
+            return;
+        }
+        
+        // Determinar si es sucursal o franquicia
+        let tipoEntidad, entidadId;
+        if (valorSeleccionado.startsWith('sucursal-')) {
+            tipoEntidad = 'sucursales';
+            entidadId = valorSeleccionado.replace('sucursal-', '');
+        } else {
+            tipoEntidad = 'franquicias';
+            entidadId = valorSeleccionado.replace('franquicia-', '');
+        }
+        
+        // Crear el objeto de evaluación
+        const evaluacion = {
+            fecha: new Date().toISOString(),
+            observaciones: document.getElementById('observaciones-evaluacion').value || ''
+        };
+        
+        // Recopilar valores de todos los parámetros
+        const parametrosInputs = document.querySelectorAll('#parametros-evaluacion-container input[type="hidden"]');
+        parametrosInputs.forEach(input => {
+            const paramId = input.id.replace('valor-param-', '');
+            evaluacion[paramId] = parseInt(input.value) || 0;
+        });
+        
+        // Inicializar la estructura si no existe
+        if (!window.evaluaciones[window.mesSeleccionado]) {
+            window.evaluaciones[window.mesSeleccionado] = { sucursales: {}, franquicias: {} };
+        }
+        if (!window.evaluaciones[window.mesSeleccionado][tipoEntidad]) {
+            window.evaluaciones[window.mesSeleccionado][tipoEntidad] = {};
+        }
+        
+        // Guardar la evaluación
+        window.evaluaciones[window.mesSeleccionado][tipoEntidad][entidadId] = evaluacion;
+        
+        // Cerrar el modal
+        document.getElementById('modal-nueva-evaluacion').style.display = 'none';
+        
+        // Actualizar las vistas
+        actualizarPuntos();
+        renderDashboard();
+        renderMatrizUnificada();
+        renderGraficas();
+        renderEvaluaciones();
+        
+        alert('Evaluación guardada correctamente.');
+    };
+    
+    // Actualizar el total de puntos
     actualizarTotalPuntosEvaluacion();
-    // Asignar eventos para actualizar el total en tiempo real
-    document.querySelectorAll('.parametro-checkbox').forEach(cb => {
-        cb.addEventListener('change', actualizarTotalPuntosEvaluacion);
-    });
 }
 
-function actualizarTotalPuntosEvaluacion() {
-    let total = 0;
-    document.querySelectorAll('.parametro-checkbox:checked').forEach(cb => {
-        total += parseInt(cb.getAttribute('data-peso')) || 0;
-    });
-    document.getElementById('total-puntos-evaluacion').textContent = `Total de puntos: ${total}`;
-}
-
-// Función para manejar los cambios en los checkboxes de parámetros
 function actualizarValorParametro(checkbox) {
     const paramId = checkbox.getAttribute('data-param-id');
     const peso = parseInt(checkbox.getAttribute('data-peso'));
@@ -297,6 +392,59 @@ function actualizarValorParametro(checkbox) {
     hiddenInput.value = valor;
     
     // Actualizar el total de puntos en tiempo real
+    actualizarTotalPuntosEvaluacion();
+}
+
+// Función para seleccionar/deseleccionar todos los parámetros de una categoría
+function seleccionarTodosCategoria(btnElement) {
+    // Obtener la categoría desde el atributo data
+    const categoria = btnElement.getAttribute('data-categoria');
+    
+    // Encontrar el contenedor de la categoría
+    const categoriaContainer = btnElement.closest('.categoria-container');
+    
+    if (!categoriaContainer) {
+        console.error('No se pudo encontrar el contenedor de la categoría');
+        return;
+    }
+    
+    // Obtener todos los checkboxes de parámetros dentro de esta categoría
+    const checkboxes = categoriaContainer.querySelectorAll('input[type="checkbox"][data-param-id]');
+    
+    if (checkboxes.length === 0) {
+        console.warn('No se encontraron checkboxes de parámetros en esta categoría');
+        return;
+    }
+    
+    // Determinar si vamos a marcar o desmarcar todos
+    // Si hay al menos un checkbox desmarcado, entonces marcaremos todos
+    // Si todos están marcados, entonces desmarcaremos todos
+    const hayDesmarcados = Array.from(checkboxes).some(cb => !cb.checked);
+    
+    // Cambiar el texto del botón según la acción
+    const nuevoTexto = hayDesmarcados ? 'Desmarcar todos' : 'Seleccionar todos';
+    btnElement.textContent = nuevoTexto;
+    
+    // Actualizar todos los checkboxes
+    checkboxes.forEach(checkbox => {
+        // Solo actualizar si el estado va a cambiar
+        if (checkbox.checked !== hayDesmarcados) {
+            checkbox.checked = hayDesmarcados;
+            
+            // Actualizar el valor oculto correspondiente
+            const paramId = checkbox.getAttribute('data-param-id');
+            const hiddenInput = document.getElementById(`valor-param-${paramId}`);
+            if (hiddenInput) {
+                hiddenInput.value = hayDesmarcados ? checkbox.getAttribute('data-peso') : 0;
+            }
+            
+            // Disparar manualmente el evento change para actualizar los valores
+            const event = new Event('change');
+            checkbox.dispatchEvent(event);
+        }
+    });
+    
+    // Actualizar el total de puntos
     actualizarTotalPuntosEvaluacion();
 }
 
@@ -876,8 +1024,18 @@ function seleccionarTodosCategoria(btnElement) {
     // Encontrar el contenedor de la categoría
     const categoriaContainer = btnElement.closest('.categoria-container');
     
-    // Obtener todos los checkboxes dentro de esta categoría
-    const checkboxes = categoriaContainer.querySelectorAll('input[type="checkbox"]');
+    if (!categoriaContainer) {
+        console.error('No se pudo encontrar el contenedor de la categoría');
+        return;
+    }
+    
+    // Obtener todos los checkboxes de parámetros dentro de esta categoría
+    const checkboxes = categoriaContainer.querySelectorAll('input[type="checkbox"][data-param-id]');
+    
+    if (checkboxes.length === 0) {
+        console.warn('No se encontraron checkboxes de parámetros en esta categoría');
+        return;
+    }
     
     // Determinar si vamos a marcar o desmarcar todos
     // Si hay al menos un checkbox desmarcado, entonces marcaremos todos
@@ -885,19 +1043,113 @@ function seleccionarTodosCategoria(btnElement) {
     const hayDesmarcados = Array.from(checkboxes).some(cb => !cb.checked);
     
     // Cambiar el texto del botón según la acción
-    if (hayDesmarcados) {
-        btnElement.textContent = 'Desmarcar todos';
-    } else {
-        btnElement.textContent = 'Seleccionar todos';
-    }
+    const nuevoTexto = hayDesmarcados ? 'Desmarcar todos' : 'Seleccionar todos';
+    btnElement.textContent = nuevoTexto;
     
     // Actualizar todos los checkboxes
     checkboxes.forEach(checkbox => {
-        checkbox.checked = hayDesmarcados;
+        // Solo actualizar si el estado va a cambiar
+        if (checkbox.checked !== hayDesmarcados) {
+            checkbox.checked = hayDesmarcados;
+            
+            // Actualizar el valor oculto correspondiente
+            const paramId = checkbox.getAttribute('data-param-id');
+            const hiddenInput = document.getElementById(`valor-param-${paramId}`);
+            if (hiddenInput) {
+                hiddenInput.value = hayDesmarcados ? checkbox.getAttribute('data-peso') : 0;
+            }
+            
+            // Disparar manualmente el evento change para actualizar los valores
+            const event = new Event('change');
+            checkbox.dispatchEvent(event);
+        }
+    });
+    
+    // Actualizar el total de puntos
+    actualizarTotalPuntosEvaluacion();
+}
+
+// Función para renderizar las gráficas del dashboard
+function renderGraficas() {
+    console.log("Renderizando gráficas...");
+    
+    // Si no hay datos para renderizar, no continuamos
+    if (!window.evaluaciones || !window.mesSeleccionado) {
+        console.log("No hay datos de evaluaciones o mes seleccionado para renderizar gráficas");
+        return;
+    }
+    
+    try {
+        // Aquí iría la lógica para generar gráficas
+        // Por ahora solo es un placeholder hasta implementar la visualización completa
+        console.log("Gráficas renderizadas correctamente para el mes:", window.mesSeleccionado);
+    } catch (error) {
+        console.error("Error al renderizar gráficas:", error);
+    }
+}
+
+// Función para actualizar los puntos totales por entidad
+function actualizarPuntos() {
+    // Calcular puntos para sucursales
+    window.sucursales.forEach(sucursal => {
+        if (!sucursal.activa) return;
         
-        // Disparar manualmente el evento change para actualizar los valores
-        const event = new Event('change');
-        checkbox.dispatchEvent(event);
+        const mes = window.mesSeleccionado;
+        let puntos = 0;
+        let puntosMaximos = 0;
+        
+        // Verificar si hay evaluación para esta sucursal en el mes seleccionado
+        if (window.evaluaciones && 
+            window.evaluaciones.sucursales && 
+            window.evaluaciones.sucursales[sucursal.id] && 
+            window.evaluaciones.sucursales[sucursal.id][mes]) {
+            
+            const evaluacion = window.evaluaciones.sucursales[sucursal.id][mes];
+            const parametrosExcluidos = obtenerParametrosExcluidosPorSucursal(sucursal.id);
+            
+            // Calcular puntos obtenidos y máximos
+            window.parametros.forEach(param => {
+                if (!parametrosExcluidos.includes(param.nombre)) {
+                    puntosMaximos += param.peso;
+                    puntos += evaluacion[param.id] || 0;
+                }
+            });
+        }
+        
+        // Guardar puntos y porcentaje
+        sucursal.puntos = puntos;
+        sucursal.porcentaje = puntosMaximos > 0 ? Math.round((puntos / puntosMaximos) * 100) : 0;
+    });
+    
+    // Calcular puntos para franquicias
+    window.franquicias.forEach(franquicia => {
+        if (!franquicia.activa) return;
+        
+        const mes = window.mesSeleccionado;
+        let puntos = 0;
+        let puntosMaximos = 0;
+        
+        // Verificar si hay evaluación para esta franquicia en el mes seleccionado
+        if (window.evaluaciones && 
+            window.evaluaciones.franquicias && 
+            window.evaluaciones.franquicias[franquicia.id] && 
+            window.evaluaciones.franquicias[franquicia.id][mes]) {
+            
+            const evaluacion = window.evaluaciones.franquicias[franquicia.id][mes];
+            const parametrosExcluidos = obtenerParametrosExcluidosPorFranquicia(franquicia.id);
+            
+            // Calcular puntos obtenidos y máximos
+            window.parametros.forEach(param => {
+                if (!parametrosExcluidos.includes(param.nombre)) {
+                    puntosMaximos += param.peso;
+                    puntos += evaluacion[param.id] || 0;
+                }
+            });
+        }
+        
+        // Guardar puntos y porcentaje
+        franquicia.puntos = puntos;
+        franquicia.porcentaje = puntosMaximos > 0 ? Math.round((puntos / puntosMaximos) * 100) : 0;
     });
 }
 
@@ -1037,87 +1289,3 @@ function inicializarDatosEvaluaciones() {
 }
 
 inicializarDatosEvaluaciones();
-
-// Función para renderizar las gráficas del dashboard
-function renderGraficas() {
-    console.log("Renderizando gráficas...");
-    
-    // Si no hay datos para renderizar, no continuamos
-    if (!window.evaluaciones || !window.mesSeleccionado) {
-        console.log("No hay datos de evaluaciones o mes seleccionado para renderizar gráficas");
-        return;
-    }
-    
-    try {
-        // Aquí iría la lógica para generar gráficas
-        // Por ahora solo es un placeholder hasta implementar la visualización completa
-        console.log("Gráficas renderizadas correctamente para el mes:", window.mesSeleccionado);
-    } catch (error) {
-        console.error("Error al renderizar gráficas:", error);
-    }
-}
-
-// Función para actualizar los puntos totales por entidad
-function actualizarPuntos() {
-    // Calcular puntos para sucursales
-    window.sucursales.forEach(sucursal => {
-        if (!sucursal.activa) return;
-        
-        const mes = window.mesSeleccionado;
-        let puntos = 0;
-        let puntosMaximos = 0;
-        
-        // Verificar si hay evaluación para esta sucursal en el mes seleccionado
-        if (window.evaluaciones && 
-            window.evaluaciones.sucursales && 
-            window.evaluaciones.sucursales[sucursal.id] && 
-            window.evaluaciones.sucursales[sucursal.id][mes]) {
-            
-            const evaluacion = window.evaluaciones.sucursales[sucursal.id][mes];
-            const parametrosExcluidos = obtenerParametrosExcluidosPorSucursal(sucursal.id);
-            
-            // Calcular puntos obtenidos y máximos
-            window.parametros.forEach(param => {
-                if (!parametrosExcluidos.includes(param.nombre)) {
-                    puntosMaximos += param.peso;
-                    puntos += evaluacion[param.id] || 0;
-                }
-            });
-        }
-        
-        // Guardar puntos y porcentaje
-        sucursal.puntos = puntos;
-        sucursal.porcentaje = puntosMaximos > 0 ? Math.round((puntos / puntosMaximos) * 100) : 0;
-    });
-    
-    // Calcular puntos para franquicias
-    window.franquicias.forEach(franquicia => {
-        if (!franquicia.activa) return;
-        
-        const mes = window.mesSeleccionado;
-        let puntos = 0;
-        let puntosMaximos = 0;
-        
-        // Verificar si hay evaluación para esta franquicia en el mes seleccionado
-        if (window.evaluaciones && 
-            window.evaluaciones.franquicias && 
-            window.evaluaciones.franquicias[franquicia.id] && 
-            window.evaluaciones.franquicias[franquicia.id][mes]) {
-            
-            const evaluacion = window.evaluaciones.franquicias[franquicia.id][mes];
-            const parametrosExcluidos = obtenerParametrosExcluidosPorFranquicia(franquicia.id);
-            
-            // Calcular puntos obtenidos y máximos
-            window.parametros.forEach(param => {
-                if (!parametrosExcluidos.includes(param.nombre)) {
-                    puntosMaximos += param.peso;
-                    puntos += evaluacion[param.id] || 0;
-                }
-            });
-        }
-        
-        // Guardar puntos y porcentaje
-        franquicia.puntos = puntos;
-        franquicia.porcentaje = puntosMaximos > 0 ? Math.round((puntos / puntosMaximos) * 100) : 0;
-    });
-}

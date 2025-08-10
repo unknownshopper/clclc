@@ -108,6 +108,48 @@ main {
     margin-left: 0.5em;
 }
 
+/* Estilos para el botón de seleccionar todos */
+.btn-seleccionar-todo {
+    background-color: #4CAF50 !important;
+    color: white !important;
+    border: none !important;
+    padding: 5px 10px !important;
+    cursor: pointer !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+    margin-left: 10px !important;
+    transition: background-color 0.3s !important;
+}
+
+.btn-seleccionar-todo:hover {
+    background-color: #45a049 !important;
+}
+
+/* Asegurar que el contenedor de la categoría sea visible */
+.categoria-container {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Estilos para los checkboxes de parámetros */
+.parametro-item {
+    margin-bottom: 10px;
+    padding: 8px;
+    background-color: white;
+    border-radius: 4px;
+    border-left: 4px solid #4CAF50;
+}
+
+/* Asegurar que el contenedor de parámetros tenga scroll si es necesario */
+.parametros-scroll {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
 /* ===== Modal de Evaluación Moderno y Elegante ===== */
 #modal-nueva-evaluacion {
   display: none;
@@ -189,11 +231,6 @@ main {
   margin-right: 12px;
   transform: scale(1.25);
   cursor: pointer;
-}
-.parametros-scroll {
-  max-height: 55vh;
-  overflow-y: auto;
-  padding-right: 6px;
 }
 #btn-guardar-evaluacion {
   background: linear-gradient(90deg,#0077cc 70%,#005fa3 100%);
