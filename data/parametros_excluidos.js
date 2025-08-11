@@ -123,19 +123,6 @@ window.parametrosExcluidosPorSucursal = {
       "Música y volumen",
       "Estado de botes de basura"
     ],
-    "tabasco2000": [
-      "Atención en mesa",
-      "Uso de tableta",
-      "Jardineras y macetas",
-      "Puertas y vidrios",
-      "Música y volumen",
-      "Limpieza de mesas y sillas",
-      "Limpieza de pisos",
-      "Estado de baños",
-      "Estado de botes de basura",
-      "Limpieza de barra",
-      "Estado de muebles"
-    ],
     "dosbocas": [
       "Atención en mesa",
       "Uso de tableta",
