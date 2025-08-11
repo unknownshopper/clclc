@@ -118,7 +118,7 @@ function generarDatosEjemplo() {
 
 // Función para poblar selector de mes
 function poblarSelectorMes() {
-    const selector = document.getElementById('mesSelector');
+    const selector = document.getElementById('mes-selector'); 
     if (!selector) return;
     
     selector.innerHTML = '';
@@ -309,13 +309,13 @@ function renderDashboard() {
 // Función para cambiar vista
 function cambiarVista(vista) {
     // Actualizar botones de navegación
-    document.querySelectorAll('.nav-button').forEach(btn => {
-        btn.classList.remove('active');
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.classList.remove('active');
     });
-    document.querySelector(`[onclick="cambiarVista('${vista}')"]`)?.classList.add('active');
+    document.querySelector(`[data-section="${vista}"]`)?.classList.add('active');
     
     // Ocultar todas las secciones
-    document.querySelectorAll('.seccion').forEach(seccion => {
+    document.querySelectorAll('.tab-section').forEach(seccion => {
         seccion.style.display = 'none';
     });
     
@@ -397,9 +397,9 @@ document.addEventListener('DOMContentLoaded', function() {
     poblarSelectorMes();
     
     // Configurar navegación
-    document.querySelectorAll('.nav-button').forEach(button => {
+    document.querySelectorAll('.tab-btn').forEach(button => {
         button.addEventListener('click', function() {
-            const vista = this.getAttribute('onclick').match(/'([^']+)'/)[1];
+            const vista = this.getAttribute('data-section');
             cambiarVista(vista);
         });
     });
