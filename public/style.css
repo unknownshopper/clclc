@@ -1,0 +1,251 @@
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f9f9f9;
+    margin: 0;
+    padding: 0;
+}
+header {
+    background: #2d3e50;
+    color: #fff;
+    padding: 1.5em 1em 1em 1em;
+    text-align: center;
+}
+nav {
+    text-align: center;
+    background: #eaeaea;
+    padding: 0.5em 0;
+}
+.tab-btn {
+    background: #2d3e50;
+    color: #fff;
+    border: none;
+    padding: 0.7em 2em;
+    margin: 0 0.5em;
+    border-radius: 4px 4px 0 0;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.tab-btn.active, .tab-btn:hover {
+    background: #1b2736;
+}
+main {
+    max-width: 1200px;
+    margin: 32px auto 0 auto;
+    padding: 24px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.tab-section {
+    display: block;
+}
+#tabla-matriz-container {
+    overflow-x: auto;
+    margin: 0 auto;
+}
+.matriz {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    background: #f9f9f9;
+    margin: 0 auto 32px auto;
+}
+.matriz th, .matriz td {
+    border: 1px solid #d1d5db;
+    padding: 6px 10px;
+    text-align: center;
+    font-size: 14px;
+}
+.matriz th {
+    background: #e5e7eb;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.matriz tr:nth-child(even) {
+    background: #f3f4f6;
+}
+.matriz td.excluido {
+    background: #222;
+    color: #fff;
+}
+.kpi-box {
+    display: inline-block;
+    background: #f2f8ff;
+    border: 1px solid #b3d4fc;
+    border-radius: 8px;
+    margin: 1em 2em 1em 0;
+    padding: 1em 2em;
+    min-width: 150px;
+    text-align: center;
+}
+.kpi-title {
+    font-size: 1.1em;
+    color: #2d3e50;
+}
+.kpi-value {
+    font-size: 2em;
+    color: #0077cc;
+    font-weight: bold;
+}
+@media (max-width: 700px) {
+    main { padding: 1em; }
+    .kpi-box { margin: 1em 0.5em 1em 0; padding: 1em; }
+    table, th, td { font-size: 0.95em; }
+}
+
+.mes-selector-container {
+    margin-bottom: 1.5em;
+    text-align: left;
+}
+#mes-selector {
+    font-size: 1em;
+    padding: 0.4em 1em;
+    border-radius: 4px;
+    border: 1px solid #b3d4fc;
+    margin-left: 0.5em;
+}
+
+/* Estilos para el botón de seleccionar todos */
+.btn-seleccionar-todo {
+    background-color: #4CAF50 !important;
+    color: white !important;
+    border: none !important;
+    padding: 5px 10px !important;
+    cursor: pointer !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+    margin-left: 10px !important;
+    transition: background-color 0.3s !important;
+}
+
+.btn-seleccionar-todo:hover {
+    background-color: #45a049 !important;
+}
+
+/* Asegurar que el contenedor de la categoría sea visible */
+.categoria-container {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Estilos para los checkboxes de parámetros */
+.parametro-item {
+    margin-bottom: 10px;
+    padding: 8px;
+    background-color: white;
+    border-radius: 4px;
+    border-left: 4px solid #4CAF50;
+}
+
+/* Asegurar que el contenedor de parámetros tenga scroll si es necesario */
+.parametros-scroll {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+/* ===== Modal de Evaluación Moderno y Elegante ===== */
+#modal-nueva-evaluacion {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(30, 41, 59, 0.23);
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2.5px);
+}
+#modal-nueva-evaluacion .modal-box {
+  background: #fff;
+  padding: 36px 32px 28px 32px;
+  max-width: 500px;
+  width: 96%;
+  margin: auto;
+  border-radius: 18px;
+  position: relative;
+  box-shadow: 0 12px 36px rgba(30,41,59,0.24), 0 2px 8px rgba(0,0,0,0.10);
+  animation: modalFadeIn 0.38s cubic-bezier(.38,.21,.37,1.08);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+@keyframes modalFadeIn {
+  from { transform: translateY(60px) scale(0.94); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+#modal-nueva-evaluacion h2 {
+  margin-top: 0;
+  font-size: 1.6em;
+  color: #1a2533;
+  letter-spacing: 0.01em;
+}
+#modal-nueva-evaluacion .close-btn {
+  position: absolute;
+  top: 14px; right: 22px;
+  font-size: 2em;
+  background: none;
+  border: none;
+  color: #b0b8c1;
+  cursor: pointer;
+  transition: color 0.18s, background 0.18s;
+  padding: 2px 7px 2px 7px;
+  border-radius: 50%;
+}
+#modal-nueva-evaluacion .close-btn:hover {
+  color: #fff;
+  background: #e74c3c;
+}
+#modal-nueva-evaluacion label {
+  font-weight: 500;
+  margin-bottom: 8px;
+  display: block;
+  color: #2a3b4c;
+}
+#parametros-evaluacion-container ul {
+  padding: 0;
+  margin: 0 0 18px 0;
+  list-style: none;
+  max-height: 230px;
+  overflow-y: auto;
+  border: 1px solid #e3e8ee;
+  border-radius: 10px;
+  background: #f7fafd;
+}
+#parametros-evaluacion-container li {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  font-size: 1.07em;
+}
+#parametros-evaluacion-container li:last-child {
+  border-bottom: none;
+}
+#parametros-evaluacion-container input[type="checkbox"] {
+  accent-color: #0077cc;
+  margin-right: 12px;
+  transform: scale(1.25);
+  cursor: pointer;
+}
+#btn-guardar-evaluacion {
+  background: linear-gradient(90deg,#0077cc 70%,#005fa3 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 26px;
+  font-size: 1.1em;
+  margin-top: 16px;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 8px rgba(0,119,204,0.07);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+#btn-guardar-evaluacion:hover {
+  background: linear-gradient(90deg,#005fa3 60%,#0077cc 100%);
+}
