@@ -860,6 +860,278 @@ function generarResumenEstadistico() {
 
 // Función para abrir modal de nueva evaluación
 function abrirModalNuevaEvaluacion() {
-    // Por ahora, mostrar un alert más informativo
-    alert(`Funcionalidad "Nueva Evaluación" para ${formatearMesLegible(window.mesSeleccionado)}\n\nEsta funcionalidad incluirá:\n- Selector de sucursal/franquicia\n- Formulario de parámetros\n- Cálculo automático de puntos\n- Guardado de evaluación\n\n¿Te gustaría que implemente el modal completo?`);
+    const modal = document.getElementById('modal-nueva-evaluacion');
+    const selectEntidad = document.getElementById('select-entidad-evaluacion');
+    const parametrosContainer = document.getElementById('parametros-evaluacion-container');
+    const totalPuntosDiv = document.getElementById('total-puntos-evaluacion');
+    const btnGuardar = document.getElementById('btn-guardar-evaluacion');
+    
+    if (!modal || !selectEntidad) {
+        console.error('Modal o elementos no encontrados');
+        return;
+    }
+    
+    // Limpiar contenido previo
+    selectEntidad.innerHTML = '<option value="">Selecciona una opción</option>';
+    parametrosContainer.innerHTML = '';
+    totalPuntosDiv.textContent = 'Total de puntos: 0';
+    btnGuardar.style.display = 'none';
+    
+    // Poblar selector con sucursales y franquicias
+    if (window.sucursales) {
+        window.sucursales.filter(s => s.activa).forEach(sucursal => {
+            const option = document.createElement('option');
+            option.value = `sucursal-${sucursal.id}`;
+            option.textContent = `${sucursal.nombre} (Sucursal)`;
+            selectEntidad.appendChild(option);
+        });
+    }
+    
+    if (window.franquicias) {
+        window.franquicias.filter(f => f.activa).forEach(franquicia => {
+            const option = document.createElement('option');
+            option.value = `franquicia-${franquicia.id}`;
+            option.textContent = `${franquicia.nombre} (Franquicia)`;
+            selectEntidad.appendChild(option);
+        });
+    }
+    
+    // Event listener para cambio de entidad
+    selectEntidad.addEventListener('change', function() {
+        cargarParametrosEvaluacion(this.value);
+    });
+    
+    // Mostrar modal
+    modal.style.display = 'flex';
+}
+
+// Función para cargar parámetros según la entidad seleccionada
+function cargarParametrosEvaluacion(entidadValue) {
+    const parametrosContainer = document.getElementById('parametros-evaluacion-container');
+    const totalPuntosDiv = document.getElementById('total-puntos-evaluacion');
+    const btnGuardar = document.getElementById('btn-guardar-evaluacion');
+    
+    if (!entidadValue) {
+        parametrosContainer.innerHTML = '';
+        totalPuntosDiv.textContent = 'Total de puntos: 0';
+        btnGuardar.style.display = 'none';
+        return;
+    }
+    
+    // Extraer tipo y ID de la entidad (corregir para IDs con guiones)
+    const firstDashIndex = entidadValue.indexOf('-');
+    const tipo = entidadValue.substring(0, firstDashIndex);
+    const entidadId = entidadValue.substring(firstDashIndex + 1);
+    
+    console.log(`Cargando parámetros para ${tipo}: ${entidadId}`);
+    
+    // Obtener parámetros aplicables usando la función existente
+    let parametrosAplicables;
+    if (tipo === 'sucursal') {
+        // Usar la función existente que maneja aplicaATodas y sucursalesEspecificas correctamente
+        parametrosAplicables = getParametrosParaSucursal(entidadId);
+    } else {
+        // Para franquicias, usar todos los parámetros por ahora
+        parametrosAplicables = window.parametros;
+    }
+    
+    console.log(`Parámetros antes de exclusiones: ${parametrosAplicables.length}`);
+    
+    // Aplicar exclusiones si existen
+    if (window.parametrosExcluidosPorSucursal && tipo === 'sucursal' && window.parametrosExcluidosPorSucursal[entidadId]) {
+        const excluidos = window.parametrosExcluidosPorSucursal[entidadId];
+        parametrosAplicables = parametrosAplicables.filter(p => !excluidos.includes(p.nombre));
+    }
+    
+    if (window.parametrosExcluidosPorFranquicia && tipo === 'franquicia' && window.parametrosExcluidosPorFranquicia[entidadId]) {
+        const excluidos = window.parametrosExcluidosPorFranquicia[entidadId];
+        parametrosAplicables = parametrosAplicables.filter(p => !excluidos.includes(p.nombre));
+    }
+    
+    // Generar formulario de parámetros
+    let html = '<div style="max-height: 400px; overflow-y: auto; margin: 10px 0;">';
+    
+    // Agregar botón "Seleccionar Todo" al inicio
+    html += `
+        <div style="margin-bottom: 15px; padding: 10px; background: #f0f8ff; border: 1px solid #0077cc; border-radius: 5px; text-align: center;">
+            <button id="btn-seleccionar-todo" onclick="toggleSeleccionarTodo()" 
+                    style="background: #0077cc; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                ✓ Seleccionar Todo
+            </button>
+            <span style="margin-left: 10px; font-size: 12px; color: #666;">
+                Marca/desmarca todos los parámetros
+            </span>
+        </div>
+    `;
+    
+    // Agrupar por categoría
+    const categorias = {};
+    parametrosAplicables.forEach(param => {
+        if (!categorias[param.categoriaId]) {
+            categorias[param.categoriaId] = [];
+        }
+        categorias[param.categoriaId].push(param);
+    });
+    
+    let numeroParametro = 1;
+    
+    Object.keys(categorias).forEach(categoriaId => {
+        const categoria = categorias[categoriaId];
+        const nombreCategoria = getCategoriaName(categoriaId);
+        
+        html += `
+            <div style="margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; padding: 10px;">
+                <h4 style="margin: 0 0 10px 0; color: #0077cc; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                    ${nombreCategoria} (${categoria.length} parámetros)
+                </h4>
+        `;
+        
+        categoria.forEach(param => {
+            html += `
+                <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f9f9f9; border-radius: 4px;">
+                    <div style="flex: 1; display: flex; align-items: center;">
+                        <span style="background: #0077cc; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin-right: 10px;">
+                            ${numeroParametro}
+                        </span>
+                        <div>
+                            <strong>${param.nombre}</strong>
+                            <div style="font-size: 12px; color: #666;">${param.descripcion}</div>
+                        </div>
+                    </div>
+                    <div style="margin-left: 10px; display: flex; align-items: center;">
+                        <input type="checkbox" 
+                               id="param-${param.id}" 
+                               data-peso="${param.peso}"
+                               style="width: 18px; height: 18px; margin-right: 8px; cursor: pointer;"
+                               onchange="actualizarTotalPuntos()">
+                        <span style="font-size: 14px; color: #0077cc; font-weight: bold;">${param.peso} pts</span>
+                    </div>
+                </div>
+            `;
+            numeroParametro++;
+        });
+        
+        html += '</div>';
+    });
+    
+    html += '</div>';
+    
+    parametrosContainer.innerHTML = html;
+    
+    // Calcular total inicial
+    actualizarTotalPuntos();
+    
+    // Mostrar botón guardar
+    btnGuardar.style.display = 'block';
+    btnGuardar.onclick = () => guardarEvaluacion(entidadValue);
+}
+
+// Función para obtener nombre de categoría
+function getCategoriaName(categoriaId) {
+    const categorias = {
+        'bienvenida': 'Bienvenida y Atención al Cliente',
+        'producto_ventas': 'Conocimiento del Producto y Ventas',
+        'atencion_mesa': 'Atención en Mesa',
+        'tiempos': 'Tiempos de Espera',
+        'personal': 'Personal y Presentación',
+        'presentacion_producto': 'Presentación del Producto',
+        'exteriores': 'Instalaciones - Exteriores',
+        'interiores': 'Instalaciones - Interiores'
+    };
+    return categorias[categoriaId] || categoriaId;
+}
+
+// Función para actualizar total de puntos
+function actualizarTotalPuntos() {
+    const totalPuntosDiv = document.getElementById('total-puntos-evaluacion');
+    const checkboxes = document.querySelectorAll('#parametros-evaluacion-container input[type="checkbox"]');
+    
+    let totalObtenido = 0;
+    let totalMaximo = 0;
+    
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            const peso = parseInt(checkbox.getAttribute('data-peso'));
+            totalObtenido += peso;
+        }
+        totalMaximo += parseInt(checkbox.getAttribute('data-peso'));
+    });
+    
+    const porcentaje = totalMaximo > 0 ? Math.round((totalObtenido / totalMaximo) * 100) : 0;
+    
+    totalPuntosDiv.innerHTML = `
+        <strong>Total de puntos: ${totalObtenido}/${totalMaximo} (${porcentaje}%)</strong>
+    `;
+}
+
+// Función para guardar evaluación
+function guardarEvaluacion(entidadValue) {
+    // Extraer tipo y ID de la entidad (corregir para IDs con guiones)
+    const firstDashIndex = entidadValue.indexOf('-');
+    const tipo = entidadValue.substring(0, firstDashIndex);
+    const entidadId = entidadValue.substring(firstDashIndex + 1);
+    
+    const checkboxes = document.querySelectorAll('#parametros-evaluacion-container input[type="checkbox"]');
+    
+    const evaluacion = {};
+    checkboxes.forEach(checkbox => {
+        const paramId = checkbox.id.replace('param-', '');
+        evaluacion[paramId] = checkbox.checked ? parseInt(checkbox.getAttribute('data-peso')) : 0;
+    });
+    
+    // Guardar en la estructura de datos
+    if (tipo === 'sucursal') {
+        if (!window.evaluaciones.sucursales[entidadId]) {
+            window.evaluaciones.sucursales[entidadId] = {};
+        }
+        window.evaluaciones.sucursales[entidadId][window.mesSeleccionado] = evaluacion;
+    } else if (tipo === 'franquicia') {
+        if (!window.evaluaciones.franquicias[entidadId]) {
+            window.evaluaciones.franquicias[entidadId] = {};
+        }
+        window.evaluaciones.franquicias[entidadId][window.mesSeleccionado] = evaluacion;
+    }
+    
+    // Cerrar modal
+    cerrarModalEvaluacion();
+    
+    // Actualizar vista actual
+    if (window.vistaActual === 'dashboard') {
+        renderDashboard();
+    } else if (window.vistaActual === 'matriz') {
+        renderMatriz();
+    } else if (window.vistaActual === 'evaluaciones') {
+        renderEvaluaciones();
+    }
+    
+    // Mostrar mensaje de éxito
+    const entidadNombre = tipo === 'sucursal' 
+        ? window.sucursales.find(s => s.id === entidadId)?.nombre 
+        : window.franquicias.find(f => f.id === entidadId)?.nombre;
+    
+    alert(`Evaluación guardada exitosamente para ${entidadNombre} - ${formatearMesLegible(window.mesSeleccionado)}`);
+}
+
+// Función para cerrar modal
+function cerrarModalEvaluacion() {
+    const modal = document.getElementById('modal-nueva-evaluacion');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Función para seleccionar/deseleccionar todos los parámetros
+function toggleSeleccionarTodo() {
+    const checkboxes = document.querySelectorAll('#parametros-evaluacion-container input[type="checkbox"]');
+    const btnSeleccionarTodo = document.getElementById('btn-seleccionar-todo');
+    
+    if (btnSeleccionarTodo.textContent === '✓ Seleccionar Todo') {
+        checkboxes.forEach(checkbox => checkbox.checked = true);
+        btnSeleccionarTodo.textContent = '✗ Deseleccionar Todo';
+    } else {
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+        btnSeleccionarTodo.textContent = '✓ Seleccionar Todo';
+    }
+    
+    actualizarTotalPuntos();
 }
