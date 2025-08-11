@@ -68,7 +68,7 @@ main {
     background: #f3f4f6;
 }
 .matriz td.excluido {
-    background: #222;
+    background: #717171;
     color: #fff;
 }
 .kpi-box {

@@ -1700,8 +1700,8 @@ function verEvaluacion(entidadId, tipo) {
     }
     
     const entidad = tipo === 'sucursal' ? 
-        window.sucursales?.find(s => s.id === entidadId) :
-        window.franquicias?.find(f => f.id === entidadId);
+        window.sucursales.find(s => s.id === entidadId) :
+        window.franquicias.find(f => f.id === entidadId);
     
     if (!entidad) {
         alert('Entidad no encontrada');
@@ -1800,9 +1800,55 @@ function editarEvaluacion(entidadId, tipo) {
     
     console.log(`Editar evaluación: ${entidadId} (${tipo})`);
     
-    // Aquí podrías abrir el modal de nueva evaluación con los datos pre-cargados
-    // Por ahora, mostrar un mensaje
-    alert(`Función de edición para ${entidadId} (${tipo}) - En desarrollo`);
+    // Buscar la evaluación existente
+    const tipoEntidad = tipo === 'sucursal' ? 'sucursales' : 'franquicias';
+    const evaluacionExistente = window.evaluaciones?.[tipoEntidad]?.[entidadId]?.[window.mesSeleccionado];
+    
+    if (!evaluacionExistente) {
+        alert('No se encontró la evaluación para editar');
+        return;
+    }
+    
+    // Marcar que estamos en modo edición
+    window.modoEdicion = {
+        activo: true,
+        entidadId: entidadId,
+        tipo: tipo,
+        mes: window.mesSeleccionado,
+        datosOriginales: { ...evaluacionExistente }
+    };
+    
+    // Abrir el modal de nueva evaluación
+    document.getElementById('modal-nueva-evaluacion').style.display = 'flex';
+    
+    // Pre-seleccionar la entidad
+    const selectEntidad = document.getElementById('select-entidad-evaluacion');
+    selectEntidad.value = `${tipo}:${entidadId}`;
+    
+    // Cargar los parámetros para esta entidad
+    cargarParametrosEvaluacion();
+    
+    // Esperar un poco para que se carguen los parámetros y luego pre-llenar los valores
+    setTimeout(() => {
+        precargarValoresEvaluacion(evaluacionExistente.parametros);
+        
+        // Cambiar el texto del botón y título
+        document.querySelector('#modal-nueva-evaluacion h2').textContent = 'Editar Evaluación';
+        document.getElementById('btn-guardar-evaluacion').textContent = 'Actualizar Evaluación';
+        document.getElementById('btn-guardar-evaluacion').style.display = 'block';
+    }, 100);
+}
+
+// Función para precargar valores de evaluación
+function precargarValoresEvaluacion(parametros) {
+    const checkboxes = document.querySelectorAll('#parametros-evaluacion-container input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        const paramId = checkbox.id.replace('param-', '');
+        checkbox.checked = parametros[paramId] > 0;
+    });
+    
+    actualizarTotalPuntos();
 }
 
 // Función para eliminar una evaluación
@@ -1813,8 +1859,8 @@ function eliminarEvaluacion(entidadId, tipo) {
     }
     
     const entidad = tipo === 'sucursal' ? 
-        window.sucursales?.find(s => s.id === entidadId) :
-        window.franquicias?.find(f => f.id === entidadId);
+        window.sucursales.find(s => s.id === entidadId) :
+        window.franquicias.find(f => f.id === entidadId);
     
     const nombreEntidad = entidad ? entidad.nombre : entidadId;
     
@@ -1850,8 +1896,8 @@ function verVideo(entidadId, tipo) {
     console.log(`Ver video: ${entidadId} (${tipo})`);
     
     const entidad = tipo === 'sucursal' ? 
-        window.sucursales?.find(s => s.id === entidadId) :
-        window.franquicias?.find(f => f.id === entidadId);
+        window.sucursales.find(s => s.id === entidadId) :
+        window.franquicias.find(f => f.id === entidadId);
     
     const nombreEntidad = entidad ? entidad.nombre : entidadId;
     
