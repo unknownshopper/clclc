@@ -1,3 +1,115 @@
+// ===== SISTEMA DE AUTENTICACIÓN Y CONTROL DE ACCESO =====
+let usuarioActual = null;
+
+// Función para iniciar sesión
+function iniciarSesion() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    const errorDiv = document.getElementById('loginError');
+    
+    // Limpiar errores previos
+    errorDiv.style.display = 'none';
+    
+    if (!email || !password) {
+        mostrarErrorLogin('Por favor, complete todos los campos');
+        return;
+    }
+    
+    // Buscar usuario en la base de datos
+    const usuario = window.usuarios.find(u => u.email === email && u.password === password);
+    
+    if (usuario) {
+        usuarioActual = usuario;
+        localStorage.setItem('usuarioActual', JSON.stringify(usuario));
+        
+        // Ocultar modal de login
+        document.getElementById('loginModal').style.display = 'none';
+        document.body.classList.remove('logged-out');
+        
+        // Mostrar información del usuario
+        mostrarInfoUsuario();
+        
+        // Aplicar restricciones basadas en rol
+        aplicarRestriccionesPorRol();
+        
+        // Recargar dashboard con datos filtrados
+        cambiarVista('dashboard');
+        
+        console.log(`Usuario ${usuario.nombre} (${usuario.rol}) ha iniciado sesión`);
+    } else {
+        mostrarErrorLogin('Email o contraseña incorrectos');
+    }
+}
+
+// Función para mostrar error de login
+function mostrarErrorLogin(mensaje) {
+    const errorDiv = document.getElementById('loginError');
+    errorDiv.textContent = mensaje;
+    errorDiv.style.display = 'block';
+}
+
+// Función para mostrar información del usuario
+function mostrarInfoUsuario() {
+    const userInfo = document.getElementById('userInfo');
+    const userName = document.getElementById('userName');
+    const userRole = document.getElementById('userRole');
+    
+    userName.textContent = usuarioActual.nombre;
+    userRole.textContent = usuarioActual.rol;
+    userInfo.style.display = 'flex';
+}
+
+// Función para cerrar sesión
+function cerrarSesion() {
+    usuarioActual = null;
+    localStorage.removeItem('usuarioActual');
+    
+    // Ocultar información del usuario
+    document.getElementById('userInfo').style.display = 'none';
+    
+    // Mostrar modal de login
+    document.getElementById('loginModal').style.display = 'block';
+    document.body.classList.add('logged-out');
+    
+    // Limpiar campos de login
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginError').style.display = 'none';
+    
+    console.log('Sesión cerrada');
+}
+
+// Función para verificar si el usuario está autenticado
+function verificarAutenticacion() {
+    const usuarioGuardado = localStorage.getItem('usuarioActual');
+    
+    if (usuarioGuardado) {
+        usuarioActual = JSON.parse(usuarioGuardado);
+        document.getElementById('loginModal').style.display = 'none';
+        document.body.classList.remove('logged-out');
+        mostrarInfoUsuario();
+        aplicarRestriccionesPorRol();
+        cambiarVista('dashboard');
+        return true;
+    } else {
+        document.getElementById('loginModal').style.display = 'block';
+        document.body.classList.add('logged-out');
+        return false;
+    }
+}
+
+// Event listener para Enter en el formulario de login
+document.addEventListener('DOMContentLoaded', function() {
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+        loginModal.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                iniciarSesion();
+            }
+        });
+    }
+});
+
 // Variables globales
 window.mesSeleccionado = '';
 window.vistaActual = 'dashboard';
@@ -76,15 +188,45 @@ function generarDatosEjemplo() {
             meses.forEach(mes => {
                 if (!window.evaluaciones.sucursales[sucursal.id][mes]) {
                     const evaluacion = {};
-                    window.parametros.forEach(param => {
+                    let totalObtenido = 0;
+                    let totalMaximo = 0;
+                    
+                    // Obtener parámetros aplicables para esta sucursal
+                    let parametrosAplicables = window.parametros || [];
+                    
+                    // Aplicar exclusiones si existen
+                    if (window.parametrosExcluidosPorSucursal && window.parametrosExcluidosPorSucursal[sucursal.id]) {
+                        const excluidos = window.parametrosExcluidosPorSucursal[sucursal.id];
+                        parametrosAplicables = parametrosAplicables.filter(p => !excluidos.includes(p.nombre));
+                    }
+                    
+                    // Filtrar parámetros que aplican a esta sucursal
+                    parametrosAplicables = parametrosAplicables.filter(p => 
+                        p.aplicaATodas || (p.sucursalesEspecificas && p.sucursalesEspecificas.includes(sucursal.id))
+                    );
+                    
+                    parametrosAplicables.forEach(param => {
                         // Generar valores aleatorios basados en el peso del parámetro
                         const probabilidadCompleto = Math.max(0.6, 1 - (param.peso / 10));
                         if (Math.random() < probabilidadCompleto) {
                             evaluacion[param.id] = param.peso;
+                            totalObtenido += param.peso;
                         } else {
-                            evaluacion[param.id] = Math.floor(Math.random() * param.peso);
+                            const valorParcial = Math.floor(Math.random() * param.peso);
+                            evaluacion[param.id] = valorParcial;
+                            totalObtenido += valorParcial;
                         }
+                        totalMaximo += param.peso;
                     });
+                    
+                    // Agregar campos requeridos para la tabla
+                    evaluacion.totalObtenido = totalObtenido;
+                    evaluacion.totalMaximo = totalMaximo;
+                    evaluacion.kpi = totalMaximo > 0 ? (totalObtenido / totalMaximo) * 100 : 0;
+                    evaluacion.estado = evaluacion.kpi >= 80 ? 'Excelente' : evaluacion.kpi >= 60 ? 'Bueno' : 'Necesita Mejora';
+                    evaluacion.created_at = new Date();
+                    evaluacion.fechaCreacion = new Date();
+                    
                     window.evaluaciones.sucursales[sucursal.id][mes] = evaluacion;
                 }
             });
@@ -101,14 +243,39 @@ function generarDatosEjemplo() {
             meses.forEach(mes => {
                 if (!window.evaluaciones.franquicias[franquicia.id][mes]) {
                     const evaluacion = {};
-                    window.parametros.forEach(param => {
+                    let totalObtenido = 0;
+                    let totalMaximo = 0;
+                    
+                    // Obtener parámetros aplicables para esta franquicia
+                    let parametrosAplicables = window.parametros || [];
+                    
+                    // Aplicar exclusiones si existen
+                    if (window.parametrosExcluidosPorFranquicia && window.parametrosExcluidosPorFranquicia[franquicia.id]) {
+                        const excluidos = window.parametrosExcluidosPorFranquicia[franquicia.id];
+                        parametrosAplicables = parametrosAplicables.filter(p => !excluidos.includes(p.nombre));
+                    }
+                    
+                    parametrosAplicables.forEach(param => {
                         const probabilidadCompleto = Math.max(0.6, 1 - (param.peso / 10));
                         if (Math.random() < probabilidadCompleto) {
                             evaluacion[param.id] = param.peso;
+                            totalObtenido += param.peso;
                         } else {
-                            evaluacion[param.id] = Math.floor(Math.random() * param.peso);
+                            const valorParcial = Math.floor(Math.random() * param.peso);
+                            evaluacion[param.id] = valorParcial;
+                            totalObtenido += valorParcial;
                         }
+                        totalMaximo += param.peso;
                     });
+                    
+                    // Agregar campos requeridos para la tabla
+                    evaluacion.totalObtenido = totalObtenido;
+                    evaluacion.totalMaximo = totalMaximo;
+                    evaluacion.kpi = totalMaximo > 0 ? (totalObtenido / totalMaximo) * 100 : 0;
+                    evaluacion.estado = evaluacion.kpi >= 80 ? 'Excelente' : evaluacion.kpi >= 60 ? 'Bueno' : 'Necesita Mejora';
+                    evaluacion.created_at = new Date();
+                    evaluacion.fechaCreacion = new Date();
+                    
                     window.evaluaciones.franquicias[franquicia.id][mes] = evaluacion;
                 }
             });
@@ -181,44 +348,38 @@ function renderDashboard() {
         container.appendChild(contentContainer);
     }
     
+    // Verificar autenticación
+    if (!usuarioActual) {
+        contentContainer.innerHTML = '<div class="no-data"><h3>Debe iniciar sesión para ver el dashboard</h3></div>';
+        return;
+    }
+    
     let html = `
         <div style="margin-bottom: 30px;">
             <h2 style="color: #0077cc; margin-bottom: 10px; text-align: center;">
                 Dashboard - ${formatearMesLegible(window.mesSeleccionado)}
             </h2>
             <p style="text-align: center; color: #666; margin-bottom: 30px;">
-                Resumen ejecutivo de evaluaciones del período
+                Resumen ejecutivo de evaluaciones del período (${usuarioActual.rol})
             </p>
         </div>
     `;
     
-    // Recopilar todos los KPIs
+    // Obtener evaluaciones del mes y aplicar filtro por rol
+    const todasLasEvaluaciones = obtenerEvaluacionesDelMes(window.mesSeleccionado);
+    const evaluacionesFiltradas = filtrarDatosPorRol(todasLasEvaluaciones);
+    
+    console.log(`Dashboard - Evaluaciones totales: ${todasLasEvaluaciones.length}, Filtradas: ${evaluacionesFiltradas.length}`);
+    
+    // Recopilar todos los KPIs de las evaluaciones filtradas
     let kpis = [];
-    let totalEvaluaciones = 0;
+    let totalEvaluaciones = evaluacionesFiltradas.length;
     
-    // Sucursales
-    if (window.sucursales) {
-        window.sucursales.filter(s => s.activa).forEach(sucursal => {
-            const evaluacion = window.evaluaciones?.sucursales?.[sucursal.id]?.[window.mesSeleccionado];
-            if (evaluacion && window.parametros) {
-                const kpi = calcularPorcentajeEvaluacion(sucursal.id, 'sucursal', evaluacion);
-                kpis.push(kpi);
-                totalEvaluaciones++;
-            }
-        });
-    }
-    
-    // Franquicias
-    if (window.franquicias) {
-        window.franquicias.filter(f => f.activa).forEach(franquicia => {
-            const evaluacion = window.evaluaciones?.franquicias?.[franquicia.id]?.[window.mesSeleccionado];
-            if (evaluacion && window.parametros) {
-                const kpi = calcularPorcentajeEvaluacion(franquicia.id, 'franquicia', evaluacion);
-                kpis.push(kpi);
-                totalEvaluaciones++;
-            }
-        });
-    }
+    evaluacionesFiltradas.forEach(eval => {
+        if (eval.kpi !== undefined) {
+            kpis.push(eval.kpi * 100); // Convertir a porcentaje
+        }
+    });
     
     // Calcular estadísticas
     const promedioKPI = kpis.length > 0 ? Math.round(kpis.reduce((a, b) => a + b, 0) / kpis.length) : 0;
@@ -239,9 +400,9 @@ function renderDashboard() {
                 <small style="opacity: 0.8;">Rendimiento general</small>
             </div>
             <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 12px; color: white; text-align: center;">
-                <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">Entidades Activas</h3>
-                <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">${(window.sucursales?.filter(s => s.activa).length || 0) + (window.franquicias?.filter(f => f.activa).length || 0)}</div>
-                <small style="opacity: 0.8;">Sucursales y franquicias</small>
+                <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">Entidades Evaluadas</h3>
+                <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">${totalEvaluaciones}</div>
+                <small style="opacity: 0.8;">Con datos disponibles</small>
             </div>
         </div>
         
@@ -257,87 +418,57 @@ function renderDashboard() {
                 <small style="color: #856404;">60% - 79% de cumplimiento</small>
             </div>
             <div style="background: #f8d7da; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #dc3545;">
-                <h4 style="margin: 0; color: #721c24;">Bajo Rendimiento</h4>
+                <h4 style="margin: 0; color: #721c24;">Necesita Mejora</h4>
                 <div style="font-size: 24px; font-weight: bold; color: #721c24;">${bajo}</div>
                 <small style="color: #721c24;">< 60% de cumplimiento</small>
             </div>
         </div>
     `;
     
-    // Top 10 mejores evaluaciones
-    if (kpis.length > 0) {
-        const evaluacionesConInfo = [];
-        
-        // Recopilar información completa
-        if (window.sucursales) {
-            window.sucursales.filter(s => s.activa).forEach(sucursal => {
-                const evaluacion = window.evaluaciones?.sucursales?.[sucursal.id]?.[window.mesSeleccionado];
-                if (evaluacion && window.parametros) {
-                    const kpi = calcularPorcentajeEvaluacion(sucursal.id, 'sucursal', evaluacion);
-                    evaluacionesConInfo.push({
-                        nombre: sucursal.nombre,
-                        tipo: 'Sucursal',
-                        kpi: kpi
-                    });
-                }
-            });
-        }
-        
-        if (window.franquicias) {
-            window.franquicias.filter(f => f.activa).forEach(franquicia => {
-                const evaluacion = window.evaluaciones?.franquicias?.[franquicia.id]?.[window.mesSeleccionado];
-                if (evaluacion && window.parametros) {
-                    const kpi = calcularPorcentajeEvaluacion(franquicia.id, 'franquicia', evaluacion);
-                    evaluacionesConInfo.push({
-                        nombre: franquicia.nombre,
-                        tipo: 'Franquicia',
-                        kpi: kpi
-                    });
-                }
-            });
-        }
-        
-        // Ordenar y tomar top 10
-        evaluacionesConInfo.sort((a, b) => b.kpi - a.kpi);
-        const top10 = evaluacionesConInfo.slice(0, 10);
+    // Ranking de mejores entidades (Top 10)
+    if (evaluacionesFiltradas.length > 0) {
+        const ranking = evaluacionesFiltradas
+            .sort((a, b) => (b.kpi || 0) - (a.kpi || 0))
+            .slice(0, 10);
         
         html += `
-            <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <h3 style="text-align: center; margin-bottom: 20px; color: #0077cc;">🏆 Top 10 Mejores Evaluaciones</h3>
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h3 style="color: #0077cc; margin-bottom: 20px; text-align: center;">
+                    <i class="fas fa-trophy" style="color: #ffd700;"></i> Top 10 Ranking
+                </h3>
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse;">
-                        <thead style="background: #f8f9fa;">
-                            <tr>
-                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6;">Posición</th>
+                        <thead>
+                            <tr style="background: #f8f9fa;">
+                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6;">#</th>
                                 <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6;">Entidad</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 2px solid #dee2e6;">Tipo</th>
+                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6;">Tipo</th>
                                 <th style="padding: 12px; text-align: center; border-bottom: 2px solid #dee2e6;">KPI</th>
+                                <th style="padding: 12px; text-align: center; border-bottom: 2px solid #dee2e6;">Estado</th>
                             </tr>
                         </thead>
                         <tbody>
         `;
         
-        top10.forEach((item, index) => {
-            const posicion = index + 1;
-            const medalla = posicion <= 3 ? (posicion === 1 ? '🥇' : posicion === 2 ? '🥈' : '🥉') : `${posicion}°`;
-            const colorKPI = item.kpi >= 80 ? '#28a745' : item.kpi >= 60 ? '#ffc107' : '#dc3545';
-            const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
+        ranking.forEach((item, index) => {
+            const kpiPorcentaje = ((item.kpi || 0) * 100).toFixed(1);
+            const estadoColor = item.estado === 'Excelente' ? '#28a745' : 
+                               item.estado === 'Bueno' ? '#ffc107' : '#dc3545';
             
             html += `
-                <tr style="background: ${bgColor};">
-                    <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: bold; font-size: 16px;">
-                        ${medalla}
-                    </td>
-                    <td style="padding: 12px; border-bottom: 1px solid #dee2e6; font-weight: 500;">
-                        ${item.nombre}
-                    </td>
-                    <td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: center;">
-                        <span style="background: ${item.tipo === 'Sucursal' ? '#007bff' : '#6f42c1'}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 12px; font-weight: bold;">${index + 1}</td>
+                    <td style="padding: 12px;">${item.entidad}</td>
+                    <td style="padding: 12px;">
+                        <span style="background: #e9ecef; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
                             ${item.tipo}
                         </span>
                     </td>
-                    <td style="padding: 12px; border-bottom: 1px solid #dee2e6; text-align: center; font-weight: bold; color: ${colorKPI}; font-size: 16px;">
-                        ${item.kpi}%
+                    <td style="padding: 12px; text-align: center; font-weight: bold;">${kpiPorcentaje}%</td>
+                    <td style="padding: 12px; text-align: center;">
+                        <span style="color: ${estadoColor}; font-weight: bold;">
+                            ${item.estado}
+                        </span>
                     </td>
                 </tr>
             `;
@@ -351,18 +482,19 @@ function renderDashboard() {
         `;
     } else {
         html += `
-            <div style="background: #f8f9fa; padding: 40px; border-radius: 8px; text-align: center; color: #666;">
-                <h3>No hay evaluaciones para mostrar</h3>
-                <p>Crea tu primera evaluación para ver las estadísticas del dashboard.</p>
-                <button onclick="cambiarVista('evaluaciones')" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
-                    Crear Nueva Evaluación
-                </button>
+            <div class="no-data">
+                <i class="fas fa-chart-bar" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i>
+                <h3>No hay datos disponibles</h3>
+                <p>No se encontraron evaluaciones para ${window.mesSeleccionado} con sus permisos actuales.</p>
+                ${tienePermiso('crear') ? '<button onclick="abrirModalNuevaEvaluacion()" class="btn btn-primary"><i class="fas fa-plus"></i> Nueva Evaluación</button>' : ''}
             </div>
         `;
     }
     
-    // Actualizar solo el contenido, preservando el selector de mes
     contentContainer.innerHTML = html;
+    
+    // Aplicar restricciones de rol después de renderizar
+    setTimeout(() => aplicarRestriccionesPorRol(), 100);
 }
 
 // Función para cambiar vista
@@ -417,81 +549,43 @@ async function renderEvaluaciones() {
         }
     }
     
-    // Obtener todas las evaluaciones para el mes seleccionado
-    const evaluacionesDelMes = [];
+    // Obtener evaluaciones del mes y aplicar filtro por rol
+    const todasLasEvaluaciones = obtenerEvaluacionesDelMes(window.mesSeleccionado);
+    const evaluacionesFiltradas = filtrarDatosPorRol(todasLasEvaluaciones);
     
-    // Recopilar evaluaciones de sucursales
-    if (window.evaluaciones?.sucursales) {
-        Object.keys(window.evaluaciones.sucursales).forEach(sucursalId => {
-            const evaluacion = window.evaluaciones.sucursales[sucursalId][window.mesSeleccionado];
-            if (evaluacion) {
-                const sucursal = window.sucursales?.find(s => s.id === sucursalId);
-                if (sucursal) {
-                    const kpi = calcularPorcentajeEvaluacion(sucursalId, 'sucursal', evaluacion);
-                    const estado = kpi >= 80 ? 'Excelente' : kpi >= 60 ? 'Bueno' : 'Necesita Mejora';
-                    evaluacionesDelMes.push({
-                        tipo: 'Sucursal',
-                        entidad: sucursal.nombre,
-                        kpi: kpi,
-                        estado: estado,
-                        fecha: evaluacion.fechaCreacion || 'N/A'
-                    });
-                }
-            }
-        });
-    }
-    
-    // Recopilar evaluaciones de franquicias
-    if (window.evaluaciones?.franquicias) {
-        Object.keys(window.evaluaciones.franquicias).forEach(franquiciaId => {
-            const evaluacion = window.evaluaciones.franquicias[franquiciaId][window.mesSeleccionado];
-            if (evaluacion) {
-                const franquicia = window.franquicias?.find(f => f.id === franquiciaId);
-                if (franquicia) {
-                    const kpi = calcularPorcentajeEvaluacion(franquiciaId, 'franquicia', evaluacion);
-                    const estado = kpi >= 80 ? 'Excelente' : kpi >= 60 ? 'Bueno' : 'Necesita Mejora';
-                    evaluacionesDelMes.push({
-                        tipo: 'Franquicia',
-                        entidad: franquicia.nombre,
-                        kpi: kpi,
-                        estado: estado,
-                        fecha: evaluacion.fechaCreacion || 'N/A'
-                    });
-                }
-            }
-        });
-    }
-    
-    // Ordenar por KPI descendente
-    evaluacionesDelMes.sort((a, b) => b.kpi - a.kpi);
+    console.log(`Evaluaciones - Total: ${todasLasEvaluaciones.length}, Filtradas: ${evaluacionesFiltradas.length}`);
     
     let html = `
         <div style="margin-bottom: 20px;">
             <h2 style="color: #0077cc; margin-bottom: 10px; text-align: center;">
                 Evaluaciones - ${formatearMesLegible(window.mesSeleccionado)}
             </h2>
+            ${tienePermiso('crear') ? `
             <div style="text-align: center; margin-bottom: 20px;">
                 <button onclick="abrirModalNuevaEvaluacion()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px;">
-                    + Nueva Evaluación
+                    <i class="fas fa-plus"></i> Nueva Evaluación
                 </button>
             </div>
+            ` : ''}
             <p style="text-align: center; color: #666; margin-bottom: 20px;">
-                Total de evaluaciones: ${evaluacionesDelMes.length}
+                Total de evaluaciones: ${evaluacionesFiltradas.length} (Rol: ${usuarioActual?.rol || 'N/A'})
             </p>
         </div>
     `;
     
-    if (evaluacionesDelMes.length === 0) {
+    if (evaluacionesFiltradas.length === 0) {
         html += `
             <div style="text-align: center; padding: 40px; color: #666; background: #f8f9fa; border-radius: 8px;">
+                <i class="fas fa-inbox" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i>
                 <h3>No hay evaluaciones para ${formatearMesLegible(window.mesSeleccionado)}</h3>
-                <p>Haz clic en "Nueva Evaluación" para crear la primera evaluación del mes.</p>
+                <p>No se encontraron evaluaciones con sus permisos actuales.</p>
+                ${tienePermiso('crear') ? '<button onclick="abrirModalNuevaEvaluacion()" class="btn btn-primary"><i class="fas fa-plus"></i> Nueva Evaluación</button>' : ''}
             </div>
         `;
     } else {
         html += `
             <div style="background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <table style="width: 100%; border-collapse: collapse;">
+                <table class="evaluaciones-table" style="width: 100%; border-collapse: collapse;">
                     <thead style="background: #0077cc; color: white;">
                         <tr>
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Tipo</th>
@@ -499,36 +593,71 @@ async function renderEvaluaciones() {
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">KPI</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Estado</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Fecha</th>
+                            ${tienePermiso('ver') || tienePermiso('editar') || tienePermiso('eliminar') ? '<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Acciones</th>' : ''}
                         </tr>
                     </thead>
                     <tbody>
         `;
         
-        evaluacionesDelMes.forEach((evaluacion, index) => {
-            const colorEstado = evaluacion.kpi >= 80 ? '#28a745' : evaluacion.kpi >= 60 ? '#ffc107' : '#dc3545';
+        evaluacionesFiltradas.forEach((evaluacion, index) => {
+            const kpiPorcentaje = ((evaluacion.kpi || 0) * 100).toFixed(1);
+            const colorEstado = evaluacion.kpi >= 0.8 ? '#28a745' : evaluacion.kpi >= 0.6 ? '#ffc107' : '#dc3545';
             const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
+            
+            // Formatear tipo para mostrar
+            const tipoMostrar = evaluacion.tipo === 'sucursal' ? 'Sucursal' : 'Franquicia';
             
             html += `
                 <tr style="background: ${bgColor};">
-                    <td style="padding: 12px; border-bottom: 1px solid #eee;">
-                        <span style="background: ${evaluacion.tipo === 'Sucursal' ? '#007bff' : '#6f42c1'}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">
-                            ${evaluacion.tipo}
+                    <td style="padding: 12px; border-bottom: 1px solid #ddd;">
+                        <span style="background: ${evaluacion.tipo === 'sucursal' ? '#007bff' : '#6f42c1'}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">
+                            ${tipoMostrar}
                         </span>
                     </td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; font-weight: 500;">
+                    <td style="padding: 12px; border-bottom: 1px solid #ddd; font-weight: 500;">
                         ${evaluacion.entidad}
                     </td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-weight: bold; color: ${colorEstado};">
-                        ${evaluacion.kpi}%
+                    <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; font-weight: bold; color: ${colorEstado}; font-size: 16px;">
+                        ${kpiPorcentaje}%
                     </td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">
-                        <span style="background: ${colorEstado}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">
+                    <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">
+                        <span style="color: ${colorEstado}; font-weight: bold;">
                             ${evaluacion.estado}
                         </span>
                     </td>
-                    <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center; color: #666; font-size: 14px;">
+                    <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; color: #666;">
                         ${evaluacion.fecha}
                     </td>
+                    ${tienePermiso('ver') || tienePermiso('editar') || tienePermiso('eliminar') ? `
+                    <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">
+                        <div class="action-buttons" style="display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;">
+                            <button onclick="verEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
+                                    class="btn-action btn-view" 
+                                    title="Ver evaluación">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${tienePermiso('editar') ? `
+                            <button onclick="editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
+                                    class="btn-action btn-edit" 
+                                    title="Editar evaluación">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ` : ''}
+                            ${tienePermiso('eliminar') ? `
+                            <button onclick="eliminarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
+                                    class="btn-action btn-delete" 
+                                    title="Eliminar evaluación">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            ` : ''}
+                            <button onclick="verVideo('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
+                                    class="btn-action btn-video" 
+                                    title="Ver video de evaluación">
+                                <i class="fas fa-video"></i>
+                            </button>
+                        </div>
+                    </td>
+                    ` : ''}
                 </tr>
             `;
         });
@@ -541,6 +670,9 @@ async function renderEvaluaciones() {
     }
     
     container.innerHTML = html;
+    
+    // Aplicar restricciones de rol después de renderizar
+    setTimeout(() => aplicarRestriccionesPorRol(), 100);
 }
 
 // Función para abrir modal de nueva evaluación
@@ -682,7 +814,7 @@ function cargarParametrosEvaluacion(entidadValue) {
         
         html += `
             <div style="margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; padding: 10px;">
-                <h4 style="margin: 0 0 10px 0; color: #0077cc; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                <h4 style="margin: 0; color: #0077cc; border-bottom: 1px solid #eee; padding-bottom: 5px;">
                     ${nombreCategoria} (${categoria.length} parámetros)
                 </h4>
         `;
@@ -958,8 +1090,9 @@ function renderMatriz() {
             : window.evaluaciones?.franquicias?.[entidad.id]?.[mes];
         
         let kpiGeneral = 'N/A';
-        if (evaluacion && window.parametros) {
-            const porcentaje = calcularPorcentajeEvaluacion(entidad.id, tipoLower, evaluacion);
+        if (evaluacion && evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
+            const porcentaje = evaluacion.totalMaximo > 0 ? 
+                Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100) : 0;
             kpiGeneral = `${porcentaje}%`;
         }
         
@@ -1063,8 +1196,9 @@ function generarGraficosKPI() {
     if (window.sucursales) {
         window.sucursales.filter(s => s.activa).forEach(sucursal => {
             const evaluacion = window.evaluaciones?.sucursales?.[sucursal.id]?.[window.mesSeleccionado];
-            if (evaluacion && window.parametros) {
-                const kpi = calcularPorcentajeEvaluacion(sucursal.id, 'sucursal', evaluacion);
+            if (evaluacion && evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
+                const kpi = evaluacion.totalMaximo > 0 ? 
+                    Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100) : 0;
                 datosKPI.push(kpi);
                 entidades.push(sucursal.nombre);
             }
@@ -1075,8 +1209,9 @@ function generarGraficosKPI() {
     if (window.franquicias) {
         window.franquicias.filter(f => f.activa).forEach(franquicia => {
             const evaluacion = window.evaluaciones?.franquicias?.[franquicia.id]?.[window.mesSeleccionado];
-            if (evaluacion && window.parametros) {
-                const kpi = calcularPorcentajeEvaluacion(franquicia.id, 'franquicia', evaluacion);
+            if (evaluacion && evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
+                const kpi = evaluacion.totalMaximo > 0 ? 
+                    Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100) : 0;
                 datosKPI.push(kpi);
                 entidades.push(franquicia.nombre);
             }
@@ -1255,8 +1390,9 @@ function generarResumenEstadistico() {
     if (window.sucursales) {
         window.sucursales.filter(s => s.activa).forEach(sucursal => {
             const evaluacion = window.evaluaciones?.sucursales?.[sucursal.id]?.[window.mesSeleccionado];
-            if (evaluacion && window.parametros) {
-                const kpi = calcularPorcentajeEvaluacion(sucursal.id, 'sucursal', evaluacion);
+            if (evaluacion && evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
+                const kpi = evaluacion.totalMaximo > 0 ? 
+                    Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100) : 0;
                 kpis.push(kpi);
             }
         });
@@ -1266,8 +1402,9 @@ function generarResumenEstadistico() {
     if (window.franquicias) {
         window.franquicias.filter(f => f.activa).forEach(franquicia => {
             const evaluacion = window.evaluaciones?.franquicias?.[franquicia.id]?.[window.mesSeleccionado];
-            if (evaluacion && window.parametros) {
-                const kpi = calcularPorcentajeEvaluacion(franquicia.id, 'franquicia', evaluacion);
+            if (evaluacion && evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
+                const kpi = evaluacion.totalMaximo > 0 ? 
+                    Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100) : 0;
                 kpis.push(kpi);
             }
         });
@@ -1323,39 +1460,649 @@ function generarResumenEstadistico() {
     `;
 }
 
-// Inicialización de la aplicación
-document.addEventListener('DOMContentLoaded', function() {
+// Inicialización cuando se carga el DOM
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('Iniciando aplicación...');
     
     // Establecer mes anterior como predeterminado
     window.mesSeleccionado = obtenerMesAnterior();
     
-    // Verificar que los datos estén cargados
-    if (!window.parametros || !window.sucursales || !window.franquicias) {
-        console.error('Error: No se pudieron cargar los datos necesarios');
-        return;
+    // Inicializar estructura de evaluaciones si no existe
+    if (!window.evaluaciones) {
+        window.evaluaciones = { sucursales: {}, franquicias: {} };
     }
     
-    // Generar datos de ejemplo si no existen
-    generarDatosEjemplo();
+    // Cargar evaluaciones desde Firebase primero
+    if (window.firebaseDB) {
+        try {
+            console.log('Cargando evaluaciones desde Firebase...');
+            await window.firebaseDB.cargarEvaluaciones();
+            console.log('Evaluaciones cargadas desde Firebase exitosamente');
+        } catch (error) {
+            console.error('Error cargando desde Firebase:', error);
+        }
+    }
+    
+    // Generar datos de muestra solo si no hay datos en Firebase
+    const evaluacionesExistentes = obtenerEvaluacionesDelMes(window.mesSeleccionado);
+    if (evaluacionesExistentes.length === 0) {
+        console.log('No hay evaluaciones en Firebase, generando datos de muestra...');
+        generarDatosMuestra();
+    } else {
+        console.log(`Encontradas ${evaluacionesExistentes.length} evaluaciones existentes para ${window.mesSeleccionado}`);
+    }
     
     // Poblar selector de mes
     poblarSelectorMes();
     
     // Configurar navegación
+    configurarNavegacion();
+    
+    // Verificar autenticación
+    const autenticado = verificarAutenticacion();
+    
+    if (autenticado) {
+        // Si está autenticado, mostrar dashboard
+        cambiarVista('dashboard');
+        aplicarRestriccionesPorRol();
+        console.log(`Sistema inicializado para usuario: ${usuarioActual.nombre} (${usuarioActual.rol})`);
+    } else {
+        // Si no está autenticado, solo mostrar login
+        console.log('Usuario no autenticado, mostrando login');
+    }
+});
+
+// Función para configurar la navegación
+function configurarNavegacion() {
     document.querySelectorAll('.tab-btn').forEach(button => {
         button.addEventListener('click', function() {
             const vista = this.getAttribute('data-section');
             cambiarVista(vista);
         });
     });
+    console.log('Navegación configurada');
+}
+
+// Función para actualizar el dashboard
+function actualizarDashboard() {
+    if (!window.mesSeleccionado) {
+        console.error('No hay mes seleccionado');
+        return;
+    }
     
-    // Mostrar dashboard por defecto
-    cambiarVista('dashboard');
+    console.log('Actualizando dashboard para mes:', window.mesSeleccionado);
     
-    console.log('Aplicación iniciada correctamente');
-    console.log('Mes seleccionado:', window.mesSeleccionado);
-    console.log('Sucursales cargadas:', window.sucursales?.length || 0);
-    console.log('Franquicias cargadas:', window.franquicias?.length || 0);
-    console.log('Parámetros cargados:', window.parametros?.length || 0);
-});
+    // Obtener evaluaciones del mes y aplicar filtro por rol
+    const todasLasEvaluaciones = obtenerEvaluacionesDelMes(window.mesSeleccionado);
+    const evaluacionesFiltradas = filtrarDatosPorRol(todasLasEvaluaciones);
+    
+    console.log(`Evaluaciones totales: ${todasLasEvaluaciones.length}, Filtradas por rol: ${evaluacionesFiltradas.length}`);
+    
+    // Calcular estadísticas basadas en datos filtrados
+    const stats = calcularEstadisticas(evaluacionesFiltradas);
+    
+    // Actualizar tarjetas de estadísticas
+    actualizarTarjetasEstadisticas(stats);
+    
+    // Actualizar tabla de ranking
+    actualizarTablaRanking(evaluacionesFiltradas);
+    
+    // Actualizar distribución de rendimiento
+    actualizarDistribucionRendimiento(evaluacionesFiltradas);
+    
+    console.log('Dashboard actualizado con restricciones de rol:', usuarioActual?.rol);
+}
+
+// Función para mostrar evaluaciones
+function mostrarEvaluaciones() {
+    const container = document.getElementById('evaluaciones-container');
+    if (!container) {
+        console.error('Container de evaluaciones no encontrado');
+        return;
+    }
+    
+    // Obtener evaluaciones del mes y aplicar filtro por rol
+    const todasLasEvaluaciones = obtenerEvaluacionesDelMes(window.mesSeleccionado);
+    const evaluacionesFiltradas = filtrarDatosPorRol(todasLasEvaluaciones);
+    
+    console.log(`Mostrando evaluaciones filtradas por rol ${usuarioActual?.rol}: ${evaluacionesFiltradas.length} de ${todasLasEvaluaciones.length}`);
+    
+    if (evaluacionesFiltradas.length === 0) {
+        container.innerHTML = `
+            <div class="no-data">
+                <i class="fas fa-inbox" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i>
+                <h3>No hay evaluaciones disponibles</h3>
+                <p>No se encontraron evaluaciones para ${window.mesSeleccionado} con sus permisos actuales.</p>
+                ${tienePermiso('crear') ? '<button onclick="abrirModalNuevaEvaluacion()" class="btn btn-primary"><i class="fas fa-plus"></i> Nueva Evaluación</button>' : ''}
+            </div>
+        `;
+        return;
+    }
+    
+    let html = `
+        <div class="evaluaciones-header">
+            <h2>Evaluaciones de ${window.mesSeleccionado}</h2>
+            ${tienePermiso('crear') ? '<button onclick="abrirModalNuevaEvaluacion()" class="btn btn-primary"><i class="fas fa-plus"></i> Nueva Evaluación</button>' : ''}
+        </div>
+        <div class="evaluaciones-grid">
+    `;
+    
+    evaluacionesFiltradas.forEach(evaluacion => {
+        const porcentaje = ((evaluacion.kpi || 0) * 100).toFixed(1);
+        const estadoClass = evaluacion.estado === 'Excelente' ? 'excelente' : 
+                           evaluacion.estado === 'Bueno' ? 'bueno' : 'mejora';
+        
+        html += `
+            <div class="evaluacion-card ${estadoClass}">
+                <div class="evaluacion-header">
+                    <h3>${evaluacion.entidad}</h3>
+                    <span class="tipo-badge">${evaluacion.tipo}</span>
+                </div>
+                <div class="evaluacion-content">
+                    <div class="kpi-display">
+                        <span class="kpi-value">${porcentaje}%</span>
+                        <span class="kpi-label">KPI</span>
+                    </div>
+                    <div class="evaluacion-details">
+                        <p><strong>Estado:</strong> ${evaluacion.estado}</p>
+                        <p><strong>Fecha:</strong> ${evaluacion.fecha}</p>
+                    </div>
+                </div>
+                ${tienePermiso('editar') || tienePermiso('eliminar') ? `
+                <div class="evaluacion-actions">
+                    ${tienePermiso('editar') ? `
+                    <button class="btn btn-secondary btn-editar" onclick="editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" title="Editar evaluación">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ` : ''}
+                            ${tienePermiso('eliminar') ? `
+                            <button class="btn btn-danger btn-eliminar" onclick="eliminarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" title="Eliminar evaluación">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            ` : ''}
+                            <button onclick="verVideo('${evaluacion.entidadId}', '${evaluacion.tipo}')"
+                                    class="btn btn-video" 
+                                    title="Ver video de evaluación">
+                                <i class="fas fa-video"></i>
+                            </button>
+                        </div>
+                        ` : ''}
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Función para cargar entidades en el modal de evaluación
+function cargarEntidadesEvaluacion() {
+    const selectEntidad = document.getElementById('entidad-evaluacion');
+    if (!selectEntidad) return;
+    
+    selectEntidad.innerHTML = '<option value="">Seleccione una entidad...</option>';
+    
+    if (!usuarioActual) {
+        console.log('Usuario no autenticado, no se cargan entidades');
+        return;
+    }
+    
+    const rol = usuarioActual.rol;
+    
+    // Filtrar entidades según el rol del usuario
+    if (rol === 'admin' || rol === 'dg') {
+        // Admin y DG pueden ver sucursales
+        if (window.sucursales) {
+            window.sucursales.forEach(sucursal => {
+                if (sucursal.activa) {
+                    const option = document.createElement('option');
+                    option.value = `sucursal-${sucursal.id}`;
+                    option.textContent = `${sucursal.nombre} (Sucursal)`;
+                    selectEntidad.appendChild(option);
+                }
+            });
+        }
+    }
+    
+    if (rol === 'admin' || rol === 'dg' || rol === 'franquicias') {
+        // Admin, DG y Franquicias pueden ver franquicias
+        if (window.franquicias) {
+            window.franquicias.forEach(franquicia => {
+                if (franquicia.activa) {
+                    const option = document.createElement('option');
+                    option.value = `franquicia-${franquicia.id}`;
+                    option.textContent = `${franquicia.nombre} (Franquicia)`;
+                    selectEntidad.appendChild(option);
+                }
+            });
+        }
+    }
+    
+    if (rol === 'admin' || rol === 'gop') {
+        // Admin y GOP pueden ver entidades GOP (si existen)
+        // Aquí podrías agregar entidades específicas de GOP si las tienes definidas
+        console.log('Cargando entidades GOP para rol:', rol);
+    }
+    
+    console.log(`Entidades cargadas para rol ${rol}:`, selectEntidad.children.length - 1);
+}
+
+// ===== FUNCIONES DE ACCIONES PARA EVALUACIONES =====
+
+// Función para ver una evaluación
+function verEvaluacion(entidadId, tipo) {
+    console.log(`Ver evaluación: ${entidadId} (${tipo})`);
+    
+    const evaluacion = obtenerEvaluacion(entidadId, tipo, window.mesSeleccionado);
+    if (!evaluacion) {
+        alert('Evaluación no encontrada');
+        return;
+    }
+    
+    const entidad = tipo === 'sucursal' ? 
+        window.sucursales?.find(s => s.id === entidadId) :
+        window.franquicias?.find(f => f.id === entidadId);
+    
+    if (!entidad) {
+        alert('Entidad no encontrada');
+        return;
+    }
+    
+    // Crear modal para mostrar detalles de la evaluación
+    const kpi = calcularPorcentajeEvaluacion(entidadId, tipo, evaluacion);
+    const estado = kpi >= 80 ? 'Excelente' : kpi >= 60 ? 'Bueno' : 'Necesita Mejora';
+    
+    let detallesHtml = `
+        <div class="modal" id="modalVerEvaluacion" style="display: block; z-index: 10001;">
+            <div class="modal-content" style="max-width: 800px;">
+                <div class="modal-header">
+                    <h2><i class="fas fa-eye"></i> Detalles de Evaluación</h2>
+                    <button onclick="cerrarModalVerEvaluacion()" class="btn-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div>
+                            <h3>Información General</h3>
+                            <p><strong>Entidad:</strong> ${entidad.nombre}</p>
+                            <p><strong>Tipo:</strong> ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}</p>
+                            <p><strong>Mes:</strong> ${formatearMesLegible(window.mesSeleccionado)}</p>
+                            <p><strong>Fecha:</strong> ${evaluacion.fechaCreacion || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <h3>Resultados</h3>
+                            <p><strong>KPI:</strong> <span style="color: ${kpi >= 80 ? '#28a745' : kpi >= 60 ? '#ffc107' : '#dc3545'}; font-weight: bold;">${kpi.toFixed(1)}%</span></p>
+                            <p><strong>Estado:</strong> <span style="color: ${kpi >= 80 ? '#28a745' : kpi >= 60 ? '#ffc107' : '#dc3545'}; font-weight: bold;">${estado}</span></p>
+                            <p><strong>Total Obtenido:</strong> ${evaluacion.totalObtenido || 0}</p>
+                            <p><strong>Total Máximo:</strong> ${evaluacion.totalMaximo || 0}</p>
+                        </div>
+                    </div>
+                    
+                    <h3>Parámetros Evaluados</h3>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8f9fa;">
+                                    <th style="padding: 8px; border: 1px solid #ddd;">Parámetro</th>
+                                    <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Valor</th>
+                                    <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Máximo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+    `;
+    
+    if (evaluacion.parametros) {
+        Object.keys(evaluacion.parametros).forEach(parametroId => {
+            const valor = evaluacion.parametros[parametroId];
+            const parametro = window.parametros?.find(p => p.id === parametroId);
+            const nombre = parametro ? parametro.nombre : parametroId;
+            const maximo = parametro ? parametro.valor : 'N/A';
+            
+            detallesHtml += `
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #ddd;">${nombre}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${valor}</td>
+                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${maximo}</td>
+                </tr>
+            `;
+        });
+    }
+    
+    detallesHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    ${tienePermiso('editar') ? `<button onclick="editarEvaluacion('${entidadId}', '${tipo}')" class="btn btn-primary"><i class="fas fa-edit"></i> Editar</button>` : ''}
+                    <button onclick="cerrarModalVerEvaluacion()" class="btn btn-secondary">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', detallesHtml);
+}
+
+// Función para cerrar modal de ver evaluación
+function cerrarModalVerEvaluacion() {
+    const modal = document.getElementById('modalVerEvaluacion');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Función para editar una evaluación
+function editarEvaluacion(entidadId, tipo) {
+    if (!tienePermiso('editar')) {
+        alert('No tiene permisos para editar evaluaciones');
+        return;
+    }
+    
+    console.log(`Editar evaluación: ${entidadId} (${tipo})`);
+    
+    // Aquí podrías abrir el modal de nueva evaluación con los datos pre-cargados
+    // Por ahora, mostrar un mensaje
+    alert(`Función de edición para ${entidadId} (${tipo}) - En desarrollo`);
+}
+
+// Función para eliminar una evaluación
+function eliminarEvaluacion(entidadId, tipo) {
+    if (!tienePermiso('eliminar')) {
+        alert('No tiene permisos para eliminar evaluaciones');
+        return;
+    }
+    
+    const entidad = tipo === 'sucursal' ? 
+        window.sucursales?.find(s => s.id === entidadId) :
+        window.franquicias?.find(f => f.id === entidadId);
+    
+    const nombreEntidad = entidad ? entidad.nombre : entidadId;
+    
+    if (confirm(`¿Está seguro de que desea eliminar la evaluación de ${nombreEntidad} para ${formatearMesLegible(window.mesSeleccionado)}?`)) {
+        try {
+            // Eliminar de la estructura local
+            if (window.evaluaciones?.[tipo + 's']?.[entidadId]?.[window.mesSeleccionado]) {
+                delete window.evaluaciones[tipo + 's'][entidadId][window.mesSeleccionado];
+                
+                // Eliminar de Firebase si está disponible
+                if (window.firebaseDB) {
+                    window.firebaseDB.eliminarEvaluacion(entidadId, tipo, window.mesSeleccionado);
+                }
+                
+                alert('Evaluación eliminada correctamente');
+                
+                // Actualizar vista
+                cambiarVista('evaluaciones');
+                
+                console.log(`Evaluación eliminada: ${entidadId} (${tipo})`);
+            } else {
+                alert('Evaluación no encontrada');
+            }
+        } catch (error) {
+            console.error('Error eliminando evaluación:', error);
+            alert('Error al eliminar la evaluación');
+        }
+    }
+}
+
+// Función para ver video de una evaluación
+function verVideo(entidadId, tipo) {
+    console.log(`Ver video: ${entidadId} (${tipo})`);
+    
+    const entidad = tipo === 'sucursal' ? 
+        window.sucursales?.find(s => s.id === entidadId) :
+        window.franquicias?.find(f => f.id === entidadId);
+    
+    const nombreEntidad = entidad ? entidad.nombre : entidadId;
+    
+    // Crear modal para mostrar video
+    const videoHtml = `
+        <div class="modal" id="modalVideo" style="display: block; z-index: 10001;">
+            <div class="modal-content" style="max-width: 900px;">
+                <div class="modal-header">
+                    <h2><i class="fas fa-video"></i> Video de Evaluación - ${nombreEntidad}</h2>
+                    <button onclick="cerrarModalVideo()" class="btn-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div style="text-align: center; padding: 20px;">
+                        <p style="margin-bottom: 20px; color: #666;">
+                            Video de evaluación para <strong>${nombreEntidad}</strong> - ${formatearMesLegible(window.mesSeleccionado)}
+                        </p>
+                        
+                        <!-- Placeholder para video - aquí podrías integrar con YouTube, Vimeo, etc. -->
+                        <div style="background: #f8f9fa; border: 2px dashed #ddd; padding: 60px; border-radius: 8px; margin: 20px 0;">
+                            <i class="fas fa-video" style="font-size: 4rem; color: #ccc; margin-bottom: 20px;"></i>
+                            <h3 style="color: #666; margin-bottom: 10px;">Video no disponible</h3>
+                            <p style="color: #999;">
+                                El video de evaluación para esta entidad aún no ha sido subido.<br>
+                                <small>Entidad: ${entidadId} | Tipo: ${tipo} | Mes: ${window.mesSeleccionado}</small>
+                            </p>
+                            
+                            ${tienePermiso('editar') ? `
+                            <button onclick="subirVideo('${entidadId}', '${tipo}')" 
+                                    style="background: #6f42c1; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 15px;">
+                                <i class="fas fa-upload"></i> Subir Video
+                            </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="cerrarModalVideo()" class="btn btn-secondary">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', videoHtml);
+}
+
+// Función para cerrar modal de video
+function cerrarModalVideo() {
+    const modal = document.getElementById('modalVideo');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Función para subir video (placeholder)
+function subirVideo(entidadId, tipo) {
+    if (!tienePermiso('editar')) {
+        alert('No tiene permisos para subir videos');
+        return;
+    }
+    
+    alert(`Función de subida de video para ${entidadId} (${tipo}) - En desarrollo`);
+}
+
+// Función auxiliar para obtener una evaluación específica
+function obtenerEvaluacion(entidadId, tipo, mes) {
+    return window.evaluaciones?.[tipo + 's']?.[entidadId]?.[mes];
+}
+
+// Función para obtener evaluaciones de un mes específico
+function obtenerEvaluacionesDelMes(mes) {
+    const evaluacionesDelMes = [];
+    
+    if (!mes || !window.evaluaciones) {
+        console.log('No hay mes seleccionado o evaluaciones disponibles');
+        return evaluacionesDelMes;
+    }
+    
+    // Recopilar evaluaciones de sucursales
+    if (window.evaluaciones.sucursales) {
+        Object.keys(window.evaluaciones.sucursales).forEach(sucursalId => {
+            const evaluacion = window.evaluaciones.sucursales[sucursalId][mes];
+            if (evaluacion) {
+                const sucursal = window.sucursales?.find(s => s.id === sucursalId);
+                if (sucursal) {
+                    // Calcular KPI directamente de los totales almacenados
+                    const totalObtenido = evaluacion.totalObtenido || 0;
+                    const totalMaximo = evaluacion.totalMaximo || 0;
+                    const kpiPorcentaje = totalMaximo > 0 ? (totalObtenido / totalMaximo) * 100 : 0;
+                    
+                    // Obtener fecha de created_at o fechaCreacion
+                    let fechaFormateada = 'N/A';
+                    const fechaSource = evaluacion.created_at || evaluacion.fechaCreacion;
+                    if (fechaSource) {
+                        try {
+                            const fecha = new Date(fechaSource);
+                            if (!isNaN(fecha.getTime())) {
+                                fechaFormateada = fecha.toLocaleDateString('es-ES', {
+                                    day: '2-digit',
+                                    month: '2-digit', 
+                                    year: 'numeric'
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Error formateando fecha:', error);
+                            fechaFormateada = String(fechaSource);
+                        }
+                    }
+                    
+                    evaluacionesDelMes.push({
+                        tipo: 'sucursal',
+                        entidad: sucursal.nombre,
+                        entidadId: sucursalId,
+                        kpi: kpiPorcentaje / 100, // Guardar como decimal para consistencia
+                        estado: kpiPorcentaje >= 80 ? 'Excelente' : kpiPorcentaje >= 60 ? 'Bueno' : 'Necesita Mejora',
+                        fecha: fechaFormateada,
+                        evaluacion: evaluacion
+                    });
+                }
+            }
+        });
+    }
+    
+    // Recopilar evaluaciones de franquicias
+    if (window.evaluaciones.franquicias) {
+        Object.keys(window.evaluaciones.franquicias).forEach(franquiciaId => {
+            const evaluacion = window.evaluaciones.franquicias[franquiciaId][mes];
+            if (evaluacion) {
+                const franquicia = window.franquicias?.find(f => f.id === franquiciaId);
+                if (franquicia) {
+                    // Calcular KPI directamente de los totales almacenados
+                    const totalObtenido = evaluacion.totalObtenido || 0;
+                    const totalMaximo = evaluacion.totalMaximo || 0;
+                    const kpiPorcentaje = totalMaximo > 0 ? (totalObtenido / totalMaximo) * 100 : 0;
+                    
+                    // Obtener fecha de created_at o fechaCreacion
+                    let fechaFormateada = 'N/A';
+                    const fechaSource = evaluacion.created_at || evaluacion.fechaCreacion;
+                    if (fechaSource) {
+                        try {
+                            const fecha = new Date(fechaSource);
+                            if (!isNaN(fecha.getTime())) {
+                                fechaFormateada = fecha.toLocaleDateString('es-ES', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Error formateando fecha:', error);
+                            fechaFormateada = String(fechaSource);
+                        }
+                    }
+                    
+                    evaluacionesDelMes.push({
+                        tipo: 'franquicia',
+                        entidad: franquicia.nombre,
+                        entidadId: franquiciaId,
+                        kpi: kpiPorcentaje / 100, // Guardar como decimal para consistencia
+                        estado: kpiPorcentaje >= 80 ? 'Excelente' : kpiPorcentaje >= 60 ? 'Bueno' : 'Necesita Mejora',
+                        fecha: fechaFormateada,
+                        evaluacion: evaluacion
+                    });
+                }
+            }
+        });
+    }
+    
+    // Ordenar por KPI descendente
+    evaluacionesDelMes.sort((a, b) => b.kpi - a.kpi);
+    
+    console.log(`Obtenidas ${evaluacionesDelMes.length} evaluaciones para ${mes}`);
+    return evaluacionesDelMes;
+}
+
+// ===== FUNCIONES DE CONTROL DE ACCESO POR ROL =====
+
+// Función para aplicar restricciones basadas en el rol del usuario
+function aplicarRestriccionesPorRol() {
+    if (!usuarioActual) return;
+    
+    const rol = usuarioActual.rol;
+    
+    // Ocultar/mostrar botones según el rol
+    const btnNuevaEvaluacion = document.querySelector('[onclick="abrirModalNuevaEvaluacion()"]');
+    const botonesEditar = document.querySelectorAll('.btn-editar, .btn-edit');
+    const botonesEliminar = document.querySelectorAll('.btn-eliminar, .btn-delete');
+    
+    if (rol === 'admin') {
+        // Admin puede hacer todo
+        if (btnNuevaEvaluacion) btnNuevaEvaluacion.style.display = 'inline-block';
+        botonesEditar.forEach(btn => btn.style.display = 'inline-block');
+        botonesEliminar.forEach(btn => btn.style.display = 'inline-block');
+    } else {
+        // Otros roles no pueden crear, editar o eliminar
+        if (btnNuevaEvaluacion) btnNuevaEvaluacion.style.display = 'none';
+        botonesEditar.forEach(btn => btn.style.display = 'none');
+        botonesEliminar.forEach(btn => btn.style.display = 'none');
+    }
+    
+    console.log(`Restricciones aplicadas para rol: ${rol}`);
+}
+
+// Función para filtrar datos según el rol del usuario
+function filtrarDatosPorRol(evaluaciones) {
+    if (!usuarioActual) return [];
+    
+    const rol = usuarioActual.rol;
+    
+    switch (rol) {
+        case 'admin':
+            // Admin puede ver todo
+            return evaluaciones;
+            
+        case 'gop':
+            // Gop solo puede ver evaluaciones de GOP
+            return evaluaciones.filter(eval => {
+                return eval.tipo === 'gop' || 
+                       (eval.entidadId && eval.entidadId.toLowerCase().includes('gop'));
+            });
+            
+        case 'franquicias':
+            // Franquicias solo puede ver evaluaciones de franquicias
+            return evaluaciones.filter(eval => eval.tipo === 'franquicia');
+            
+        case 'dg':
+            // DG puede ver sucursales y franquicias
+            return evaluaciones.filter(eval => 
+                eval.tipo === 'sucursal' || eval.tipo === 'franquicia'
+            );
+            
+        default:
+            return [];
+    }
+}
+
+// Función para verificar permisos de acción
+function tienePermiso(accion) {
+    if (!usuarioActual) return false;
+    
+    const rol = usuarioActual.rol;
+    
+    switch (accion) {
+        case 'crear':
+        case 'editar':
+        case 'eliminar':
+            return rol === 'admin';
+        case 'ver':
+            return true; // Todos pueden ver (pero con filtros)
+        default:
+            return false;
+    }
+}
+
+// ===== FUNCIONES AUXILIARES PARA MANEJO DE DATOS =====

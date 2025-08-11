@@ -2,8 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Evaluación Café La Cabaña</title>
+    <title>Sistema de Evaluaciones - Café La Cabaña</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Chart.js CDN para gráficas -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
@@ -67,11 +68,56 @@
             });
             
             console.log(`Cargadas ${evaluaciones.length} evaluaciones desde Firebase`);
+            
+            // Integrar evaluaciones en la estructura local
+            this.integrarEvaluacionesEnEstructuraLocal(evaluaciones);
+            
             return evaluaciones;
           } catch (error) {
             console.error('Error cargando evaluaciones desde Firebase:', error);
             return [];
           }
+        },
+
+        // Integrar evaluaciones de Firebase en la estructura local
+        integrarEvaluacionesEnEstructuraLocal(evaluacionesFirebase) {
+          if (!window.evaluaciones) {
+            window.evaluaciones = { sucursales: {}, franquicias: {} };
+          }
+          
+          evaluacionesFirebase.forEach(evalFirebase => {
+            const { tipo, entidadId, mes, parametros, totalObtenido, totalMaximo, kpi, estado, fechaCreacion, created_at, timestamp } = evalFirebase;
+            
+            if (tipo && entidadId && mes) {
+              // Determinar el tipo de entidad
+              const tipoEntidad = tipo === 'sucursal' ? 'sucursales' : 'franquicias';
+              
+              // Inicializar estructura si no existe
+              if (!window.evaluaciones[tipoEntidad]) {
+                window.evaluaciones[tipoEntidad] = {};
+              }
+              if (!window.evaluaciones[tipoEntidad][entidadId]) {
+                window.evaluaciones[tipoEntidad][entidadId] = {};
+              }
+              
+              // Integrar la evaluación con todos los datos necesarios
+              const evaluacionLocal = {
+                parametros: parametros || {},
+                totalObtenido: totalObtenido || 0,
+                totalMaximo: totalMaximo || 0,
+                kpi: kpi || 0,
+                estado: estado || 'Pendiente',
+                fechaCreacion: fechaCreacion,
+                created_at: created_at,
+                timestamp: timestamp
+              };
+              
+              window.evaluaciones[tipoEntidad][entidadId][mes] = evaluacionLocal;
+            }
+          });
+          
+          console.log('Evaluaciones de Firebase integradas en estructura local');
+          console.log('Estructura actual:', window.evaluaciones);
         },
 
         // Verificar conexión a Firebase
@@ -92,8 +138,19 @@
 </head>
 <body>
     <header>
-        <h1>Reportes de Evaluaciones</h1>
-        <p>Sistema de evaluación mensual de Sucursales y Franquicias para Café La Cabaña</p>
+        <div class="header-content">
+            <div class="logo">
+                <img src="https://cafelacabana.com/wp-content/uploads/2023/05/cropped-logo-cafe-la-cabana-1.png" alt="Café La Cabaña" class="logo-img">
+                <h1>Sistema de Evaluaciones</h1>
+            </div>
+            <div class="user-info" id="userInfo" style="display: none;">
+                <span id="userName"></span>
+                <span id="userRole" class="user-role"></span>
+                <button onclick="cerrarSesion()" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </div>
+        </div>
     </header>
     
     <nav>
@@ -123,6 +180,7 @@
     <script src="data/franquicias.js"></script>
     <script src="data/parametros.js"></script>
     <script src="data/parametros_excluidos.js"></script>
+    <script src="data/usuarios.js"></script>
     <script src="script.js"></script>
     <style>
         /* Estilos para la tabla de evaluaciones */
@@ -172,6 +230,30 @@
             font-style: italic;
         }
     </style>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal" style="display: block;">
+      <div class="modal-content" style="max-width: 400px; margin: 10% auto;">
+        <div class="modal-header">
+          <h2><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</h2>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="loginEmail">Email:</label>
+            <input type="email" id="loginEmail" class="form-control" placeholder="Ingrese su email" required>
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Contraseña:</label>
+            <input type="password" id="loginPassword" class="form-control" placeholder="Ingrese su contraseña" required>
+          </div>
+          <div id="loginError" class="error-message" style="display: none; color: #e74c3c; margin-top: 10px; text-align: center;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" onclick="iniciarSesion()">
+            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+          </button>
+        </div>
+      </div>
+    </div>
     <!-- Modal para nueva evaluación -->
     <div id="modal-nueva-evaluacion">
       <div class="modal-box">
