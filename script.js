@@ -925,27 +925,43 @@ function cargarParametrosEvaluacion(entidadValue) {
     
     console.log(`Cargando parámetros para ${tipo}: ${entidadId}`);
     
-    // Obtener parámetros aplicables usando la función existente
+    // Obtener parámetros aplicables - SOLUCIÓN SIMPLE Y CORRECTA
     let parametrosAplicables;
-    if (tipo === 'sucursal') {
-        // Usar la función existente que maneja aplicaATodas y sucursalesEspecificas correctamente
-        parametrosAplicables = getParametrosParaSucursal(entidadId);
-    } else {
-        // Para franquicias, usar todos los parámetros por ahora
-        parametrosAplicables = window.parametros;
-    }
     
-    console.log(`Parámetros antes de exclusiones: ${parametrosAplicables.length}`);
+    // Usar TODOS los parámetros para ambos tipos (sucursales y franquicias)
+    // Las exclusiones se encargarán de filtrar los que no aplican
+    parametrosAplicables = window.parametros.slice(); // Copia de todos los parámetros
+    console.log(`Usando todos los parámetros para ${tipo}: ${entidadId} (${parametrosAplicables.length} parámetros)`);
     
-    // Aplicar exclusiones si existen
+    console.log('Lista de parámetros antes de exclusiones:', parametrosAplicables.map(p => p.nombre));
+    
+    // Verificar si existen las exclusiones
+    console.log('Verificando exclusiones...');
+    console.log('window.parametrosExcluidosPorSucursal existe:', !!window.parametrosExcluidosPorSucursal);
+    console.log('window.parametrosExcluidosPorFranquicia existe:', !!window.parametrosExcluidosPorFranquicia);
+    
     if (window.parametrosExcluidosPorSucursal && tipo === 'sucursal' && window.parametrosExcluidosPorSucursal[entidadId]) {
         const excluidos = window.parametrosExcluidosPorSucursal[entidadId];
+        console.log(`APLICANDO exclusiones para sucursal ${entidadId}:`, excluidos);
+        const parametrosAntesDelFiltro = parametrosAplicables.length;
         parametrosAplicables = parametrosAplicables.filter(p => !excluidos.includes(p.nombre));
+        console.log(`Parámetros filtrados: ${parametrosAntesDelFiltro} -> ${parametrosAplicables.length}`);
+        console.log('Lista de parámetros después de exclusiones:', parametrosAplicables.map(p => p.nombre));
+    } else if (tipo === 'sucursal') {
+        console.log(`NO se encontraron exclusiones para sucursal ${entidadId}`);
+        console.log('Claves disponibles en parametrosExcluidosPorSucursal:', Object.keys(window.parametrosExcluidosPorSucursal || {}));
     }
     
     if (window.parametrosExcluidosPorFranquicia && tipo === 'franquicia' && window.parametrosExcluidosPorFranquicia[entidadId]) {
         const excluidos = window.parametrosExcluidosPorFranquicia[entidadId];
+        console.log(`APLICANDO exclusiones para franquicia ${entidadId}:`, excluidos);
+        const parametrosAntesDelFiltro = parametrosAplicables.length;
         parametrosAplicables = parametrosAplicables.filter(p => !excluidos.includes(p.nombre));
+        console.log(`Parámetros filtrados: ${parametrosAntesDelFiltro} -> ${parametrosAplicables.length}`);
+        console.log('Lista de parámetros después de exclusiones:', parametrosAplicables.map(p => p.nombre));
+    } else if (tipo === 'franquicia') {
+        console.log(`NO se encontraron exclusiones para franquicia ${entidadId}`);
+        console.log('Claves disponibles en parametrosExcluidosPorFranquicia:', Object.keys(window.parametrosExcluidosPorFranquicia || {}));
     }
     
     // Generar formulario de parámetros
