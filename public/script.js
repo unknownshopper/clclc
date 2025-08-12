@@ -222,9 +222,9 @@ function renderDashboard() {
     
     // Calcular estadísticas
     const promedioKPI = kpis.length > 0 ? Math.round(kpis.reduce((a, b) => a + b, 0) / kpis.length) : 0;
-    const alto = kpis.filter(k => k >= 80).length;
-    const medio = kpis.filter(k => k >= 60 && k < 80).length;
-    const bajo = kpis.filter(k => k < 60).length;
+    const alto = kpis.filter(k => k >= 95).length;
+    const medio = kpis.filter(k => k >= 90 && k < 95).length;
+    const bajo = kpis.filter(k => k < 90).length;
     
     html += `
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
@@ -249,17 +249,17 @@ function renderDashboard() {
             <div style="background: #d4edda; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #28a745;">
                 <h4 style="margin: 0; color: #155724;">Alto Rendimiento</h4>
                 <div style="font-size: 24px; font-weight: bold; color: #155724;">${alto}</div>
-                <small style="color: #155724;">≥ 80% de cumplimiento</small>
+                <small style="color: #155724;">≥ 95% de cumplimiento</small>
             </div>
             <div style="background: #fff3cd; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #ffc107;">
                 <h4 style="margin: 0; color: #856404;">Rendimiento Medio</h4>
                 <div style="font-size: 24px; font-weight: bold; color: #856404;">${medio}</div>
-                <small style="color: #856404;">60% - 79% de cumplimiento</small>
+                <small style="color: #856404;">90% - 94% de cumplimiento</small>
             </div>
             <div style="background: #f8d7da; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #dc3545;">
                 <h4 style="margin: 0; color: #721c24;">Bajo Rendimiento</h4>
                 <div style="font-size: 24px; font-weight: bold; color: #721c24;">${bajo}</div>
-                <small style="color: #721c24;">< 60% de cumplimiento</small>
+                <small style="color: #721c24;">< 90% de cumplimiento</small>
             </div>
         </div>
     `;
@@ -320,7 +320,7 @@ function renderDashboard() {
         top10.forEach((item, index) => {
             const posicion = index + 1;
             const medalla = posicion <= 3 ? (posicion === 1 ? '🥇' : posicion === 2 ? '🥈' : '🥉') : `${posicion}°`;
-            const colorKPI = item.kpi >= 80 ? '#28a745' : item.kpi >= 60 ? '#ffc107' : '#dc3545';
+            const colorKPI = item.kpi >= 95 ? '#28a745' : item.kpi >= 90 ? '#ffc107' : '#dc3545';
             const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
             
             html += `
@@ -428,7 +428,7 @@ async function renderEvaluaciones() {
                 const sucursal = window.sucursales?.find(s => s.id === sucursalId);
                 if (sucursal) {
                     const kpi = calcularPorcentajeEvaluacion(sucursalId, 'sucursal', evaluacion);
-                    const estado = kpi >= 80 ? 'Excelente' : kpi >= 60 ? 'Bueno' : 'Necesita Mejora';
+                    const estado = kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita Mejora';
                     evaluacionesDelMes.push({
                         tipo: 'Sucursal',
                         entidad: sucursal.nombre,
@@ -449,7 +449,7 @@ async function renderEvaluaciones() {
                 const franquicia = window.franquicias?.find(f => f.id === franquiciaId);
                 if (franquicia) {
                     const kpi = calcularPorcentajeEvaluacion(franquiciaId, 'franquicia', evaluacion);
-                    const estado = kpi >= 80 ? 'Excelente' : kpi >= 60 ? 'Bueno' : 'Necesita Mejora';
+                    const estado = kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita Mejora';
                     evaluacionesDelMes.push({
                         tipo: 'Franquicia',
                         entidad: franquicia.nombre,
@@ -505,7 +505,7 @@ async function renderEvaluaciones() {
         `;
         
         evaluacionesDelMes.forEach((evaluacion, index) => {
-            const colorEstado = evaluacion.kpi >= 80 ? '#28a745' : evaluacion.kpi >= 60 ? '#ffc107' : '#dc3545';
+            const colorEstado = evaluacion.kpi >= 95 ? '#28a745' : evaluacion.kpi >= 90 ? '#ffc107' : '#dc3545';
             const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
             
             html += `
@@ -807,7 +807,7 @@ async function guardarEvaluacion(entidadValue) {
         totalObtenido: totalObtenido,
         totalMaximo: totalMaximo,
         kpi: kpi,
-        estado: kpi >= 85 ? 'Excelente' : kpi >= 70 ? 'Bueno' : 'Necesita mejora'
+        estado: kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita mejora'
     };
     
     try {
@@ -1119,8 +1119,8 @@ function dibujarGraficoBarras(canvas, labels, data) {
         
         // Color según rendimiento
         let color = '#dc3545'; // Rojo para bajo
-        if (value >= 80) color = '#28a745'; // Verde para alto
-        else if (value >= 60) color = '#ffc107'; // Amarillo para medio
+        if (value >= 95) color = '#28a745'; // Verde para alto
+        else if (value >= 90) color = '#ffc107'; // Amarillo para medio
         
         ctx.fillStyle = color;
         ctx.fillRect(x, y, barWidth - 5, barHeight);
@@ -1174,9 +1174,9 @@ function dibujarGraficoDistribucion(canvas, data) {
     }
     
     // Categorizar datos
-    let alto = data.filter(d => d >= 80).length;
-    let medio = data.filter(d => d >= 60 && d < 80).length;
-    let bajo = data.filter(d => d < 60).length;
+    let alto = data.filter(d => d >= 95).length;
+    let medio = data.filter(d => d >= 90 && d < 95).length;
+    let bajo = data.filter(d => d < 90).length;
     
     const total = alto + medio + bajo;
     if (total === 0) return;
@@ -1230,17 +1230,17 @@ function dibujarGraficoDistribucion(canvas, data) {
     ctx.fillStyle = '#28a745';
     ctx.fillRect(20, height - 60, 15, 15);
     ctx.fillStyle = '#333';
-    ctx.fillText(`Alto (≥80%): ${alto}`, 40, height - 48);
+    ctx.fillText(`Alto (≥95%): ${alto}`, 40, height - 48);
     
     ctx.fillStyle = '#ffc107';
     ctx.fillRect(20, height - 40, 15, 15);
     ctx.fillStyle = '#333';
-    ctx.fillText(`Medio (60-79%): ${medio}`, 40, height - 28);
+    ctx.fillText(`Medio (90-94%): ${medio}`, 40, height - 28);
     
     ctx.fillStyle = '#dc3545';
     ctx.fillRect(20, height - 20, 15, 15);
     ctx.fillStyle = '#333';
-    ctx.fillText(`Bajo (<60%): ${bajo}`, 40, height - 8);
+    ctx.fillText(`Bajo (<90%): ${bajo}`, 40, height - 8);
 }
 
 // Función para generar resumen estadístico
@@ -1282,9 +1282,9 @@ function generarResumenEstadistico() {
     const promedio = kpis.reduce((a, b) => a + b, 0) / kpis.length;
     const maximo = Math.max(...kpis);
     const minimo = Math.min(...kpis);
-    const alto = kpis.filter(k => k >= 80).length;
-    const medio = kpis.filter(k => k >= 60 && k < 80).length;
-    const bajo = kpis.filter(k => k < 60).length;
+    const alto = kpis.filter(k => k >= 95).length;
+    const medio = kpis.filter(k => k >= 90 && k < 95).length;
+    const bajo = kpis.filter(k => k < 90).length;
     
     container.innerHTML = `
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -1309,15 +1309,15 @@ function generarResumenEstadistico() {
         <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
             <div style="text-align: center; padding: 10px; background: #d4edda; border-radius: 5px;">
                 <strong style="color: #155724;">Alto Rendimiento</strong><br>
-                <span style="font-size: 18px;">${alto} entidades (≥80%)</span>
+                <span style="font-size: 18px;">${alto} entidades (≥95%)</span>
             </div>
             <div style="text-align: center; padding: 10px; background: #fff3cd; border-radius: 5px;">
                 <strong style="color: #856404;">Rendimiento Medio</strong><br>
-                <span style="font-size: 18px;">${medio} entidades (60-79%)</span>
+                <span style="font-size: 18px;">${medio} entidades (90-94%)</span>
             </div>
             <div style="text-align: center; padding: 10px; background: #f8d7da; border-radius: 5px;">
                 <strong style="color: #721c24;">Bajo Rendimiento</strong><br>
-                <span style="font-size: 18px;">${bajo} entidades (<60%)</span>
+                <span style="font-size: 18px;">${bajo} entidades (<90%)</span>
             </div>
         </div>
     `;

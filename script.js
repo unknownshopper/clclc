@@ -389,15 +389,19 @@ function renderDashboard() {
     
     html += `
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; color: white; text-align: center;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; color: white; text-align: center; position: relative; cursor: help;" 
+                 title="Total de evaluaciones completadas en ${formatearMesLegible(window.mesSeleccionado)}">
                 <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">Total Evaluaciones</h3>
                 <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">${totalEvaluaciones}</div>
                 <small style="opacity: 0.8;">Completadas este mes</small>
+                <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;">📊</div>
             </div>
-            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 12px; color: white; text-align: center;">
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 12px; color: white; text-align: center; position: relative; cursor: help;"
+                 title="Promedio de KPI de todas las evaluaciones del mes. Meta: ≥95% para excelencia">
                 <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">KPI Promedio</h3>
                 <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">${promedioKPI}%</div>
-                <small style="opacity: 0.8;">Rendimiento general</small>
+                <small style="opacity: 0.8;">Meta: ≥95%</small>
+                <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;">🎯</div>
             </div>
             <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 12px; color: white; text-align: center;">
                 <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">Entidades Evaluadas</h3>
@@ -407,20 +411,26 @@ function renderDashboard() {
         </div>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
-            <div style="background: #d4edda; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #28a745;">
+            <div style="background: #d4edda; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #28a745; position: relative; cursor: help;"
+                 title="Entidades con rendimiento excelente (95-100%). Cumplen con los más altos estándares de calidad.">
                 <h4 style="margin: 0; color: #155724;">Alto Rendimiento</h4>
                 <div style="font-size: 24px; font-weight: bold; color: #155724;">${alto}</div>
                 <small style="color: #155724;">≥ 95% de cumplimiento</small>
+                <div style="position: absolute; top: 8px; right: 8px; color: #155724; font-size: 16px;">🏆</div>
             </div>
-            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #ffc107;">
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #ffc107; position: relative; cursor: help;"
+                 title="Entidades con rendimiento medio (90-94%). Buen desempeño pero pueden mejorar.">
                 <h4 style="margin: 0; color: #856404;">Rendimiento Medio</h4>
                 <div style="font-size: 24px; font-weight: bold; color: #856404;">${medio}</div>
                 <small style="color: #856404;">90% - 94% de cumplimiento</small>
+                <div style="position: absolute; top: 8px; right: 8px; color: #856404; font-size: 16px;">⚠️</div>
             </div>
-            <div style="background: #f8d7da; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #dc3545;">
+            <div style="background: #f8d7da; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #dc3545; position: relative; cursor: help;"
+                 title="Entidades que necesitan mejora urgente (<90%). Requieren atención inmediata.">
                 <h4 style="margin: 0; color: #721c24;">Necesita Mejora</h4>
                 <div style="font-size: 24px; font-weight: bold; color: #721c24;">${bajo}</div>
                 <small style="color: #721c24;">< 90% de cumplimiento</small>
+                <div style="position: absolute; top: 8px; right: 8px; color: #721c24; font-size: 16px;">🚨</div>
             </div>
         </div>
     `;
@@ -433,18 +443,18 @@ function renderDashboard() {
         
         html += `
             <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                <h3 style="color: #0077cc; margin-bottom: 20px; text-align: center;">
+                <h3 style="text-align: center; margin-bottom: 20px;">
                     <i class="fas fa-trophy" style="color: #ffd700;"></i> Top 10 Ranking
                 </h3>
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="background: #f8f9fa;">
-                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6;">#</th>
-                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6;">Entidad</th>
-                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6;">Tipo</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 2px solid #dee2e6;">KPI</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 2px solid #dee2e6;">Estado</th>
+                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">#</th>
+                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Entidad</th>
+                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Tipo</th>
+                                <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">KPI</th>
+                                <th style="padding: 12px; text-align: center; border-bottom: 2px solid #ddd;">Estado</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -455,7 +465,7 @@ function renderDashboard() {
             const estadoColor = item.estado === 'Excelente' ? '#28a745' : item.estado === 'Bueno' ? '#ffc107' : '#dc3545';
             
             html += `
-                <tr style="border-bottom: 1px solid #dee2e6;">
+                <tr style="border-bottom: 1px solid #ddd;">
                     <td style="padding: 12px; font-weight: bold;">${index + 1}</td>
                     <td style="padding: 12px;">${item.entidad}</td>
                     <td style="padding: 12px;">
@@ -463,7 +473,9 @@ function renderDashboard() {
                             ${item.tipo}
                         </span>
                     </td>
-                    <td style="padding: 12px; text-align: center; font-weight: bold;">${kpiPorcentaje}%</td>
+                    <td style="padding: 12px; text-align: center; font-weight: bold; color: ${estadoColor}; font-size: 16px;">
+                        ${kpiPorcentaje}%
+                    </td>
                     <td style="padding: 12px; text-align: center;">
                         <span style="color: ${estadoColor}; font-weight: bold;">
                             ${item.estado}
@@ -486,6 +498,79 @@ function renderDashboard() {
                 <h3>No hay datos disponibles</h3>
                 <p>No se encontraron evaluaciones para ${window.mesSeleccionado} con sus permisos actuales.</p>
                 ${tienePermiso('crear') ? '<button onclick="abrirModalNuevaEvaluacion()" class="btn btn-primary"><i class="fas fa-plus"></i> Nueva Evaluación</button>' : ''}
+            </div>
+        `;
+    }
+    
+    // Agregar lista de entidades que necesitan atención
+    const entidadesAtencion = evaluacionesFiltradas.filter(evaluacion => {
+        const kpiPorcentaje = (evaluacion.kpi * 100);
+        return kpiPorcentaje < 95;
+    }).sort((a, b) => (a.kpi * 100) - (b.kpi * 100));
+
+    if (entidadesAtencion.length > 0) {
+        html += `
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px;">
+                <h3 style="color: #dc3545; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 20px;">🎯</span>
+                    Entidades que Requieren Atención (${entidadesAtencion.length})
+                </h3>
+                <p style="color: #666; margin-bottom: 20px; font-style: italic;">
+                    Las siguientes entidades necesitan seguimiento y planes de mejora para alcanzar los estándares de excelencia.
+                </p>
+                <div style="display: grid; gap: 10px;">
+        `;
+
+        entidadesAtencion.forEach((entidad) => {
+            const kpiPorcentaje = (entidad.kpi * 100);
+            const prioridad = kpiPorcentaje < 90 ? 'alta' : 'media';
+            const colorFondo = prioridad === 'alta' ? '#ffebee' : '#fff8e1';
+            const colorBorde = prioridad === 'alta' ? '#f44336' : '#ff9800';
+            const iconoPrioridad = prioridad === 'alta' ? '🚨' : '⚠️';
+            const textoPrioridad = prioridad === 'alta' ? 'Prioridad Alta' : 'Prioridad Media';
+
+            html += `
+                <div style="background: ${colorFondo}; border-left: 4px solid ${colorBorde}; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                            <span style="font-size: 16px;">${iconoPrioridad}</span>
+                            <strong style="color: #333;">${entidad.entidad}</strong>
+                            <span style="background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 12px; font-size: 12px; color: #666;">
+                                ${entidad.tipo === 'sucursal' ? 'Sucursal' : 'Franquicia'}
+                            </span>
+                        </div>
+                        <div style="font-size: 12px; color: #666;">
+                            ${textoPrioridad} • KPI: <strong style="color: ${colorBorde};">${kpiPorcentaje.toFixed(1)}%</strong>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="background: ${colorBorde}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">
+                            ${entidad.estado}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                </div>
+                <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 6px; border-left: 4px solid #2196f3;">
+                    <small style="color: #1976d2;">
+                        <strong>💡 Recomendación:</strong> Priorice las entidades con KPI < 90% para planes de acción inmediatos. 
+                        Las entidades con KPI 90-94% pueden beneficiarse de capacitación adicional y seguimiento cercano.
+                    </small>
+                </div>
+            </div>
+        `;
+    } else {
+        html += `
+            <div style="background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%); padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 30px;">
+                <div style="font-size: 48px; margin-bottom: 10px;">🎉</div>
+                <h3 style="color: #2e7d32; margin: 0 0 10px 0;">¡Excelente Desempeño!</h3>
+                <p style="color: #388e3c; margin: 0; font-size: 16px;">
+                    Todas las entidades evaluadas han alcanzado el nivel de excelencia (≥95%). 
+                    ¡Felicitaciones por mantener los más altos estándares de calidad!
+                </p>
             </div>
         `;
     }
@@ -585,8 +670,8 @@ async function renderEvaluaciones() {
         html += `
             <div style="background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                 <table class="evaluaciones-table" style="width: 100%; border-collapse: collapse;">
-                    <thead style="background: #0077cc; color: white;">
-                        <tr>
+                    <thead>
+                        <tr style="background: #0077cc; color: white;">
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Tipo</th>
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Entidad</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">KPI</th>
@@ -600,7 +685,7 @@ async function renderEvaluaciones() {
         
         evaluacionesFiltradas.forEach((evaluacion, index) => {
             const kpiPorcentaje = ((evaluacion.kpi || 0) * 100).toFixed(1);
-            const colorEstado = evaluacion.kpi >= 0.95 ? '#28a745' : evaluacion.kpi >= 0.9 ? '#ffc107' : '#dc3545';
+            const colorEstado = evaluacion.estado === 'Excelente' ? '#28a745' : evaluacion.estado === 'Bueno' ? '#ffc107' : '#dc3545';
             const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
             
             // Formatear tipo para mostrar
@@ -972,6 +1057,8 @@ async function guardarEvaluacion(entidadValue) {
             renderMatriz();
         } else if (window.vistaActual === 'evaluaciones') {
             renderEvaluaciones();
+        } else if (window.vistaActual === 'graficas') {
+            renderGraficas();
         }
         
         // También actualizar la sección de evaluaciones para mostrar la nueva evaluación
@@ -1165,6 +1252,7 @@ function renderMatriz() {
                 </tbody>
             </table>
         </div>
+        
         <div style="margin-top: 20px; font-size: 12px; color: #666;">
             <p><strong>Leyenda:</strong> ✓ = Completo | ◐ = Parcial | ✗ = No cumple | N/A = Sin evaluar</p>
         </div>
@@ -1456,34 +1544,34 @@ function generarResumenEstadistico() {
     
     container.innerHTML = `
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
                 <h4 style="margin: 0; color: #0077cc;">Promedio General</h4>
                 <div style="font-size: 24px; font-weight: bold; color: #333;">${promedio.toFixed(1)}%</div>
             </div>
-            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
                 <h4 style="margin: 0; color: #28a745;">Mejor Rendimiento</h4>
                 <div style="font-size: 24px; font-weight: bold; color: #333;">${maximo}%</div>
             </div>
-            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
                 <h4 style="margin: 0; color: #dc3545;">Menor Rendimiento</h4>
                 <div style="font-size: 24px; font-weight: bold; color: #333;">${minimo}%</div>
             </div>
-            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 5px;">
-                <h4 style="margin: 0; color: #666;">Total Evaluadas</h4>
+            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <h4 style="margin: 0; color: #6c757d;">Total Evaluadas</h4>
                 <div style="font-size: 24px; font-weight: bold; color: #333;">${kpis.length}</div>
             </div>
         </div>
         
         <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
-            <div style="text-align: center; padding: 10px; background: #d4edda; border-radius: 5px;">
+            <div style="text-align: center; padding: 10px; background: #d4edda; border-radius: 8px;">
                 <strong style="color: #155724;">Alto Rendimiento</strong><br>
                 <span style="font-size: 18px;">${alto} entidades (≥95%)</span>
             </div>
-            <div style="text-align: center; padding: 10px; background: #fff3cd; border-radius: 5px;">
+            <div style="text-align: center; padding: 10px; background: #fff3cd; border-radius: 8px;">
                 <strong style="color: #856404;">Rendimiento Medio</strong><br>
                 <span style="font-size: 18px;">${medio} entidades (90-94%)</span>
             </div>
-            <div style="text-align: center; padding: 10px; background: #f8d7da; border-radius: 5px;">
+            <div style="text-align: center; padding: 10px; background: #f8d7da; border-radius: 8px;">
                 <strong style="color: #721c24;">Bajo Rendimiento</strong><br>
                 <span style="font-size: 18px;">${bajo} entidades (<90%)</span>
             </div>
@@ -1873,7 +1961,7 @@ function editarEvaluacion(entidadId, tipo) {
     
     // Cambiar el título del modal para mostrar la entidad específica
     const modalTitle = document.querySelector('#modal-nueva-evaluacion h2');
-    modalTitle.textContent = `Editar Evaluación - ${entidadInfo?.nombre || entidadId}`;
+    modalTitle.textContent = `Editar Evaluación - ${entidadInfo?.nombre}`;
     
     // Cargar los parámetros para esta entidad específica
     const entidadValue = `${tipo}-${entidadId}`;
@@ -2246,3 +2334,167 @@ function validarBotonesAccion() {
 }
 
 // ===== FUNCIONES AUXILIARES PARA MANEJO DE DATOS =====
+
+// Función para generar análisis detallado
+function generarAnalisisDetallado() {
+    const container = document.getElementById('analisisDetallado');
+    if (!container) return;
+    
+    // Obtener evaluaciones del mes y aplicar filtro por rol
+    const todasLasEvaluaciones = obtenerEvaluacionesDelMes(window.mesSeleccionado);
+    const evaluacionesFiltradas = filtrarDatosPorRol(todasLasEvaluaciones);
+    
+    if (evaluacionesFiltradas.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #666;">No hay datos de evaluaciones para el período seleccionado.</p>';
+        return;
+    }
+    
+    // Calcular estadísticas
+    const kpis = evaluacionesFiltradas.map(eval => eval.kpi * 100);
+    const promedio = kpis.reduce((a, b) => a + b, 0) / kpis.length;
+    const maximo = Math.max(...kpis);
+    const minimo = Math.min(...kpis);
+    const alto = kpis.filter(k => k >= 95).length;
+    const medio = kpis.filter(k => k >= 90 && k < 95).length;
+    const bajo = kpis.filter(k => k < 90).length;
+    
+    // Generar resumen estadístico
+    let html = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #0077cc;">
+                <h4 style="margin: 0; color: #0077cc; font-size: 14px;">Promedio General</h4>
+                <div style="font-size: 24px; font-weight: bold; color: #333; margin: 5px 0;">${promedio.toFixed(1)}%</div>
+                <small style="color: #666;">Meta: ≥95%</small>
+            </div>
+            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745;">
+                <h4 style="margin: 0; color: #28a745; font-size: 14px;">Mejor KPI</h4>
+                <div style="font-size: 24px; font-weight: bold; color: #333; margin: 5px 0;">${maximo}%</div>
+                <small style="color: #666;">Máximo alcanzado</small>
+            </div>
+            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #dc3545;">
+                <h4 style="margin: 0; color: #dc3545; font-size: 14px;">Menor KPI</h4>
+                <div style="font-size: 24px; font-weight: bold; color: #333; margin: 5px 0;">${minimo}%</div>
+                <small style="color: #666;">Requiere atención</small>
+            </div>
+            <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #6c757d;">
+                <h4 style="margin: 0; color: #6c757d; font-size: 14px;">Total Evaluadas</h4>
+                <div style="font-size: 24px; font-weight: bold; color: #333; margin: 5px 0;">${kpis.length}</div>
+                <small style="color: #666;">Entidades activas</small>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px;">
+            <div style="text-align: center; padding: 15px; background: #d4edda; border-radius: 8px; border-left: 4px solid #28a745;">
+                <h4 style="margin: 0; color: #155724; font-size: 14px;">🏆 Alto Rendimiento</h4>
+                <div style="font-size: 20px; font-weight: bold; color: #155724; margin: 5px 0;">${alto} entidades</div>
+                <small style="color: #155724;">≥ 95% de cumplimiento</small>
+            </div>
+            <div style="text-align: center; padding: 15px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                <h4 style="margin: 0; color: #856404; font-size: 14px;">⚠️ Rendimiento Medio</h4>
+                <div style="font-size: 20px; font-weight: bold; color: #856404; margin: 5px 0;">${medio} entidades</div>
+                <small style="color: #856404;">90% - 94% de cumplimiento</small>
+            </div>
+            <div style="text-align: center; padding: 15px; background: #f8d7da; border-radius: 8px; border-left: 4px solid #dc3545;">
+                <h4 style="margin: 0; color: #721c24; font-size: 14px;">🚨 Necesita Mejora</h4>
+                <div style="font-size: 20px; font-weight: bold; color: #721c24; margin: 5px 0;">${bajo} entidades</div>
+                <small style="color: #721c24;">< 90% de cumplimiento</small>
+            </div>
+        </div>
+    `;
+    
+    // Filtrar y mostrar entidades con rendimiento medio/bajo
+    const entidadesMedioBajo = evaluacionesFiltradas
+        .filter(eval => (eval.kpi * 100) < 95)
+        .sort((a, b) => (a.kpi * 100) - (b.kpi * 100)); // Ordenar de menor a mayor KPI
+    
+    if (entidadesMedioBajo.length > 0) {
+        html += `
+            <div style="margin-top: 20px;">
+                <h4 style="color: #dc3545; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 18px;">📋</span>
+                    Entidades que Requieren Atención (${entidadesMedioBajo.length})
+                </h4>
+                <p style="color: #666; margin-bottom: 15px; font-style: italic; font-size: 14px;">
+                    Listado detallado de entidades con KPI inferior a 95%, ordenadas por prioridad de atención:
+                </p>
+                <div style="display: grid; gap: 10px;">
+        `;
+        
+        entidadesMedioBajo.forEach((entidad, index) => {
+            const kpiPorcentaje = (entidad.kpi * 100);
+            const prioridad = kpiPorcentaje < 90 ? 'alta' : 'media';
+            const colorFondo = prioridad === 'alta' ? '#ffebee' : '#fff8e1';
+            const colorBorde = prioridad === 'alta' ? '#f44336' : '#ff9800';
+            const iconoPrioridad = prioridad === 'alta' ? '🚨' : '⚠️';
+            const textoPrioridad = prioridad === 'alta' ? 'Prioridad Alta' : 'Prioridad Media';
+            const recomendacion = prioridad === 'alta' ? 
+                'Requiere plan de acción inmediato y seguimiento semanal' : 
+                'Capacitación adicional y revisión mensual recomendada';
+            
+            html += `
+                <div style="background: ${colorFondo}; border-left: 4px solid ${colorBorde}; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span style="background: #333; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">
+                                ${index + 1}
+                            </span>
+                            <span style="font-size: 16px;">${iconoPrioridad}</span>
+                            <strong style="color: #333; font-size: 16px;">${entidad.entidad}</strong>
+                            <span style="background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 12px; font-size: 12px; color: #666;">
+                                ${entidad.tipo === 'sucursal' ? 'Sucursal' : 'Franquicia'}
+                            </span>
+                        </div>
+                        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
+                            ${textoPrioridad} • KPI: <strong style="color: ${colorBorde};">${kpiPorcentaje.toFixed(1)}%</strong> • Estado: <strong>${entidad.estado}</strong>
+                        </div>
+                        <div style="font-size: 11px; color: #888; font-style: italic;">
+                            💡 ${recomendacion}
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="background: ${colorBorde}; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 5px;">
+                            ${kpiPorcentaje.toFixed(1)}%
+                        </div>
+                        <div style="font-size: 10px; color: #666;">
+                            ${entidad.fecha}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                </div>
+                <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-radius: 6px; border-left: 4px solid #2196f3;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="font-size: 16px;">💡</span>
+                        <strong style="color: #1976d2; font-size: 14px;">Plan de Acción Recomendado:</strong>
+                    </div>
+                    <ul style="margin: 0; padding-left: 20px; color: #1976d2; font-size: 13px;">
+                        <li><strong>Prioridad Alta (KPI < 90%):</strong> Implementar plan de mejora inmediato con seguimiento semanal</li>
+                        <li><strong>Prioridad Media (KPI 90-94%):</strong> Capacitación específica y revisión mensual</li>
+                        <li><strong>Meta Global:</strong> Alcanzar ≥95% de KPI en todas las entidades para el próximo período</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+    } else {
+        html += `
+            <div style="background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%); padding: 25px; border-radius: 12px; text-align: center; margin-top: 20px;">
+                <div style="font-size: 48px; margin-bottom: 15px;">🎉</div>
+                <h3 style="color: #2e7d32; margin: 0 0 10px 0;">¡Rendimiento Excepcional!</h3>
+                <p style="color: #388e3c; margin: 0; font-size: 16px;">
+                    Todas las entidades evaluadas han alcanzado el nivel de excelencia (≥95%). 
+                    ¡Felicitaciones por mantener los más altos estándares de calidad en ${formatearMesLegible(window.mesSeleccionado)}!
+                </p>
+                <div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.3); border-radius: 8px;">
+                    <small style="color: #2e7d32; font-weight: bold;">
+                        🏆 ${evaluacionesFiltradas.length} entidades con rendimiento excelente
+                    </small>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+}
