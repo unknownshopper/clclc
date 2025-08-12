@@ -494,7 +494,7 @@ function renderDashboard() {
     contentContainer.innerHTML = html;
     
     // Aplicar restricciones de rol después de renderizar
-    setTimeout(() => aplicarRestriccionesPorRol(), 100);
+    aplicarRestriccionesPorRol();
 }
 
 // Función para cambiar vista
@@ -672,7 +672,7 @@ async function renderEvaluaciones() {
     container.innerHTML = html;
     
     // Aplicar restricciones de rol después de renderizar
-    setTimeout(() => aplicarRestriccionesPorRol(), 100);
+    aplicarRestriccionesPorRol();
 }
 
 // Función para abrir modal de nueva evaluación
@@ -925,8 +925,8 @@ async function guardarEvaluacion(entidadValue) {
     const kpi = totalMaximo > 0 ? Math.round((totalObtenido / totalMaximo) * 100) : 0;
     
     // Obtener información de la entidad
-    const entidadInfo = tipo === 'sucursal' 
-        ? window.sucursales.find(s => s.id === entidadId)
+    const entidadInfo = tipo === 'sucursal' ? 
+        window.sucursales.find(s => s.id === entidadId)
         : window.franquicias.find(f => f.id === entidadId);
     
     // Estructura de datos para Firebase
@@ -992,6 +992,38 @@ function cerrarModalEvaluacion() {
     const modal = document.getElementById('modal-nueva-evaluacion');
     if (modal) {
         modal.style.display = 'none';
+    }
+    
+    // Restaurar elementos del modal para futuras creaciones
+    const labelEntidad = document.querySelector('label[for="select-entidad-evaluacion"]');
+    const selectEntidad = document.getElementById('select-entidad-evaluacion');
+    
+    if (labelEntidad) {
+        labelEntidad.style.display = 'block';
+    }
+    if (selectEntidad) {
+        selectEntidad.style.display = 'block';
+        selectEntidad.value = ''; // Limpiar selección
+    }
+    
+    // Restaurar título y botón por defecto
+    const modalTitle = document.querySelector('#modal-nueva-evaluacion h2');
+    if (modalTitle) {
+        modalTitle.textContent = 'Nueva evaluación';
+    }
+    
+    const btnGuardar = document.getElementById('btn-guardar-evaluacion');
+    if (btnGuardar) {
+        btnGuardar.textContent = 'Guardar evaluación';
+    }
+    
+    // Limpiar modo edición
+    window.modoEdicion = { activo: false };
+    
+    // Limpiar contenedor de parámetros
+    const container = document.getElementById('parametros-evaluacion-container');
+    if (container) {
+        container.innerHTML = '';
     }
 }
 
@@ -1085,8 +1117,8 @@ function renderMatriz() {
         const mes = window.mesSeleccionado;
         
         // Obtener evaluación
-        const evaluacion = tipoLower === 'sucursal' 
-            ? window.evaluaciones?.sucursales?.[entidad.id]?.[mes]
+        const evaluacion = tipoLower === 'sucursal' ? 
+            window.evaluaciones?.sucursales?.[entidad.id]?.[mes]
             : window.evaluaciones?.franquicias?.[entidad.id]?.[mes];
         
         let kpiGeneral = 'N/A';
@@ -1633,6 +1665,9 @@ function mostrarEvaluaciones() {
     
     html += '</div>';
     container.innerHTML = html;
+    
+    // Aplicar restricciones de rol después de renderizar
+    aplicarRestriccionesPorRol();
 }
 
 // Función para cargar entidades en el modal de evaluación
@@ -1700,13 +1735,10 @@ function verEvaluacion(entidadId, tipo) {
     }
     
     const entidad = tipo === 'sucursal' ? 
-        window.sucursales.find(s => s.id === entidadId) :
-        window.franquicias.find(f => f.id === entidadId);
+        window.sucursales.find(s => s.id === entidadId)
+        : window.franquicias.find(f => f.id === entidadId);
     
-    if (!entidad) {
-        alert('Entidad no encontrada');
-        return;
-    }
+    const nombreEntidad = entidad ? entidad.nombre : entidadId;
     
     // Crear modal para mostrar detalles de la evaluación
     const kpi = calcularPorcentajeEvaluacion(entidadId, tipo, evaluacion);
@@ -1809,31 +1841,50 @@ function editarEvaluacion(entidadId, tipo) {
         return;
     }
     
+    // Obtener información de la entidad
+    const entidadInfo = tipo === 'sucursal' ? 
+        window.sucursales.find(s => s.id === entidadId)
+        : window.franquicias.find(f => f.id === entidadId);
+    
     // Marcar que estamos en modo edición
     window.modoEdicion = {
         activo: true,
         entidadId: entidadId,
         tipo: tipo,
         mes: window.mesSeleccionado,
-        datosOriginales: { ...evaluacionExistente }
+        datosOriginales: { ...evaluacionExistente },
+        entidadInfo: entidadInfo
     };
     
     // Abrir el modal de nueva evaluación
     document.getElementById('modal-nueva-evaluacion').style.display = 'flex';
     
-    // Pre-seleccionar la entidad
+    // OCULTAR el selector de entidad y su label en modo edición
+    const labelEntidad = document.querySelector('label[for="select-entidad-evaluacion"]');
     const selectEntidad = document.getElementById('select-entidad-evaluacion');
-    selectEntidad.value = `${tipo}:${entidadId}`;
     
-    // Cargar los parámetros para esta entidad
-    cargarParametrosEvaluacion();
+    if (labelEntidad) {
+        labelEntidad.style.display = 'none';
+    }
+    if (selectEntidad) {
+        selectEntidad.style.display = 'none';
+        // Pre-seleccionar la entidad internamente (para que cargarParametrosEvaluacion funcione)
+        selectEntidad.value = `${tipo}-${entidadId}`;
+    }
+    
+    // Cambiar el título del modal para mostrar la entidad específica
+    const modalTitle = document.querySelector('#modal-nueva-evaluacion h2');
+    modalTitle.textContent = `Editar Evaluación - ${entidadInfo?.nombre || entidadId}`;
+    
+    // Cargar los parámetros para esta entidad específica
+    const entidadValue = `${tipo}-${entidadId}`;
+    cargarParametrosEvaluacion(entidadValue);
     
     // Esperar un poco para que se carguen los parámetros y luego pre-llenar los valores
     setTimeout(() => {
         precargarValoresEvaluacion(evaluacionExistente.parametros);
         
-        // Cambiar el texto del botón y título
-        document.querySelector('#modal-nueva-evaluacion h2').textContent = 'Editar Evaluación';
+        // Cambiar el texto del botón
         document.getElementById('btn-guardar-evaluacion').textContent = 'Actualizar Evaluación';
         document.getElementById('btn-guardar-evaluacion').style.display = 'block';
     }, 100);
@@ -1859,31 +1910,43 @@ function eliminarEvaluacion(entidadId, tipo) {
     }
     
     const entidad = tipo === 'sucursal' ? 
-        window.sucursales.find(s => s.id === entidadId) :
-        window.franquicias.find(f => f.id === entidadId);
+        window.sucursales.find(s => s.id === entidadId)
+        : window.franquicias.find(f => f.id === entidadId);
     
     const nombreEntidad = entidad ? entidad.nombre : entidadId;
+    
+    console.log(`Intentando eliminar: ${entidadId} (${tipo}) del mes ${window.mesSeleccionado}`);
+    
+    // Determinar el tipo de entidad correctamente
+    const tipoEntidad = tipo === 'sucursal' ? 'sucursales' : 'franquicias';
+    
+    // Verificar si existe la evaluación
+    const evaluacionExiste = window.evaluaciones?.[tipoEntidad]?.[entidadId]?.[window.mesSeleccionado];
+    console.log(`Evaluación existe:`, evaluacionExiste);
+    console.log(`Estructura evaluaciones:`, window.evaluaciones);
+    
+    if (!evaluacionExiste) {
+        alert(`No se encontró la evaluación de ${nombreEntidad} para ${formatearMesLegible(window.mesSeleccionado)}`);
+        return;
+    }
     
     if (confirm(`¿Está seguro de que desea eliminar la evaluación de ${nombreEntidad} para ${formatearMesLegible(window.mesSeleccionado)}?`)) {
         try {
             // Eliminar de la estructura local
-            if (window.evaluaciones?.[tipo + 's']?.[entidadId]?.[window.mesSeleccionado]) {
-                delete window.evaluaciones[tipo + 's'][entidadId][window.mesSeleccionado];
-                
-                // Eliminar de Firebase si está disponible
-                if (window.firebaseDB) {
-                    window.firebaseDB.eliminarEvaluacion(entidadId, tipo, window.mesSeleccionado);
-                }
-                
-                alert('Evaluación eliminada correctamente');
-                
-                // Actualizar vista
-                cambiarVista('evaluaciones');
-                
-                console.log(`Evaluación eliminada: ${entidadId} (${tipo})`);
-            } else {
-                alert('Evaluación no encontrada');
+            delete window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado];
+            
+            // Eliminar de Firebase si está disponible
+            if (window.firebaseDB) {
+                window.firebaseDB.eliminarEvaluacion(entidadId, tipo, window.mesSeleccionado);
             }
+            
+            alert('Evaluación eliminada correctamente');
+            
+            // Actualizar vista
+            cambiarVista('evaluaciones');
+            
+            console.log(`Evaluación eliminada: ${entidadId} (${tipo})`);
+            
         } catch (error) {
             console.error('Error eliminando evaluación:', error);
             alert('Error al eliminar la evaluación');
@@ -1896,8 +1959,8 @@ function verVideo(entidadId, tipo) {
     console.log(`Ver video: ${entidadId} (${tipo})`);
     
     const entidad = tipo === 'sucursal' ? 
-        window.sucursales.find(s => s.id === entidadId) :
-        window.franquicias.find(f => f.id === entidadId);
+        window.sucursales.find(s => s.id === entidadId)
+        : window.franquicias.find(f => f.id === entidadId);
     
     const nombreEntidad = entidad ? entidad.nombre : entidadId;
     
@@ -1985,7 +2048,8 @@ function obtenerEvaluacionesDelMes(mes) {
                     // Calcular KPI directamente de los totales almacenados
                     const totalObtenido = evaluacion.totalObtenido || 0;
                     const totalMaximo = evaluacion.totalMaximo || 0;
-                    const kpiPorcentaje = totalMaximo > 0 ? (totalObtenido / totalMaximo) * 100 : 0;
+                    const kpiPorcentaje = totalMaximo > 0 ? 
+                        Math.round((totalObtenido / totalMaximo) * 100) : 0;
                     
                     // Obtener fecha de created_at o fechaCreacion
                     let fechaFormateada = 'N/A';
@@ -2030,7 +2094,8 @@ function obtenerEvaluacionesDelMes(mes) {
                     // Calcular KPI directamente de los totales almacenados
                     const totalObtenido = evaluacion.totalObtenido || 0;
                     const totalMaximo = evaluacion.totalMaximo || 0;
-                    const kpiPorcentaje = totalMaximo > 0 ? (totalObtenido / totalMaximo) * 100 : 0;
+                    const kpiPorcentaje = totalMaximo > 0 ? 
+                        Math.round((totalObtenido / totalMaximo) * 100) : 0;
                     
                     // Obtener fecha de created_at o fechaCreacion
                     let fechaFormateada = 'N/A';
@@ -2082,14 +2147,14 @@ function aplicarRestriccionesPorRol() {
     
     // Ocultar/mostrar botones según el rol
     const btnNuevaEvaluacion = document.querySelector('[onclick="abrirModalNuevaEvaluacion()"]');
-    const botonesEditar = document.querySelectorAll('.btn-editar, .btn-edit');
-    const botonesEliminar = document.querySelectorAll('.btn-eliminar, .btn-delete');
+    const botonesEditar = document.querySelectorAll('.btn-edit, .btn-editar');
+    const botonesEliminar = document.querySelectorAll('.btn-delete, .btn-eliminar');
     
     if (rol === 'admin') {
         // Admin puede hacer todo
         if (btnNuevaEvaluacion) btnNuevaEvaluacion.style.display = 'inline-block';
-        botonesEditar.forEach(btn => btn.style.display = 'inline-block');
-        botonesEliminar.forEach(btn => btn.style.display = 'inline-block');
+        botonesEditar.forEach(btn => btn.style.display = 'inline-flex');
+        botonesEliminar.forEach(btn => btn.style.display = 'inline-flex');
     } else {
         // Otros roles no pueden crear, editar o eliminar
         if (btnNuevaEvaluacion) btnNuevaEvaluacion.style.display = 'none';
@@ -2098,6 +2163,8 @@ function aplicarRestriccionesPorRol() {
     }
     
     console.log(`Restricciones aplicadas para rol: ${rol}`);
+    console.log(`Botones editar encontrados: ${botonesEditar.length}`);
+    console.log(`Botones eliminar encontrados: ${botonesEliminar.length}`);
 }
 
 // Función para filtrar datos según el rol del usuario
@@ -2149,6 +2216,34 @@ function tienePermiso(accion) {
         default:
             return false;
     }
+}
+
+// Función para validar que los botones de acción funcionen correctamente
+function validarBotonesAccion() {
+    const botonesVer = document.querySelectorAll('.btn-view');
+    const botonesEditar = document.querySelectorAll('.btn-edit, .btn-editar');
+    const botonesEliminar = document.querySelectorAll('.btn-delete, .btn-eliminar');
+    const botonesVideo = document.querySelectorAll('.btn-video');
+    
+    console.log('=== VALIDACIÓN DE BOTONES DE ACCIÓN ===');
+    console.log(`Botones Ver: ${botonesVer.length}`);
+    console.log(`Botones Editar: ${botonesEditar.length}`);
+    console.log(`Botones Eliminar: ${botonesEliminar.length}`);
+    console.log(`Botones Video: ${botonesVideo.length}`);
+    console.log(`Usuario actual: ${usuarioActual?.nombre} (${usuarioActual?.rol})`);
+    
+    // Verificar que los botones tengan los onclick correctos
+    botonesEditar.forEach((btn, index) => {
+        const onclick = btn.getAttribute('onclick');
+        console.log(`Botón Editar ${index + 1}: ${onclick}`);
+    });
+    
+    botonesEliminar.forEach((btn, index) => {
+        const onclick = btn.getAttribute('onclick');
+        console.log(`Botón Eliminar ${index + 1}: ${onclick}`);
+    });
+    
+    console.log('=== FIN VALIDACIÓN ===');
 }
 
 // ===== FUNCIONES AUXILIARES PARA MANEJO DE DATOS =====

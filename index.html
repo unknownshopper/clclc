@@ -12,7 +12,7 @@
     <script type="module">
       // Import the functions you need from the SDKs you need
       import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-      import { getFirestore, collection, addDoc, getDocs, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+      import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
       // Your web app's Firebase configuration
       const firebaseConfig = {
@@ -118,6 +118,72 @@
           
           console.log('Evaluaciones de Firebase integradas en estructura local');
           console.log('Estructura actual:', window.evaluaciones);
+        },
+
+        // Eliminar evaluación de Firestore
+        async eliminarEvaluacion(entidadId, tipo, mes) {
+          try {
+            // Buscar el documento por entidadId, tipo y mes
+            const q = query(
+              collection(db, 'evaluaciones'), 
+              where('entidadId', '==', entidadId),
+              where('tipo', '==', tipo),
+              where('mes', '==', mes)
+            );
+            
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+              // Eliminar todos los documentos que coincidan (debería ser solo uno)
+              const deletePromises = [];
+              querySnapshot.forEach((doc) => {
+                deletePromises.push(deleteDoc(doc.ref));
+              });
+              
+              await Promise.all(deletePromises);
+              console.log(`Evaluación eliminada de Firebase: ${entidadId} (${tipo}) - ${mes}`);
+              return true;
+            } else {
+              console.log('No se encontró la evaluación en Firebase para eliminar');
+              return false;
+            }
+          } catch (error) {
+            console.error('Error eliminando evaluación de Firebase:', error);
+            throw error;
+          }
+        },
+
+        // Actualizar evaluación en Firestore
+        async actualizarEvaluacion(entidadId, tipo, mes, evaluacionData) {
+          try {
+            // Buscar el documento existente
+            const q = query(
+              collection(db, 'evaluaciones'), 
+              where('entidadId', '==', entidadId),
+              where('tipo', '==', tipo),
+              where('mes', '==', mes)
+            );
+            
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+              // Actualizar el documento existente
+              const doc = querySnapshot.docs[0];
+              await updateDoc(doc.ref, {
+                ...evaluacionData,
+                fechaModificacion: new Date(),
+                timestampModificacion: Date.now()
+              });
+              console.log(`Evaluación actualizada en Firebase: ${entidadId} (${tipo}) - ${mes}`);
+              return doc.id;
+            } else {
+              console.log('No se encontró la evaluación en Firebase para actualizar');
+              return null;
+            }
+          } catch (error) {
+            console.error('Error actualizando evaluación en Firebase:', error);
+            throw error;
+          }
         },
 
         // Verificar conexión a Firebase
