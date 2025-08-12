@@ -223,7 +223,7 @@ function generarDatosEjemplo() {
                     evaluacion.totalObtenido = totalObtenido;
                     evaluacion.totalMaximo = totalMaximo;
                     evaluacion.kpi = totalMaximo > 0 ? (totalObtenido / totalMaximo) * 100 : 0;
-                    evaluacion.estado = evaluacion.kpi >= 80 ? 'Excelente' : evaluacion.kpi >= 60 ? 'Bueno' : 'Necesita Mejora';
+                    evaluacion.estado = evaluacion.kpi >= 95 ? 'Excelente' : evaluacion.kpi >= 90 ? 'Bueno' : 'Necesita Mejora';
                     evaluacion.created_at = new Date();
                     evaluacion.fechaCreacion = new Date();
                     
@@ -272,7 +272,7 @@ function generarDatosEjemplo() {
                     evaluacion.totalObtenido = totalObtenido;
                     evaluacion.totalMaximo = totalMaximo;
                     evaluacion.kpi = totalMaximo > 0 ? (totalObtenido / totalMaximo) * 100 : 0;
-                    evaluacion.estado = evaluacion.kpi >= 80 ? 'Excelente' : evaluacion.kpi >= 60 ? 'Bueno' : 'Necesita Mejora';
+                    evaluacion.estado = evaluacion.kpi >= 95 ? 'Excelente' : evaluacion.kpi >= 90 ? 'Bueno' : 'Necesita Mejora';
                     evaluacion.created_at = new Date();
                     evaluacion.fechaCreacion = new Date();
                     
@@ -383,9 +383,9 @@ function renderDashboard() {
     
     // Calcular estadísticas
     const promedioKPI = kpis.length > 0 ? Math.round(kpis.reduce((a, b) => a + b, 0) / kpis.length) : 0;
-    const alto = kpis.filter(k => k >= 80).length;
-    const medio = kpis.filter(k => k >= 60 && k < 80).length;
-    const bajo = kpis.filter(k => k < 60).length;
+    const alto = kpis.filter(k => k >= 95).length;
+    const medio = kpis.filter(k => k >= 90 && k < 95).length;
+    const bajo = kpis.filter(k => k < 90).length;
     
     html += `
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
@@ -410,17 +410,17 @@ function renderDashboard() {
             <div style="background: #d4edda; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #28a745;">
                 <h4 style="margin: 0; color: #155724;">Alto Rendimiento</h4>
                 <div style="font-size: 24px; font-weight: bold; color: #155724;">${alto}</div>
-                <small style="color: #155724;">≥ 80% de cumplimiento</small>
+                <small style="color: #155724;">≥ 95% de cumplimiento</small>
             </div>
             <div style="background: #fff3cd; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #ffc107;">
                 <h4 style="margin: 0; color: #856404;">Rendimiento Medio</h4>
                 <div style="font-size: 24px; font-weight: bold; color: #856404;">${medio}</div>
-                <small style="color: #856404;">60% - 79% de cumplimiento</small>
+                <small style="color: #856404;">90% - 94% de cumplimiento</small>
             </div>
             <div style="background: #f8d7da; padding: 15px; border-radius: 8px; text-align: center; border-left: 4px solid #dc3545;">
                 <h4 style="margin: 0; color: #721c24;">Necesita Mejora</h4>
                 <div style="font-size: 24px; font-weight: bold; color: #721c24;">${bajo}</div>
-                <small style="color: #721c24;">< 60% de cumplimiento</small>
+                <small style="color: #721c24;">< 90% de cumplimiento</small>
             </div>
         </div>
     `;
@@ -452,8 +452,7 @@ function renderDashboard() {
         
         ranking.forEach((item, index) => {
             const kpiPorcentaje = ((item.kpi || 0) * 100).toFixed(1);
-            const estadoColor = item.estado === 'Excelente' ? '#28a745' : 
-                               item.estado === 'Bueno' ? '#ffc107' : '#dc3545';
+            const estadoColor = item.estado === 'Excelente' ? '#28a745' : item.estado === 'Bueno' ? '#ffc107' : '#dc3545';
             
             html += `
                 <tr style="border-bottom: 1px solid #dee2e6;">
@@ -601,7 +600,7 @@ async function renderEvaluaciones() {
         
         evaluacionesFiltradas.forEach((evaluacion, index) => {
             const kpiPorcentaje = ((evaluacion.kpi || 0) * 100).toFixed(1);
-            const colorEstado = evaluacion.kpi >= 0.8 ? '#28a745' : evaluacion.kpi >= 0.6 ? '#ffc107' : '#dc3545';
+            const colorEstado = evaluacion.kpi >= 0.95 ? '#28a745' : evaluacion.kpi >= 0.9 ? '#ffc107' : '#dc3545';
             const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
             
             // Formatear tipo para mostrar
@@ -939,7 +938,7 @@ async function guardarEvaluacion(entidadValue) {
         totalObtenido: totalObtenido,
         totalMaximo: totalMaximo,
         kpi: kpi,
-        estado: kpi >= 85 ? 'Excelente' : kpi >= 70 ? 'Bueno' : 'Necesita mejora'
+        estado: kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita mejora'
     };
     
     try {
@@ -1286,8 +1285,8 @@ function dibujarGraficoBarras(canvas, labels, data) {
         
         // Color según rendimiento
         let color = '#dc3545'; // Rojo para bajo
-        if (value >= 80) color = '#28a745'; // Verde para alto
-        else if (value >= 60) color = '#ffc107'; // Amarillo para medio
+        if (value >= 95) color = '#28a745'; // Verde para alto
+        else if (value >= 90) color = '#ffc107'; // Amarillo para medio
         
         ctx.fillStyle = color;
         ctx.fillRect(x, y, barWidth - 5, barHeight);
@@ -1341,9 +1340,9 @@ function dibujarGraficoDistribucion(canvas, data) {
     }
     
     // Categorizar datos
-    let alto = data.filter(d => d >= 80).length;
-    let medio = data.filter(d => d >= 60 && d < 80).length;
-    let bajo = data.filter(d => d < 60).length;
+    let alto = data.filter(d => d >= 95).length;
+    let medio = data.filter(d => d >= 90 && d < 95).length;
+    let bajo = data.filter(d => d < 90).length;
     
     const total = alto + medio + bajo;
     if (total === 0) return;
@@ -1397,17 +1396,17 @@ function dibujarGraficoDistribucion(canvas, data) {
     ctx.fillStyle = '#28a745';
     ctx.fillRect(20, height - 60, 15, 15);
     ctx.fillStyle = '#333';
-    ctx.fillText(`Alto (≥80%): ${alto}`, 40, height - 48);
+    ctx.fillText(`Alto (≥95%): ${alto}`, 40, height - 48);
     
     ctx.fillStyle = '#ffc107';
     ctx.fillRect(20, height - 40, 15, 15);
     ctx.fillStyle = '#333';
-    ctx.fillText(`Medio (60-79%): ${medio}`, 40, height - 28);
+    ctx.fillText(`Medio (90-94%): ${medio}`, 40, height - 28);
     
     ctx.fillStyle = '#dc3545';
     ctx.fillRect(20, height - 20, 15, 15);
     ctx.fillStyle = '#333';
-    ctx.fillText(`Bajo (<60%): ${bajo}`, 40, height - 8);
+    ctx.fillText(`Bajo (<90%): ${bajo}`, 40, height - 8);
 }
 
 // Función para generar resumen estadístico
@@ -1451,9 +1450,9 @@ function generarResumenEstadistico() {
     const promedio = kpis.reduce((a, b) => a + b, 0) / kpis.length;
     const maximo = Math.max(...kpis);
     const minimo = Math.min(...kpis);
-    const alto = kpis.filter(k => k >= 80).length;
-    const medio = kpis.filter(k => k >= 60 && k < 80).length;
-    const bajo = kpis.filter(k => k < 60).length;
+    const alto = kpis.filter(k => k >= 95).length;
+    const medio = kpis.filter(k => k >= 90 && k < 95).length;
+    const bajo = kpis.filter(k => k < 90).length;
     
     container.innerHTML = `
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -1478,15 +1477,15 @@ function generarResumenEstadistico() {
         <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
             <div style="text-align: center; padding: 10px; background: #d4edda; border-radius: 5px;">
                 <strong style="color: #155724;">Alto Rendimiento</strong><br>
-                <span style="font-size: 18px;">${alto} entidades (≥80%)</span>
+                <span style="font-size: 18px;">${alto} entidades (≥95%)</span>
             </div>
             <div style="text-align: center; padding: 10px; background: #fff3cd; border-radius: 5px;">
                 <strong style="color: #856404;">Rendimiento Medio</strong><br>
-                <span style="font-size: 18px;">${medio} entidades (60-79%)</span>
+                <span style="font-size: 18px;">${medio} entidades (90-94%)</span>
             </div>
             <div style="text-align: center; padding: 10px; background: #f8d7da; border-radius: 5px;">
                 <strong style="color: #721c24;">Bajo Rendimiento</strong><br>
-                <span style="font-size: 18px;">${bajo} entidades (<60%)</span>
+                <span style="font-size: 18px;">${bajo} entidades (<90%)</span>
             </div>
         </div>
     `;
@@ -1742,7 +1741,7 @@ function verEvaluacion(entidadId, tipo) {
     
     // Crear modal para mostrar detalles de la evaluación
     const kpi = calcularPorcentajeEvaluacion(entidadId, tipo, evaluacion);
-    const estado = kpi >= 80 ? 'Excelente' : kpi >= 60 ? 'Bueno' : 'Necesita Mejora';
+    const estado = kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita Mejora';
     
     let detallesHtml = `
         <div class="modal" id="modalVerEvaluacion" style="display: block; z-index: 10001;">
@@ -1762,8 +1761,8 @@ function verEvaluacion(entidadId, tipo) {
                         </div>
                         <div>
                             <h3>Resultados</h3>
-                            <p><strong>KPI:</strong> <span style="color: ${kpi >= 80 ? '#28a745' : kpi >= 60 ? '#ffc107' : '#dc3545'}; font-weight: bold;">${kpi.toFixed(1)}%</span></p>
-                            <p><strong>Estado:</strong> <span style="color: ${kpi >= 80 ? '#28a745' : kpi >= 60 ? '#ffc107' : '#dc3545'}; font-weight: bold;">${estado}</span></p>
+                            <p><strong>KPI:</strong> <span style="color: ${kpi >= 95 ? '#28a745' : kpi >= 90 ? '#ffc107' : '#dc3545'}; font-weight: bold;">${kpi.toFixed(1)}%</span></p>
+                            <p><strong>Estado:</strong> <span style="color: ${kpi >= 95 ? '#28a745' : kpi >= 90 ? '#ffc107' : '#dc3545'}; font-weight: bold;">${estado}</span></p>
                             <p><strong>Total Obtenido:</strong> ${evaluacion.totalObtenido || 0}</p>
                             <p><strong>Total Máximo:</strong> ${evaluacion.totalMaximo || 0}</p>
                         </div>
@@ -2075,7 +2074,7 @@ function obtenerEvaluacionesDelMes(mes) {
                         entidad: sucursal.nombre,
                         entidadId: sucursalId,
                         kpi: kpiPorcentaje / 100, // Guardar como decimal para consistencia
-                        estado: kpiPorcentaje >= 80 ? 'Excelente' : kpiPorcentaje >= 60 ? 'Bueno' : 'Necesita Mejora',
+                        estado: kpiPorcentaje >= 95 ? 'Excelente' : kpiPorcentaje >= 90 ? 'Bueno' : 'Necesita Mejora',
                         fecha: fechaFormateada,
                         evaluacion: evaluacion
                     });
@@ -2121,7 +2120,7 @@ function obtenerEvaluacionesDelMes(mes) {
                         entidad: franquicia.nombre,
                         entidadId: franquiciaId,
                         kpi: kpiPorcentaje / 100, // Guardar como decimal para consistencia
-                        estado: kpiPorcentaje >= 80 ? 'Excelente' : kpiPorcentaje >= 60 ? 'Bueno' : 'Necesita Mejora',
+                        estado: kpiPorcentaje >= 95 ? 'Excelente' : kpiPorcentaje >= 90 ? 'Bueno' : 'Necesita Mejora',
                         fecha: fechaFormateada,
                         evaluacion: evaluacion
                     });
