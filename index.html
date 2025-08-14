@@ -118,6 +118,44 @@
           }
         },
 
+        // Actualizar estado de publicación de una evaluación
+        async actualizarEstadoPublicacion(entidadId, tipo, mes, nuevoEstado) {
+          try {
+            // Buscar la evaluación por entidadId, tipo y mes
+            const q = query(
+              collection(db, 'evaluaciones'),
+              where('entidadId', '==', entidadId),
+              where('tipo', '==', tipo),
+              where('mes', '==', mes)
+            );
+    
+            const querySnapshot = await getDocs(q);
+    
+            if (querySnapshot.empty) {
+              console.log(`No se encontró evaluación para actualizar: ${entidadId} (${tipo}) - ${mes}`);
+              return false;
+            }
+    
+            // Actualizar todos los documentos encontrados
+            const updatePromises = [];
+            querySnapshot.forEach((doc) => {
+              console.log(`Actualizando estado de publicación del documento: ${doc.id}`);
+              updatePromises.push(updateDoc(doc.ref, {
+                estadoPublicacion: nuevoEstado,
+                fechaPublicacion: new Date(),
+                timestampPublicacion: Date.now()
+              }));
+            });
+    
+            await Promise.all(updatePromises);
+            console.log(`Estado de publicación actualizado: ${entidadId} (${tipo}) - ${mes} -> ${nuevoEstado}`);
+            return true;
+          } catch (error) {
+            console.error('Error actualizando estado de publicación:', error);
+            throw error;
+          }
+        },
+
         // Verificar conexión a Firebase
         async verificarConexion() {
           try {

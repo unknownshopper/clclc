@@ -96,8 +96,9 @@ async function renderEvaluaciones() {
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Entidad</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">KPI</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Estado</th>
+                            <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Publicación</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Fecha</th>
-                            ${tienePermiso('ver') || tienePermiso('editar') || tienePermiso('eliminar') ? '<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Acciones</th>' : ''}
+                            ${tienePermiso('ver') || tienePermiso('editar') || tienePermiso('eliminar') || tienePermiso('publicar') ? '<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Acciones</th>' : ''}
                         </tr>
                     </thead>
                     <tbody>
@@ -110,6 +111,9 @@ async function renderEvaluaciones() {
             
             // Formatear tipo para mostrar
             const tipoMostrar = evaluacion.tipo === 'sucursal' ? 'Sucursal' : 'Franquicia';
+            // Estado de publicación
+            const estadoPublicacion = evaluacion.estadoPublicacion || 'borrador';
+            const esBorrador = estadoPublicacion === 'borrador';
             
             html += `
                 <tr style="background: ${bgColor};">
@@ -129,10 +133,15 @@ async function renderEvaluaciones() {
                             ${evaluacion.estado}
                         </span>
                     </td>
+                    <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">
+                        <span class="estado-publicacion ${esBorrador ? 'estado-borrador' : 'estado-publicado'}">
+                            ${esBorrador ? 'Borrador' : 'Publicado'}
+                        </span>
+                    </td>
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; color: #666;">
                         ${evaluacion.fecha}
                     </td>
-                    ${tienePermiso('ver') || tienePermiso('editar') || tienePermiso('eliminar') ? `
+                    ${tienePermiso('ver') || tienePermiso('editar') || tienePermiso('eliminar') || tienePermiso('publicar') ? `
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">
                         <div class="action-buttons" style="display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;">
                             <button onclick="verEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
@@ -154,7 +163,14 @@ async function renderEvaluaciones() {
                                 <i class="fas fa-trash"></i>
                             </button>
                             ` : ''}
-                            <button onclick="verVideo('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
+                            ${tienePermiso('publicar') && esBorrador ? `
+                            <button onclick="publicarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
+                                    class="btn-action btn-publish" 
+                                    title="Publicar evaluación">
+                                <i class="fas fa-share"></i>
+                            </button>
+                            ` : ''}
+                            <button onclick="verVideo('${evaluacion.entidadId}', '${evaluacion.tipo}')"
                                     class="btn-action btn-video" 
                                     title="Ver video de evaluación">
                                 <i class="fas fa-video"></i>
@@ -444,7 +460,9 @@ async function guardarEvaluacion(entidadValue) {
         totalObtenido: totalObtenido,
         totalMaximo: totalMaximo,
         kpi: kpi,
-        estado: kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita mejora'
+        estado: kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita mejora',
+        estadoPublicacion: 'borrador', // Todas las evaluaciones nuevas inician como borrador
+        fechaPublicacion: null
     };
     
     try {
@@ -564,31 +582,68 @@ function renderGraficas() {
     console.log('Renderizando gráficas para mes:', window.mesSeleccionado);
     
     let html = `
-        <div style="margin-bottom: 20px;">
-            <h2 style="color: #0077cc; margin-bottom: 10px; text-align: center;">
+        <div style="margin-bottom: 30px;">
+            <h2 style="color: #0077cc; margin-bottom: 10px; text-align: center; font-size: 2rem;">
                 Gráficas de Rendimiento - ${formatearMesLegible(window.mesSeleccionado)}
             </h2>
-            <p style="text-align: center; color: #666; margin-bottom: 20px;">
+            <p style="text-align: center; color: #666; margin-bottom: 30px; font-size: 1.1rem;">
                 Visualización de KPIs y tendencias
             </p>
         </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
-            <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <h3 style="text-align: center; margin-bottom: 15px;">KPIs por Entidad</h3>
-                <canvas id="graficoKPIs" width="400" height="300"></canvas>
+        <!-- Gráfico de Barras - Espacio Principal -->
+        <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 30px;">
+            <h3 style="text-align: center; margin-bottom: 25px; color: #2c3e50; font-size: 1.4rem; font-weight: 600;">
+                📊 KPIs por Entidad
+            </h3>
+            <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                <canvas id="graficoKPIs" width="800" height="400" style="max-width: 100%; border-radius: 8px;"></canvas>
+            </div>
+            <p style="text-align: center; color: #7f8c8d; font-size: 0.9rem; margin-top: 15px;">
+                Comparación del rendimiento individual de cada entidad evaluada
+            </p>
+        </div>
+        
+        <!-- Layout de 2 columnas para gráfico circular y resumen -->
+        <div class="graficas-responsive" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 30px; margin-bottom: 30px;">
+            <!-- Gráfico Circular -->
+            <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #2c3e50; font-size: 1.3rem; font-weight: 600;">
+                    🎯 Distribución de Rendimiento
+                </h3>
+                <div style="display: flex; justify-content: center;">
+                    <canvas id="graficoDistribucion" width="350" height="350" style="border-radius: 8px;"></canvas>
+                </div>
+                <p style="text-align: center; color: #7f8c8d; font-size: 0.9rem; margin-top: 15px;">
+                    Proporción de entidades por nivel de rendimiento
+                </p>
             </div>
             
-            <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <h3 style="text-align: center; margin-bottom: 15px;">Distribución de Rendimiento</h3>
-                <canvas id="graficoDistribucion" width="400" height="300"></canvas>
+            <!-- Resumen Estadístico -->
+            <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #2c3e50; font-size: 1.3rem; font-weight: 600;">
+                    📈 Resumen Estadístico
+                </h3>
+                <div id="resumenEstadistico"></div>
             </div>
         </div>
         
-        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h3 style="text-align: center; margin-bottom: 15px;">Resumen Estadístico</h3>
-            <div id="resumenEstadistico"></div>
-        </div>
+        <!-- Responsive design para móviles -->
+        <style>
+            @media (max-width: 768px) {
+                .graficas-responsive {
+                    grid-template-columns: 1fr !important;
+                }
+                #graficoKPIs {
+                    width: 100% !important;
+                    height: 300px !important;
+                }
+                #graficoDistribucion {
+                    width: 280px !important;
+                    height: 280px !important;
+                }
+            }
+        </style>
     `;
     
     document.getElementById('graficas').innerHTML = html;
@@ -1054,7 +1109,7 @@ function mostrarEvaluaciones() {
                         <p><strong>Fecha:</strong> ${evaluacion.fecha}</p>
                     </div>
                 </div>
-                ${tienePermiso('editar') || tienePermiso('eliminar') ? `
+                ${tienePermiso('editar') || tienePermiso('eliminar') || tienePermiso('publicar') ? `
                 <div class="evaluacion-actions">
                     ${tienePermiso('editar') ? `
                     <button class="btn btn-secondary btn-editar" onclick="editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" title="Editar evaluación">
@@ -1064,6 +1119,11 @@ function mostrarEvaluaciones() {
                             ${tienePermiso('eliminar') ? `
                             <button class="btn btn-danger btn-eliminar" onclick="eliminarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" title="Eliminar evaluación">
                                 <i class="fas fa-trash"></i>
+                            </button>
+                            ` : ''}
+                            ${tienePermiso('publicar') ? `
+                            <button class="btn btn-success btn-publicar" onclick="publicarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" title="Publicar evaluación">
+                                <i class="fas fa-share"></i>
                             </button>
                             ` : ''}
                             <button onclick="verVideo('${evaluacion.entidadId}', '${evaluacion.tipo}')"
@@ -1102,13 +1162,11 @@ function cargarEntidadesEvaluacion() {
     if (rol === 'admin' || rol === 'dg') {
         // Admin y DG pueden ver sucursales
         if (window.sucursales) {
-            window.sucursales.forEach(sucursal => {
-                if (sucursal.activa) {
-                    const option = document.createElement('option');
-                    option.value = `sucursal-${sucursal.id}`;
-                    option.textContent = `${sucursal.nombre} (Sucursal)`;
-                    selectEntidad.appendChild(option);
-                }
+            window.sucursales.filter(s => s.activa).forEach(sucursal => {
+                const option = document.createElement('option');
+                option.value = `sucursal-${sucursal.id}`;
+                option.textContent = `${sucursal.nombre} (Sucursal)`;
+                selectEntidad.appendChild(option);
             });
         }
     }
@@ -1116,13 +1174,11 @@ function cargarEntidadesEvaluacion() {
     if (rol === 'admin' || rol === 'dg' || rol === 'franquicias') {
         // Admin, DG y Franquicias pueden ver franquicias
         if (window.franquicias) {
-            window.franquicias.forEach(franquicia => {
-                if (franquicia.activa) {
-                    const option = document.createElement('option');
-                    option.value = `franquicia-${franquicia.id}`;
-                    option.textContent = `${franquicia.nombre} (Franquicia)`;
-                    selectEntidad.appendChild(option);
-                }
+            window.franquicias.filter(f => f.activa).forEach(franquicia => {
+                const option = document.createElement('option');
+                option.value = `franquicia-${franquicia.id}`;
+                option.textContent = `${franquicia.nombre} (Franquicia)`;
+                selectEntidad.appendChild(option);
             });
         }
     }
@@ -1439,7 +1495,7 @@ function eliminarEvaluacion(entidadId, tipo) {
         return;
     }
     
-    if (confirm(`¿Está seguro de que desea eliminar la evaluación de ${nombreEntidad} para ${formatearMesLegible(window.mesSeleccionado)}?`)) {
+    if (confirm(`¿Está seguro de que desea eliminar la evaluación de ${nombreEntidad} para ${formatearMesLegible(window.mesSeleccionado)}?\n\nUna vez eliminada, no podrá ser recuperada.`)) {
         try {
             // Eliminar de la estructura local
             delete window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado];
@@ -1536,23 +1592,23 @@ function subirVideo(entidadId, tipo) {
 // Función auxiliar para obtener una evaluación específica
 function obtenerEvaluacion(entidadId, tipo, mes) {
     // Mapear tipos correctamente a las estructuras de datos
-    let tipoEstructura;
+    let tipoEntidad;
     switch(tipo) {
         case 'sucursal':
-            tipoEstructura = 'sucursales';
+            tipoEntidad = 'sucursales';
             break;
         case 'franquicia':
-            tipoEstructura = 'franquicias';
+            tipoEntidad = 'franquicias';
             break;
         case 'competencia':
-            tipoEstructura = 'competencia';
+            tipoEntidad = 'competencia';
             break;
         default:
             console.error('Tipo de entidad no reconocido:', tipo);
             return null;
     }
     
-    return window.evaluaciones?.[tipoEstructura]?.[entidadId]?.[mes];
+    return window.evaluaciones?.[tipoEntidad]?.[entidadId]?.[mes];
 }
 
 // Función para obtener evaluaciones de un mes específico
@@ -1603,6 +1659,8 @@ function obtenerEvaluacionesDelMes(mes) {
                         kpi: kpiPorcentaje / 100, // Guardar como decimal para consistencia
                         estado: kpiPorcentaje >= 95 ? 'Excelente' : kpiPorcentaje >= 90 ? 'Bueno' : 'Necesita Mejora',
                         fecha: fechaFormateada,
+                        estadoPublicacion: evaluacion.estadoPublicacion || 'borrador',
+fechaPublicacion: evaluacion.fechaPublicacion,
                         evaluacion: evaluacion
                     });
                 }
@@ -1695,6 +1753,8 @@ function obtenerEvaluacionesDelMes(mes) {
                         kpi: kpiPorcentaje / 100, // Guardar como decimal para consistencia
                         estado: kpiPorcentaje >= 95 ? 'Excelente' : kpiPorcentaje >= 90 ? 'Bueno' : 'Necesita Mejora',
                         fecha: fechaFormateada,
+                        estadoPublicacion: evaluacion.estadoPublicacion || 'borrador',
+                        fechaPublicacion: evaluacion.fechaPublicacion,
                         evaluacion: evaluacion
                     });
                 }
@@ -1764,10 +1824,87 @@ function integrarDatosFirebase(evaluacionesFirebase) {
             totalMaximo: evaluacion.totalMaximo || 0,
             kpi: evaluacion.kpi || 0,
             estado: evaluacion.estado || 'Sin evaluar',
+            estadoPublicacion: evaluacion.estadoPublicacion || 'borrador',
+            fechaPublicacion: evaluacion.fechaPublicacion ? 
+                (evaluacion.fechaPublicacion.toDate ? evaluacion.fechaPublicacion.toDate() : evaluacion.fechaPublicacion) : null,
             fechaCreacion: evaluacion.fechaCreacion || evaluacion.created_at || new Date().toISOString(),
             timestamp: evaluacion.timestamp || Date.now()
         };
     });
     
     console.log('Datos de Firebase integrados exitosamente');
+}
+
+// Función para publicar una evaluación (solo admin)
+async function publicarEvaluacion(entidadId, tipo) {
+    if (!tienePermiso('admin')) {
+        alert('Solo los administradores pueden publicar evaluaciones');
+        return;
+    }
+    
+    const entidad = tipo === 'sucursal' ? 
+        window.sucursales.find(s => s.id === entidadId)
+        : window.franquicias.find(f => f.id === entidadId);
+    
+    const nombreEntidad = entidad ? entidad.nombre : entidadId;
+    
+    const confirmacion = confirm(`¿Está seguro de que desea publicar la evaluación de ${nombreEntidad} para ${formatearMesLegible(window.mesSeleccionado)}?\n\nUna vez publicada, será visible para GOP, DG y franquicias.`);
+    
+    if (!confirmacion) return;
+    
+    try {
+        // Actualizar en Firebase
+        if (window.firebaseDB) {
+            // Buscar y actualizar la evaluación en Firebase usando query
+            const success = await window.firebaseDB.actualizarEstadoPublicacion(entidadId, tipo, window.mesSeleccionado, 'publicado');
+            
+            if (success) {
+                console.log('Evaluación publicada en Firebase exitosamente');
+                
+                // También actualizar en estructura local si existe
+                const tipoEntidad = tipo === 'sucursal' ? 'sucursales' : 'franquicias';
+                if (window.evaluaciones?.[tipoEntidad]?.[entidadId]?.[window.mesSeleccionado]) {
+                    window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado].estadoPublicacion = 'publicado';
+                    window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado].fechaPublicacion = new Date();
+                }
+                
+                alert(`Evaluación de ${nombreEntidad} publicada exitosamente.\nAhora es visible para todos los roles autorizados.`);
+                
+                // Actualizar vista actual
+                if (window.vistaActual === 'evaluaciones') {
+                    renderEvaluaciones();
+                }
+            } else {
+                throw new Error('No se pudo actualizar la evaluación en Firebase');
+            }
+        } else {
+            throw new Error('Firebase no está disponible');
+        }
+        
+    } catch (error) {
+        console.error('Error publicando evaluación:', error);
+        alert('Error al publicar la evaluación. Por favor, inténtalo de nuevo.');
+    }
+}
+
+// Función auxiliar para obtener una evaluación específica
+function obtenerEvaluacion(entidadId, tipo, mes) {
+    // Mapear tipos correctamente a las estructuras de datos
+    let tipoEntidad;
+    switch(tipo) {
+        case 'sucursal':
+            tipoEntidad = 'sucursales';
+            break;
+        case 'franquicia':
+            tipoEntidad = 'franquicias';
+            break;
+        case 'competencia':
+            tipoEntidad = 'competencia';
+            break;
+        default:
+            console.error('Tipo de entidad no reconocido:', tipo);
+            return null;
+    }
+    
+    return window.evaluaciones?.[tipoEntidad]?.[entidadId]?.[mes];
 }

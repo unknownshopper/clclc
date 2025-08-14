@@ -131,31 +131,45 @@ function filtrarDatosPorRol(evaluaciones) {
     const rol = usuarioActual.rol;
     console.log(`Filtrando datos para rol: ${rol}, evaluaciones totales: ${evaluaciones.length}`);
     
+    // Función auxiliar para filtrar por estado de publicación
+    const filtrarPorPublicacion = (evals) => {
+        if (rol === 'admin') {
+            // Admin puede ver todas las evaluaciones (borradores y publicadas)
+            return evals;
+        } else {
+            // Otros roles solo ven evaluaciones publicadas
+            return evals.filter(eval => eval.estadoPublicacion === 'publicado');
+        }
+    };
+    
     switch (rol) {
         case 'admin':
             // Admin puede ver todo
             console.log('Admin: mostrando todas las evaluaciones');
-            return evaluaciones;
+            return filtrarPorPublicacion(evaluaciones);
             
         case 'gop':
-            // GOP puede ver evaluaciones de sucursales (no existe tipo 'gop')
+            // GOP puede ver evaluaciones de sucursales (solo publicadas)
             const evaluacionesGop = evaluaciones.filter(eval => eval.tipo === 'sucursal');
-            console.log(`GOP: filtrando ${evaluacionesGop.length} sucursales de ${evaluaciones.length} total`);
-            return evaluacionesGop;
+            const evaluacionesGopPublicadas = filtrarPorPublicacion(evaluacionesGop);
+            console.log(`GOP: filtrando ${evaluacionesGopPublicadas.length} sucursales publicadas de ${evaluacionesGop.length} total`);
+            return evaluacionesGopPublicadas;
             
         case 'franquicias':
-            // Franquicias solo puede ver evaluaciones de franquicias
+            // Franquicias solo puede ver evaluaciones de franquicias (solo publicadas)
             const evaluacionesFranquicias = evaluaciones.filter(eval => eval.tipo === 'franquicia');
-            console.log(`Franquicias: filtrando ${evaluacionesFranquicias.length} franquicias de ${evaluaciones.length} total`);
-            return evaluacionesFranquicias;
+            const evaluacionesFranquiciasPublicadas = filtrarPorPublicacion(evaluacionesFranquicias);
+            console.log(`Franquicias: filtrando ${evaluacionesFranquiciasPublicadas.length} franquicias publicadas de ${evaluacionesFranquicias.length} total`);
+            return evaluacionesFranquiciasPublicadas;
             
         case 'dg':
-            // DG puede ver sucursales y franquicias
+            // DG puede ver sucursales y franquicias (solo publicadas)
             const evaluacionesDg = evaluaciones.filter(eval => 
                 eval.tipo === 'sucursal' || eval.tipo === 'franquicia'
             );
-            console.log(`DG: filtrando ${evaluacionesDg.length} evaluaciones (sucursales + franquicias) de ${evaluaciones.length} total`);
-            return evaluacionesDg;
+            const evaluacionesDgPublicadas = filtrarPorPublicacion(evaluacionesDg);
+            console.log(`DG: filtrando ${evaluacionesDgPublicadas.length} evaluaciones publicadas (sucursales + franquicias) de ${evaluacionesDg.length} total`);
+            return evaluacionesDgPublicadas;
             
         default:
             console.log(`Rol desconocido: ${rol}, no se muestran datos`);
@@ -173,9 +187,12 @@ function tienePermiso(accion) {
         case 'crear':
         case 'editar':
         case 'eliminar':
+        case 'publicar':
             return rol === 'admin';
         case 'ver':
             return true; // Todos pueden ver (pero con filtros)
+        case 'admin':
+            return rol === 'admin'; // Verificación específica de rol admin
         default:
             return false;
     }
