@@ -12,17 +12,10 @@
     <script type="module">
       // Import the functions you need from the SDKs you need
       import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-      import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-      // Your web app's Firebase configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyAnfQSqfJSSQ6QBrYyF4rWUhCZmIAqGb90",
-        authDomain: "clclc-24987.firebaseapp.com",
-        projectId: "clclc-24987",
-        storageBucket: "clclc-24987.firebasestorage.app",
-        messagingSenderId: "266489305461",
-        appId: "1:266489305461:web:2ce3fbdc212a61064d5b3c"
-      };
+      import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+      
+      // Import Firebase configuration from separate file
+      import { firebaseConfig } from './firebase-config.js';
 
       // Initialize Firebase
       const app = initializeApp(firebaseConfig);
@@ -68,10 +61,6 @@
             });
             
             console.log(`Cargadas ${evaluaciones.length} evaluaciones desde Firebase`);
-            
-            // Integrar evaluaciones en la estructura local
-            this.integrarEvaluacionesEnEstructuraLocal(evaluaciones);
-            
             return evaluaciones;
           } catch (error) {
             console.error('Error cargando evaluaciones desde Firebase:', error);
@@ -79,74 +68,12 @@
           }
         },
 
-        // Integrar evaluaciones de Firebase en la estructura local
-        integrarEvaluacionesEnEstructuraLocal(evaluacionesFirebase) {
-          if (!window.evaluaciones) {
-            window.evaluaciones = { sucursales: {}, franquicias: {} };
-          }
-          
-          evaluacionesFirebase.forEach(evalFirebase => {
-            const { tipo, entidadId, mes, parametros, totalObtenido, totalMaximo, kpi, estado, fechaCreacion, created_at, timestamp } = evalFirebase;
-            
-            if (tipo && entidadId && mes) {
-              // Determinar el tipo de entidad
-              const tipoEntidad = tipo === 'sucursal' ? 'sucursales' : 'franquicias';
-              
-              // Inicializar estructura si no existe
-              if (!window.evaluaciones[tipoEntidad]) {
-                window.evaluaciones[tipoEntidad] = {};
-              }
-              if (!window.evaluaciones[tipoEntidad][entidadId]) {
-                window.evaluaciones[tipoEntidad][entidadId] = {};
-              }
-              
-              // Integrar la evaluación con todos los datos necesarios
-              const evaluacionLocal = {
-                parametros: parametros || {},
-                totalObtenido: totalObtenido || 0,
-                totalMaximo: totalMaximo || 0,
-                kpi: kpi || 0,
-                estado: estado || 'Pendiente',
-                fechaCreacion: fechaCreacion,
-                created_at: created_at,
-                timestamp: timestamp
-              };
-              
-              window.evaluaciones[tipoEntidad][entidadId][mes] = evaluacionLocal;
-            }
-          });
-          
-          console.log('Evaluaciones de Firebase integradas en estructura local');
-          console.log('Estructura actual:', window.evaluaciones);
-        },
-
         // Eliminar evaluación de Firestore
-        async eliminarEvaluacion(entidadId, tipo, mes) {
+        async eliminarEvaluacion(evaluacionId) {
           try {
-            // Buscar el documento por entidadId, tipo y mes
-            const q = query(
-              collection(db, 'evaluaciones'), 
-              where('entidadId', '==', entidadId),
-              where('tipo', '==', tipo),
-              where('mes', '==', mes)
-            );
-            
-            const querySnapshot = await getDocs(q);
-            
-            if (!querySnapshot.empty) {
-              // Eliminar todos los documentos que coincidan (debería ser solo uno)
-              const deletePromises = [];
-              querySnapshot.forEach((doc) => {
-                deletePromises.push(deleteDoc(doc.ref));
-              });
-              
-              await Promise.all(deletePromises);
-              console.log(`Evaluación eliminada de Firebase: ${entidadId} (${tipo}) - ${mes}`);
-              return true;
-            } else {
-              console.log('No se encontró la evaluación en Firebase para eliminar');
-              return false;
-            }
+            await deleteDoc(doc(db, 'evaluaciones', evaluacionId));
+            console.log('Evaluación eliminada de Firebase:', evaluacionId);
+            return true;
           } catch (error) {
             console.error('Error eliminando evaluación de Firebase:', error);
             throw error;
@@ -154,32 +81,15 @@
         },
 
         // Actualizar evaluación en Firestore
-        async actualizarEvaluacion(entidadId, tipo, mes, evaluacionData) {
+        async actualizarEvaluacion(evaluacionId, datosActualizados) {
           try {
-            // Buscar el documento existente
-            const q = query(
-              collection(db, 'evaluaciones'), 
-              where('entidadId', '==', entidadId),
-              where('tipo', '==', tipo),
-              where('mes', '==', mes)
-            );
-            
-            const querySnapshot = await getDocs(q);
-            
-            if (!querySnapshot.empty) {
-              // Actualizar el documento existente
-              const doc = querySnapshot.docs[0];
-              await updateDoc(doc.ref, {
-                ...evaluacionData,
-                fechaModificacion: new Date(),
-                timestampModificacion: Date.now()
-              });
-              console.log(`Evaluación actualizada en Firebase: ${entidadId} (${tipo}) - ${mes}`);
-              return doc.id;
-            } else {
-              console.log('No se encontró la evaluación en Firebase para actualizar');
-              return null;
-            }
+            await updateDoc(doc(db, 'evaluaciones', evaluacionId), {
+              ...datosActualizados,
+              fechaActualizacion: new Date(),
+              timestampActualizacion: Date.now()
+            });
+            console.log('Evaluación actualizada en Firebase:', evaluacionId);
+            return true;
           } catch (error) {
             console.error('Error actualizando evaluación en Firebase:', error);
             throw error;
@@ -189,7 +99,7 @@
         // Verificar conexión a Firebase
         async verificarConexion() {
           try {
-            await getDocs(query(collection(db, 'evaluaciones'), orderBy('fechaCreacion', 'desc')));
+            const testCollection = collection(db, 'test');
             console.log('Conexión a Firebase establecida correctamente');
             return true;
           } catch (error) {
@@ -224,6 +134,7 @@
         <button class="tab-btn" data-section="evaluaciones">Evaluaciones</button>
         <button class="tab-btn" data-section="matriz">Matriz</button>
         <button class="tab-btn" data-section="graficas">Gráficas</button>
+        <button class="tab-btn" data-section="competencia">Competencia</button>
     </nav>
     <main>
         <section id="dashboard" class="tab-section">
@@ -241,12 +152,16 @@
         <section id="graficas" class="tab-section" style="display:none">
             <canvas id="graficaResultados" width="600" height="300"></canvas>
         </section>
+        <section id="competencia" class="tab-section" style="display:none">
+            <!-- Contenido de la sección de competencia -->
+        </section>
     </main>
     <script src="data/sucursales.js"></script>
     <script src="data/franquicias.js"></script>
     <script src="data/parametros.js"></script>
     <script src="data/parametros_excluidos.js"></script>
     <script src="data/usuarios.js"></script>
+    <script src="competencia.js"></script>
     <script src="script.js"></script>
     <style>
         /* Estilos para la tabla de evaluaciones */
