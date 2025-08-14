@@ -69,10 +69,32 @@
         },
 
         // Eliminar evaluación de Firestore
-        async eliminarEvaluacion(evaluacionId) {
+        async eliminarEvaluacion(entidadId, tipo, mes) {
           try {
-            await deleteDoc(doc(db, 'evaluaciones', evaluacionId));
-            console.log('Evaluación eliminada de Firebase:', evaluacionId);
+            // Buscar la evaluación por entidadId, tipo y mes
+            const q = query(
+              collection(db, 'evaluaciones'),
+              where('entidadId', '==', entidadId),
+              where('tipo', '==', tipo),
+              where('mes', '==', mes)
+            );
+            
+            const querySnapshot = await getDocs(q);
+            
+            if (querySnapshot.empty) {
+              console.log(`No se encontró evaluación para eliminar: ${entidadId} (${tipo}) - ${mes}`);
+              return false;
+            }
+            
+            // Eliminar todos los documentos que coincidan (debería ser solo uno)
+            const deletePromises = [];
+            querySnapshot.forEach((doc) => {
+              console.log(`Eliminando documento Firebase: ${doc.id}`);
+              deletePromises.push(deleteDoc(doc.ref));
+            });
+            
+            await Promise.all(deletePromises);
+            console.log(`Evaluación eliminada de Firebase: ${entidadId} (${tipo}) - ${mes}`);
             return true;
           } catch (error) {
             console.error('Error eliminando evaluación de Firebase:', error);

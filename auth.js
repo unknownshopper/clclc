@@ -94,6 +94,87 @@ function verificarAutenticacion() {
     }
 }
 
+// ===== FUNCIONES DE CONTROL DE ACCESO POR ROL =====
+
+// Función para aplicar restricciones basadas en el rol del usuario
+function aplicarRestriccionesPorRol() {
+    if (!usuarioActual) return;
+    
+    const rol = usuarioActual.rol;
+    
+    // Ocultar/mostrar botones según el rol
+    const btnNuevaEvaluacion = document.querySelector('[onclick="abrirModalNuevaEvaluacion()"]');
+    const botonesEditar = document.querySelectorAll('.btn-edit, .btn-editar');
+    const botonesEliminar = document.querySelectorAll('.btn-delete, .btn-eliminar');
+    
+    if (rol === 'admin') {
+        // Admin puede hacer todo
+        if (btnNuevaEvaluacion) btnNuevaEvaluacion.style.display = 'inline-block';
+        botonesEditar.forEach(btn => btn.style.display = 'inline-flex');
+        botonesEliminar.forEach(btn => btn.style.display = 'inline-flex');
+    } else {
+        // Otros roles no pueden crear, editar o eliminar
+        if (btnNuevaEvaluacion) btnNuevaEvaluacion.style.display = 'none';
+        botonesEditar.forEach(btn => btn.style.display = 'none');
+        botonesEliminar.forEach(btn => btn.style.display = 'none');
+    }
+    
+    console.log(`Restricciones aplicadas para rol: ${rol}`);
+    console.log(`Botones editar encontrados: ${botonesEditar.length}`);
+    console.log(`Botones eliminar encontrados: ${botonesEliminar.length}`);
+}
+
+// Función para filtrar datos según el rol del usuario
+function filtrarDatosPorRol(evaluaciones) {
+    if (!usuarioActual) return [];
+    
+    const rol = usuarioActual.rol;
+    
+    switch (rol) {
+        case 'admin':
+            // Admin puede ver todo
+            return evaluaciones;
+            
+        case 'gop':
+            // Gop solo puede ver evaluaciones de GOP
+            return evaluaciones.filter(eval => {
+                return eval.tipo === 'gop' || 
+                       (eval.entidadId && eval.entidadId.toLowerCase().includes('gop'));
+            });
+            
+        case 'franquicias':
+            // Franquicias solo puede ver evaluaciones de franquicias
+            return evaluaciones.filter(eval => eval.tipo === 'franquicia');
+            
+        case 'dg':
+            // DG puede ver sucursales y franquicias
+            return evaluaciones.filter(eval => 
+                eval.tipo === 'sucursal' || eval.tipo === 'franquicia'
+            );
+            
+        default:
+            return [];
+    }
+}
+
+// Función para verificar permisos de acción
+function tienePermiso(accion) {
+    if (!usuarioActual) return false;
+    
+    const rol = usuarioActual.rol;
+    
+    switch (accion) {
+        case 'crear':
+        case 'editar':
+        case 'eliminar':
+            return rol === 'admin';
+        case 'ver':
+            return true; // Todos pueden ver (pero con filtros)
+        default:
+            return false;
+    }
+}
+
 // Event listener para Enter en el formulario de login
 document.addEventListener('DOMContentLoaded', function() {
     const loginModal = document.getElementById('loginModal');

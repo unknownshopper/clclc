@@ -1,6 +1,3 @@
-
-
-
 // Función para cambiar vista
 function cambiarVista(vista) {
     // Actualizar botones de navegación
@@ -179,7 +176,7 @@ async function renderEvaluaciones() {
     container.innerHTML = html;
     
     // Aplicar restricciones de rol después de renderizar
-    aplicarRestriccionesPorRol();
+    // aplicarRestriccionesPorRol();
 }
 
 // Función para abrir modal de nueva evaluación
@@ -953,7 +950,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (autenticado) {
         // Si está autenticado, mostrar dashboard
         cambiarVista('dashboard');
-        aplicarRestriccionesPorRol();
+        // aplicarRestriccionesPorRol();
         console.log(`Sistema inicializado para usuario: ${usuarioActual.nombre} (${usuarioActual.rol})`);
     } else {
         // Si no está autenticado, solo mostrar login
@@ -1084,7 +1081,7 @@ function mostrarEvaluaciones() {
     container.innerHTML = html;
     
     // Aplicar restricciones de rol después de renderizar
-    aplicarRestriccionesPorRol();
+    // aplicarRestriccionesPorRol();
 }
 
 // Función para cargar entidades en el modal de evaluación
@@ -1255,7 +1252,7 @@ function verEvaluacion(entidadId, tipo) {
                     
                     <!-- Leyenda de estados -->
                     <div style="margin-top: 15px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; border: 1px solid #dee2e6;">
-                        <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; font-weight: 600;">
+                        <h4 style="margin: 0; color: #495057; font-size: 14px; font-weight: 600;">
                             <i class="fas fa-info-circle" style="margin-right: 8px; color: #6c757d;"></i>
                             Leyenda de Estados
                         </h4>
@@ -1289,14 +1286,14 @@ function verEvaluacion(entidadId, tipo) {
                                 style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,123,255,0.3);"
                                 onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(0,123,255,0.4)'"
                                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,123,255,0.3)'">
-                            <i class="fas fa-edit" style="margin-right: 8px;"></i>Editar
+                            <i class="fas fa-edit"></i>Editar
                         </button>
                         ` : ''}
                         <button onclick="cerrarModalVerEvaluacion()" 
                                 style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(108,117,125,0.3);"
                                 onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(108,117,125,0.4)'"
                                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(108,117,125,0.3)'">
-                            <i class="fas fa-times" style="margin-right: 8px;"></i>Cerrar
+                            <i class="fas fa-times"></i>Cerrar
                         </button>
                     </div>
                 </div>
@@ -1710,87 +1707,6 @@ function obtenerEvaluacionesDelMes(mes) {
     
     console.log(`Obtenidas ${evaluacionesDelMes.length} evaluaciones para ${mes}`);
     return evaluacionesDelMes;
-}
-
-// ===== FUNCIONES DE CONTROL DE ACCESO POR ROL =====
-
-// Función para aplicar restricciones basadas en el rol del usuario
-function aplicarRestriccionesPorRol() {
-    if (!usuarioActual) return;
-    
-    const rol = usuarioActual.rol;
-    
-    // Ocultar/mostrar botones según el rol
-    const btnNuevaEvaluacion = document.querySelector('[onclick="abrirModalNuevaEvaluacion()"]');
-    const botonesEditar = document.querySelectorAll('.btn-edit, .btn-editar');
-    const botonesEliminar = document.querySelectorAll('.btn-delete, .btn-eliminar');
-    
-    if (rol === 'admin') {
-        // Admin puede hacer todo
-        if (btnNuevaEvaluacion) btnNuevaEvaluacion.style.display = 'inline-block';
-        botonesEditar.forEach(btn => btn.style.display = 'inline-flex');
-        botonesEliminar.forEach(btn => btn.style.display = 'inline-flex');
-    } else {
-        // Otros roles no pueden crear, editar o eliminar
-        if (btnNuevaEvaluacion) btnNuevaEvaluacion.style.display = 'none';
-        botonesEditar.forEach(btn => btn.style.display = 'none');
-        botonesEliminar.forEach(btn => btn.style.display = 'none');
-    }
-    
-    console.log(`Restricciones aplicadas para rol: ${rol}`);
-    console.log(`Botones editar encontrados: ${botonesEditar.length}`);
-    console.log(`Botones eliminar encontrados: ${botonesEliminar.length}`);
-}
-
-// Función para filtrar datos según el rol del usuario
-function filtrarDatosPorRol(evaluaciones) {
-    if (!usuarioActual) return [];
-    
-    const rol = usuarioActual.rol;
-    
-    switch (rol) {
-        case 'admin':
-            // Admin puede ver todo
-            return evaluaciones;
-            
-        case 'gop':
-            // Gop solo puede ver evaluaciones de GOP
-            return evaluaciones.filter(eval => {
-                return eval.tipo === 'gop' || 
-                       (eval.entidadId && eval.entidadId.toLowerCase().includes('gop'));
-            });
-            
-        case 'franquicias':
-            // Franquicias solo puede ver evaluaciones de franquicias
-            return evaluaciones.filter(eval => eval.tipo === 'franquicia');
-            
-        case 'dg':
-            // DG puede ver sucursales y franquicias
-            return evaluaciones.filter(eval => 
-                eval.tipo === 'sucursal' || eval.tipo === 'franquicia'
-            );
-            
-        default:
-            return [];
-    }
-}
-
-// Función para verificar permisos de acción
-function tienePermiso(accion) {
-    if (!usuarioActual) return false;
-    
-    const rol = usuarioActual.rol;
-    
-    switch (accion) {
-        case 'crear':
-        case 'editar':
-        case 'eliminar':
-            return rol === 'admin';
-        case 'ver':
-            return true; // Todos pueden ver (pero con filtros)
-        default:
-            return false;
-    }
 }
 
 // Función para validar que los botones de acción funcionen correctamente
