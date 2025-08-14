@@ -360,7 +360,7 @@ function abrirModalEvaluacionCompetencia(competidorId = null) {
         return;
     }
     
-    // Usar el modal existente del sistema pero adaptado para competencia
+    // Usar el modal existente del sistema
     const modal = document.getElementById('modal-nueva-evaluacion');
     const selectEntidad = document.getElementById('select-entidad-evaluacion');
     const parametrosContainer = document.getElementById('parametros-evaluacion-container');
@@ -390,33 +390,15 @@ function abrirModalEvaluacionCompetencia(competidorId = null) {
         modalTitle.textContent = `Evaluar Competencia - ${competidor.nombre}`;
     }
     
-    // Cargar parámetros para competencia
-    cargarParametrosCompetencia(competidorId);
+    // Cargar parámetros usando el formato de cafeterías
+    cargarParametrosParaCompetencia(competidorId);
     
     // Mostrar modal
     modal.style.display = 'flex';
 }
 
-// Función para ver evaluación de competencia
-function verEvaluacionCompetencia(competidorId) {
-    console.log('Ver evaluación de competencia:', competidorId);
-    alert('Funcionalidad de visualización en desarrollo');
-}
-
-// Función para editar competidor
-function editarCompetidor(competidorId) {
-    console.log('Editar competidor:', competidorId);
-    alert('Funcionalidad de edición en desarrollo');
-}
-
-// Función para eliminar evaluación de competencia
-function eliminarEvaluacionCompetencia(competidorId) {
-    console.log('Eliminar evaluación de competencia:', competidorId);
-    alert('Funcionalidad de eliminación en desarrollo');
-}
-
-// Función para cargar parámetros de competencia en el modal
-function cargarParametrosCompetencia(competidorId) {
+// Función para cargar parámetros usando el formato de cafeterías
+function cargarParametrosParaCompetencia(competidorId) {
     const parametrosContainer = document.getElementById('parametros-evaluacion-container');
     const totalPuntosDiv = document.getElementById('total-puntos-evaluacion');
     const btnGuardar = document.getElementById('btn-guardar-evaluacion');
@@ -428,7 +410,7 @@ function cargarParametrosCompetencia(competidorId) {
     
     console.log(`Cargando parámetros para competencia: ${competidorId}`);
     
-    // Obtener parámetros aplicables para competencia
+    // Obtener parámetros aplicables (usar todos los parámetros para competencia)
     let parametrosAplicables = window.parametros ? window.parametros.slice() : [];
     
     // Aplicar exclusiones específicas para competencia si existen
@@ -440,10 +422,10 @@ function cargarParametrosCompetencia(competidorId) {
     
     console.log(`Parámetros aplicables para competencia: ${parametrosAplicables.length}`);
     
-    // Generar formulario de parámetros
+    // Usar exactamente el mismo formato que el sistema de cafeterías
     let html = '<div style="max-height: 400px; overflow-y: auto; margin: 10px 0;">';
     
-    // Agregar botón "Seleccionar Todo" al inicio
+    // Agregar botón "Seleccionar Todo" igual que en cafeterías
     html += `
         <div style="margin-bottom: 15px; padding: 10px; background: #f0f8ff; border: 1px solid #0077cc; border-radius: 5px; text-align: center; position: relative; cursor: help;" 
                title="Marcar/desmarcar todos los parámetros">
@@ -457,7 +439,7 @@ function cargarParametrosCompetencia(competidorId) {
         </div>
     `;
     
-    // Agrupar por categoría
+    // Agrupar por categoría igual que en cafeterías
     const categorias = {};
     parametrosAplicables.forEach(param => {
         if (!categorias[param.categoriaId]) {
@@ -511,7 +493,7 @@ function cargarParametrosCompetencia(competidorId) {
     
     parametrosContainer.innerHTML = html;
     
-    // Calcular total inicial
+    // Calcular total inicial usando la función del sistema
     if (typeof actualizarTotalPuntos === 'function') {
         actualizarTotalPuntos();
     }
@@ -520,6 +502,24 @@ function cargarParametrosCompetencia(competidorId) {
     btnGuardar.style.display = 'block';
     btnGuardar.textContent = 'Guardar Evaluación de Competencia';
     btnGuardar.onclick = () => guardarEvaluacionCompetencia(competidorId);
+}
+
+// Función para ver evaluación de competencia
+function verEvaluacionCompetencia(competidorId) {
+    console.log('Ver evaluación de competencia:', competidorId);
+    alert('Funcionalidad de visualización en desarrollo');
+}
+
+// Función para editar competidor
+function editarCompetidor(competidorId) {
+    console.log('Editar competidor:', competidorId);
+    alert('Funcionalidad de edición en desarrollo');
+}
+
+// Función para eliminar evaluación de competencia
+function eliminarEvaluacionCompetencia(competidorId) {
+    console.log('Eliminar evaluación de competencia:', competidorId);
+    alert('Funcionalidad de eliminación en desarrollo');
 }
 
 // Función para guardar evaluación de competencia
