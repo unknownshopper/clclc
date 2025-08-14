@@ -129,30 +129,36 @@ function filtrarDatosPorRol(evaluaciones) {
     if (!usuarioActual) return [];
     
     const rol = usuarioActual.rol;
+    console.log(`Filtrando datos para rol: ${rol}, evaluaciones totales: ${evaluaciones.length}`);
     
     switch (rol) {
         case 'admin':
             // Admin puede ver todo
+            console.log('Admin: mostrando todas las evaluaciones');
             return evaluaciones;
             
         case 'gop':
-            // Gop solo puede ver evaluaciones de GOP
-            return evaluaciones.filter(eval => {
-                return eval.tipo === 'gop' || 
-                       (eval.entidadId && eval.entidadId.toLowerCase().includes('gop'));
-            });
+            // GOP puede ver evaluaciones de sucursales (no existe tipo 'gop')
+            const evaluacionesGop = evaluaciones.filter(eval => eval.tipo === 'sucursal');
+            console.log(`GOP: filtrando ${evaluacionesGop.length} sucursales de ${evaluaciones.length} total`);
+            return evaluacionesGop;
             
         case 'franquicias':
             // Franquicias solo puede ver evaluaciones de franquicias
-            return evaluaciones.filter(eval => eval.tipo === 'franquicia');
+            const evaluacionesFranquicias = evaluaciones.filter(eval => eval.tipo === 'franquicia');
+            console.log(`Franquicias: filtrando ${evaluacionesFranquicias.length} franquicias de ${evaluaciones.length} total`);
+            return evaluacionesFranquicias;
             
         case 'dg':
             // DG puede ver sucursales y franquicias
-            return evaluaciones.filter(eval => 
+            const evaluacionesDg = evaluaciones.filter(eval => 
                 eval.tipo === 'sucursal' || eval.tipo === 'franquicia'
             );
+            console.log(`DG: filtrando ${evaluacionesDg.length} evaluaciones (sucursales + franquicias) de ${evaluaciones.length} total`);
+            return evaluacionesDg;
             
         default:
+            console.log(`Rol desconocido: ${rol}, no se muestran datos`);
             return [];
     }
 }
