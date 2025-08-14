@@ -115,7 +115,8 @@ window.mesSeleccionado = '';
 window.vistaActual = 'dashboard';
 window.evaluaciones = {
     sucursales: {},
-    franquicias: {}
+    franquicias: {},
+    competencia: {}
 };
 
 // Función para obtener el mes anterior
@@ -361,10 +362,13 @@ function poblarSelectorMes() {
             renderEvaluaciones();
         } else if (window.vistaActual === 'graficas') {
             renderGraficas();
+        } else if (window.vistaActual === 'competencia') {
+            renderCompetencia();
         }
         
         // Siempre actualizar evaluaciones para que los datos estén listos
         renderEvaluaciones();
+        
     });
 }
 
@@ -704,6 +708,9 @@ function cambiarVista(vista) {
             break;
         case 'graficas':
             renderGraficas();
+            break;
+        case 'competencia':
+            renderCompetencia();
             break;
     }
 }
@@ -1135,6 +1142,11 @@ async function guardarEvaluacion(entidadValue) {
                 window.evaluaciones.franquicias[entidadId] = {};
             }
             window.evaluaciones.franquicias[entidadId][window.mesSeleccionado] = evaluacion;
+        } else if (tipo === 'competencia') {
+            if (!window.evaluaciones.competencia[entidadId]) {
+                window.evaluaciones.competencia[entidadId] = {};
+            }
+            window.evaluaciones.competencia[entidadId][window.mesSeleccionado] = evaluacion;
         }
         
         // Cerrar modal
@@ -1149,6 +1161,8 @@ async function guardarEvaluacion(entidadValue) {
             renderEvaluaciones();
         } else if (window.vistaActual === 'graficas') {
             renderGraficas();
+        } else if (window.vistaActual === 'competencia') {
+            renderCompetencia();
         }
         
         // También actualizar la sección de evaluaciones para mostrar la nueva evaluación
@@ -1678,7 +1692,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Inicializar estructura de evaluaciones si no existe
     if (!window.evaluaciones) {
-        window.evaluaciones = { sucursales: {}, franquicias: {} };
+        window.evaluaciones = { sucursales: {}, franquicias: {}, competencia: {} };
     }
     
     // Cargar evaluaciones desde Firebase primero
@@ -2325,6 +2339,52 @@ function obtenerEvaluacionesDelMes(mes) {
                         tipo: 'franquicia',
                         entidad: franquicia.nombre,
                         entidadId: franquiciaId,
+                        kpi: kpiPorcentaje / 100, // Guardar como decimal para consistencia
+                        estado: kpiPorcentaje >= 95 ? 'Excelente' : kpiPorcentaje >= 90 ? 'Bueno' : 'Necesita Mejora',
+                        fecha: fechaFormateada,
+                        evaluacion: evaluacion
+                    });
+                }
+            }
+        });
+    }
+    
+    // Recopilar evaluaciones de competencia
+    if (window.evaluaciones.competencia) {
+        Object.keys(window.evaluaciones.competencia).forEach(competenciaId => {
+            const evaluacion = window.evaluaciones.competencia[competenciaId][mes];
+            if (evaluacion) {
+                const competencia = window.competencias?.find(c => c.id === competenciaId);
+                if (competencia) {
+                    // Calcular KPI directamente de los totales almacenados
+                    const totalObtenido = evaluacion.totalObtenido || 0;
+                    const totalMaximo = evaluacion.totalMaximo || 0;
+                    const kpiPorcentaje = totalMaximo > 0 ? 
+                        Math.round((totalObtenido / totalMaximo) * 100) : 0;
+                    
+                    // Obtener fecha de created_at o fechaCreacion
+                    let fechaFormateada = 'N/A';
+                    const fechaSource = evaluacion.created_at || evaluacion.fechaCreacion;
+                    if (fechaSource) {
+                        try {
+                            const fecha = new Date(fechaSource);
+                            if (!isNaN(fecha.getTime())) {
+                                fechaFormateada = fecha.toLocaleDateString('es-ES', {
+                                    day: '2-digit',
+                                    month: '2-digit', 
+                                    year: 'numeric'
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Error formateando fecha:', error);
+                            fechaFormateada = String(fechaSource);
+                        }
+                    }
+                    
+                    evaluacionesDelMes.push({
+                        tipo: 'competencia',
+                        entidad: competencia.nombre,
+                        entidadId: competenciaId,
                         kpi: kpiPorcentaje / 100, // Guardar como decimal para consistencia
                         estado: kpiPorcentaje >= 95 ? 'Excelente' : kpiPorcentaje >= 90 ? 'Bueno' : 'Necesita Mejora',
                         fecha: fechaFormateada,
