@@ -34,8 +34,6 @@ function iniciarSesion() {
         
         // Recargar dashboard con datos filtrados
         cambiarVista('dashboard');
-        
-        console.log(`Usuario ${usuario.nombre} (${usuario.rol}) ha iniciado sesión`);
     } else {
         mostrarErrorLogin('Email o contraseña incorrectos');
     }
@@ -75,8 +73,6 @@ function cerrarSesion() {
     document.getElementById('loginEmail').value = '';
     document.getElementById('loginPassword').value = '';
     document.getElementById('loginError').style.display = 'none';
-    
-    console.log('Sesión cerrada');
 }
 
 // Función para verificar si el usuario está autenticado
@@ -613,7 +609,7 @@ function renderDashboard() {
                 </p>
                 <div style="display: grid; gap: 10px;">
         `;
-
+        
         entidadesAtencion.forEach((entidad) => {
             const kpiPorcentaje = (entidad.kpi * 100);
             const prioridad = kpiPorcentaje < 90 ? 'alta' : 'media';
@@ -1895,7 +1891,7 @@ function cargarEntidadesEvaluacion() {
     const selectEntidad = document.getElementById('entidad-evaluacion');
     if (!selectEntidad) return;
     
-    selectEntidad.innerHTML = '<option value="">Seleccione una entidad...</option>';
+    selectEntidad.innerHTML = '<option value="">Seleccione una opción...</option>';
     
     if (!usuarioActual) {
         console.log('Usuario no autenticado, no se cargan entidades');
@@ -1946,8 +1942,6 @@ function cargarEntidadesEvaluacion() {
 
 // Función para ver una evaluación
 function verEvaluacion(entidadId, tipo) {
-    console.log(`Ver evaluación: ${entidadId} (${tipo})`);
-    
     const evaluacion = obtenerEvaluacion(entidadId, tipo, window.mesSeleccionado);
     if (!evaluacion) {
         alert('Evaluación no encontrada');
@@ -1961,77 +1955,174 @@ function verEvaluacion(entidadId, tipo) {
     const nombreEntidad = entidad ? entidad.nombre : entidadId;
     
     // Crear modal para mostrar detalles de la evaluación
-    const kpi = calcularPorcentajeEvaluacion(entidadId, tipo, evaluacion);
+    const totalObtenido = evaluacion.totalObtenido || 0;
+    const totalMaximo = evaluacion.totalMaximo || 0;
+    const kpi = totalMaximo > 0 ? Math.round((totalObtenido / totalMaximo) * 100) : 0;
     const estado = kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita Mejora';
     
+    console.log(`Ver evaluación: ${entidadId} (${tipo})`);
+    console.log(`Total obtenido: ${totalObtenido}, Total máximo: ${totalMaximo}, KPI: ${kpi}%`);
+    
     let detallesHtml = `
-        <div class="modal" id="modalVerEvaluacion" style="display: block; z-index: 10001;">
-            <div class="modal-content" style="max-width: 800px;">
-                <div class="modal-header">
-                    <h2><i class="fas fa-eye"></i> Detalles de Evaluación</h2>
-                    <button onclick="cerrarModalVerEvaluacion()" class="btn-close">&times;</button>
+        <div class="modal" id="modalVerEvaluacion" style="display: block; z-index: 10001; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); overflow-y: auto;">
+            <div class="modal-content" style="max-width: 800px; margin: 50px auto; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                <div class="modal-header" style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin: 0; color: #333;"><i class="fas fa-eye"></i> Detalles de Evaluación</h2>
+                    <button onclick="cerrarModalVerEvaluacion()" class="btn-close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" style="padding: 20px;">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                         <div>
-                            <h3>Información General</h3>
+                            <h3 style="color: #555; margin-bottom: 15px;">Información General</h3>
                             <p><strong>Entidad:</strong> ${entidad.nombre}</p>
                             <p><strong>Tipo:</strong> ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}</p>
                             <p><strong>Mes:</strong> ${formatearMesLegible(window.mesSeleccionado)}</p>
-                            <p><strong>Fecha:</strong> ${evaluacion.fechaCreacion || 'N/A'}</p>
+                            <p><strong>Fecha:</strong> ${evaluacion.fechaCreacion || evaluacion.created_at || new Date().toLocaleDateString('es-ES')}</p>
                         </div>
                         <div>
-                            <h3>Resultados</h3>
-                            <p><strong>KPI:</strong> <span style="color: ${kpi >= 95 ? '#28a745' : kpi >= 90 ? '#ffc107' : '#dc3545'}; font-weight: bold;">${kpi.toFixed(1)}%</span></p>
+                            <h3 style="color: #555; margin-bottom: 15px;">Resultados</h3>
+                            <p><strong>KPI:</strong> <span style="color: ${kpi >= 95 ? '#28a745' : kpi >= 90 ? '#ffc107' : '#dc3545'}; font-weight: bold; font-size: 18px;">${kpi.toFixed(1)}%</span></p>
                             <p><strong>Estado:</strong> <span style="color: ${kpi >= 95 ? '#28a745' : kpi >= 90 ? '#ffc107' : '#dc3545'}; font-weight: bold;">${estado}</span></p>
                             <p><strong>Total Obtenido:</strong> ${evaluacion.totalObtenido || 0}</p>
                             <p><strong>Total Máximo:</strong> ${evaluacion.totalMaximo || 0}</p>
                         </div>
                     </div>
                     
-                    <h3>Parámetros Evaluados</h3>
-                    <div style="max-height: 400px; overflow-y: auto;">
+                    <h3 style="color: #555; margin-bottom: 15px;">Parámetros Evaluados</h3>
+                    <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
                         <table style="width: 100%; border-collapse: collapse;">
                             <thead>
-                                <tr style="background: #f8f9fa;">
-                                    <th style="padding: 8px; border: 1px solid #ddd;">Parámetro</th>
-                                    <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Valor</th>
-                                    <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Máximo</th>
+                                <tr style="background-color: #f5f5f5;">
+                                    <th style="padding: 15px 12px; border-bottom: 2px solid #ddd; text-align: left; font-weight: 600;">Parámetro</th>
+                                    <th style="padding: 15px 12px; border-bottom: 2px solid #ddd; text-align: center; font-weight: 600;">Valor</th>
+                                    <th style="padding: 15px 12px; border-bottom: 2px solid #ddd; text-align: center; font-weight: 600;">Máximo</th>
+                                    <th style="padding: 15px 12px; border-bottom: 2px solid #ddd; text-align: center; font-weight: 600;">Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
     `;
     
-    if (evaluacion.parametros) {
-        Object.keys(evaluacion.parametros).forEach(parametroId => {
-            const valor = evaluacion.parametros[parametroId];
-            const parametro = window.parametros?.find(p => p.id === parametroId);
-            const nombre = parametro ? parametro.nombre : parametroId;
-            const maximo = parametro ? parametro.peso : 'N/A';            
-            detallesHtml += `
-                <tr>
-                    <td style="padding: 8px; border: 1px solid #ddd;">${nombre}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${valor}</td>
-                    <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${maximo}</td>
-                </tr>
-            `;
-        });
-    }
+    Object.keys(evaluacion.parametros).forEach(parametroId => {
+        const valor = evaluacion.parametros[parametroId];
+        const parametro = window.parametros?.find(p => p.id === parametroId);
+        const nombre = parametro ? parametro.nombre : parametroId;
+        const maximo = parametro ? parametro.peso : 'N/A';
+        
+        // Determinar estado y color
+        let estadoIcon, estadoColor, estadoTexto;
+        if (valor === maximo) {
+            estadoIcon = '✅';
+            estadoColor = '#28a745';
+            estadoTexto = 'Completo';
+        } else if (valor > 0) {
+            estadoIcon = '🟡';
+            estadoColor = '#ffc107';
+            estadoTexto = 'Parcial';
+        } else {
+            estadoIcon = '❌';
+            estadoColor = '#dc3545';
+            estadoTexto = 'No cumple';
+        }
+        
+        detallesHtml += `
+            <tr style="transition: background-color 0.2s ease; border-left: 3px solid ${estadoColor};" 
+                onmouseover="this.style.backgroundColor='#f8f9fa'" 
+                onmouseout="this.style.backgroundColor='white'">
+                <td style="padding: 15px 12px; border-bottom: 1px solid #eee; font-weight: 500;">
+                    ${nombre}
+                </td>
+                <td style="padding: 15px 12px; border-bottom: 1px solid #eee; text-align: center; font-weight: 600; color: ${estadoColor};">
+                    ${valor}
+                </td>
+                <td style="padding: 15px 12px; border-bottom: 1px solid #eee; text-align: center; color: #666;">
+                    ${maximo}
+                </td>
+                <td style="padding: 15px 12px; border-bottom: 1px solid #eee; text-align: center;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span style="font-size: 16px;">${estadoIcon}</span>
+                        <span style="color: ${estadoColor}; font-weight: 600; font-size: 12px;">${estadoTexto}</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
     
     detallesHtml += `
                             </tbody>
                         </table>
                     </div>
+                    
+                    <!-- Leyenda de estados -->
+                    <div style="margin-top: 15px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; border: 1px solid #dee2e6;">
+                        <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; font-weight: 600;">
+                            <i class="fas fa-info-circle" style="margin-right: 8px; color: #6c757d;"></i>
+                            Leyenda de Estados
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; font-size: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 14px;">✅</span>
+                                <span style="color: #28a745; font-weight: 600;">Completo</span>
+                                <span style="color: #6c757d;">- Puntaje máximo obtenido</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 14px;">🟡</span>
+                                <span style="color: #ffc107; font-weight: 600;">Parcial</span>
+                                <span style="color: #6c757d;">- Puntaje parcial obtenido</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 14px;">❌</span>
+                                <span style="color: #dc3545; font-weight: 600;">No cumple</span>
+                                <span style="color: #6c757d;">- Sin puntaje obtenido</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    ${tienePermiso('editar') ? `<button onclick="editarEvaluacion('${entidadId}', '${tipo}')" class="btn btn-primary"><i class="fas fa-edit"></i> Editar</button>` : ''}
-                    <button onclick="cerrarModalVerEvaluacion()" class="btn btn-secondary">Cerrar</button>
+                <div class="modal-footer" style="padding: 20px; border-top: 1px solid #eee; background: #f8f9fa; border-radius: 0 0 8px 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 12px; color: #6c757d;">
+                        <i class="fas fa-calendar-alt" style="margin-right: 5px;"></i>
+                        Evaluación del ${formatearMesLegible(window.mesSeleccionado)}
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        ${tienePermiso('editar') ? `
+                        <button onclick="editarEvaluacion('${entidadId}', '${tipo}')" 
+                                style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,123,255,0.3);"
+                                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(0,123,255,0.4)'"
+                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,123,255,0.3)'">
+                            <i class="fas fa-edit" style="margin-right: 8px;"></i>Editar
+                        </button>
+                        ` : ''}
+                        <button onclick="cerrarModalVerEvaluacion()" 
+                                style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(108,117,125,0.3);"
+                                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(108,117,125,0.4)'"
+                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(108,117,125,0.3)'">
+                            <i class="fas fa-times" style="margin-right: 8px;"></i>Cerrar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     `;
     
+    console.log('Creando modal HTML...');
     document.body.insertAdjacentHTML('beforeend', detallesHtml);
+    
+    // Verificar que el modal se creó y forzar su visibilidad
+    const modal = document.getElementById('modalVerEvaluacion');
+    console.log('Modal creado:', modal);
+    
+    if (modal) {
+        modal.style.display = 'block';
+        modal.style.zIndex = '99999';
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        console.log('Modal forzado a ser visible');
+    } else {
+        console.error('Modal no se pudo crear');
+    }
 }
 
 // Función para cerrar modal de ver evaluación
@@ -2052,10 +2143,11 @@ function editarEvaluacion(entidadId, tipo) {
     console.log(`Editar evaluación: ${entidadId} (${tipo})`);
     
     // Buscar la evaluación existente
-    const tipoEntidad = tipo === 'sucursal' ? 'sucursales' : 'franquicias';
-    const evaluacionExistente = window.evaluaciones?.[tipoEntidad]?.[entidadId]?.[window.mesSeleccionado];
+    const tipoEntidad = tipo === 'sucursal' ? 
+        window.evaluaciones?.sucursales?.[entidadId]?.[window.mesSeleccionado]
+        : window.evaluaciones?.franquicias?.[entidadId]?.[window.mesSeleccionado];
     
-    if (!evaluacionExistente) {
+    if (!tipoEntidad) {
         alert('No se encontró la evaluación para editar');
         return;
     }
@@ -2071,7 +2163,7 @@ function editarEvaluacion(entidadId, tipo) {
         entidadId: entidadId,
         tipo: tipo,
         mes: window.mesSeleccionado,
-        datosOriginales: { ...evaluacionExistente },
+        datosOriginales: { ...tipoEntidad },
         entidadInfo: entidadInfo
     };
     
@@ -2101,7 +2193,7 @@ function editarEvaluacion(entidadId, tipo) {
     
     // Esperar un poco para que se carguen los parámetros y luego pre-llenar los valores
     setTimeout(() => {
-        precargarValoresEvaluacion(evaluacionExistente.parametros);
+        precargarValoresEvaluacion(tipoEntidad.parametros);
         
         // Cambiar el texto del botón
         document.getElementById('btn-guardar-evaluacion').textContent = 'Actualizar Evaluación';
@@ -2185,13 +2277,13 @@ function verVideo(entidadId, tipo) {
     
     // Crear modal para mostrar video
     const videoHtml = `
-        <div class="modal" id="modalVideo" style="display: block; z-index: 10001;">
-            <div class="modal-content" style="max-width: 900px;">
-                <div class="modal-header">
-                    <h2><i class="fas fa-video"></i> Video de Evaluación - ${nombreEntidad}</h2>
-                    <button onclick="cerrarModalVideo()" class="btn-close">&times;</button>
+        <div class="modal" id="modalVideo" style="display: block; z-index: 10001; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); overflow-y: auto;">
+            <div class="modal-content" style="max-width: 900px; margin: 50px auto; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                <div class="modal-header" style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin: 0; color: #333;"><i class="fas fa-video"></i> Video de Evaluación - ${nombreEntidad}</h2>
+                    <button onclick="cerrarModalVideo()" class="btn-close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" style="padding: 20px;">
                     <div style="text-align: center; padding: 20px;">
                         <p style="margin-bottom: 20px; color: #666;">
                             Video de evaluación para <strong>${nombreEntidad}</strong> - ${formatearMesLegible(window.mesSeleccionado)}
@@ -2245,7 +2337,24 @@ function subirVideo(entidadId, tipo) {
 
 // Función auxiliar para obtener una evaluación específica
 function obtenerEvaluacion(entidadId, tipo, mes) {
-    return window.evaluaciones?.[tipo + 's']?.[entidadId]?.[mes];
+    // Mapear tipos correctamente a las estructuras de datos
+    let tipoEstructura;
+    switch(tipo) {
+        case 'sucursal':
+            tipoEstructura = 'sucursales';
+            break;
+        case 'franquicia':
+            tipoEstructura = 'franquicias';
+            break;
+        case 'competencia':
+            tipoEstructura = 'competencia';
+            break;
+        default:
+            console.error('Tipo de entidad no reconocido:', tipo);
+            return null;
+    }
+    
+    return window.evaluaciones?.[tipoEstructura]?.[entidadId]?.[mes];
 }
 
 // Función para obtener evaluaciones de un mes específico
