@@ -930,9 +930,50 @@ footer p {
 }
 
 /* Show on hover */
-.matriz-tooltip:hover .matriz-tooltip-bubble {
+.matriz-table td:hover .matriz-tooltip-bubble,
+.matriz-table th:hover .matriz-tooltip-bubble {
   display: block;
 }
 
 /* Ensure tooltips overlay in table */
 .matriz-table td, .matriz-table th { position: relative; }
+
+/* ===== Responsive Matriz Wrapper & Table ===== */
+.matriz-wrapper {
+  overflow: auto; /* both axes if needed */
+  max-width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  -webkit-overflow-scrolling: touch; /* smooth on iOS */
+}
+
+.matriz-table {
+  width: max-content; /* expand to content width */
+  min-width: 100%; /* never smaller than container */
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+/* Parameter header cells more compact on small screens */
+.matriz-table th.param-th { min-width: 56px; }
+
+@media (max-width: 992px) {
+  .matriz-table { font-size: 11px; }
+  .matriz-table th.param-th { min-width: 50px; }
+}
+
+@media (max-width: 768px) {
+  .matriz-table { font-size: 10px; }
+  .matriz-table th.param-th { min-width: 44px; }
+}
+
+/* Maintain tooltip layering over sticky cells */
+.matriz-table td, .matriz-table th { position: relative; z-index: 1; }
+
+/* Optional: subtle shadow for sticky first columns when scrolled */
+.matriz-wrapper .matriz-table th[style*="left:"],
+.matriz-wrapper .matriz-table td[style*="left:"] {
+  box-shadow: 2px 0 4px rgba(0,0,0,0.06);
+}

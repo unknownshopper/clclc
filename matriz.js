@@ -108,8 +108,8 @@ function renderMatrizCompleta() {
     
     // Crear tabla de matriz con scroll horizontal
     html += `
-        <div style="overflow-x: auto; width: 100vw; margin-left: calc(-50vw + 50%); border: 1px solid #ddd; border-radius: 8px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <table class="matriz-table" style="width: max-content; min-width: 100%; border-collapse: collapse; font-size: 12px;">
+        <div class="matriz-wrapper">
+            <table class="matriz-table">
                 <thead>
                     <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); position: sticky; top: 0; z-index: 10;">
                         <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; color: #495057; min-width: 150px; position: sticky; left: 0; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">Entidad</th>
@@ -120,7 +120,7 @@ function renderMatrizCompleta() {
     // Agregar columnas para TODOS los parámetros (32)
     window.parametros.forEach((param, index) => {
         html += `
-            <th style="border: 1px solid #ddd; padding: 8px 4px; text-align: center; font-weight: 600; color: #495057; min-width: 60px; writing-mode: vertical-rl; text-orientation: mixed; font-size: 10px; height: 120px;">
+            <th class="param-th" style="border: 1px solid #ddd; padding: 8px 4px; text-align: center; font-weight: 600; color: #495057; min-width: 48px; writing-mode: vertical-rl; text-orientation: mixed; font-size: 10px; height: 100px;">
                 <div class="matriz-tooltip" style="display: block;">
                     <div style="transform: rotate(180deg);">${param.nombre}</div>
                     <div class="matriz-tooltip-bubble">
