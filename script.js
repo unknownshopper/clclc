@@ -110,7 +110,9 @@ async function renderEvaluaciones() {
             const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
             
             // Formatear tipo para mostrar
-            const tipoMostrar = evaluacion.tipo === 'sucursal' ? 'Sucursal' : 'Franquicia';
+            let tipoMostrar = 'Sucursal';
+            if (evaluacion.tipo === 'franquicia') tipoMostrar = 'Franquicia';
+            else if (evaluacion.tipo === 'competencia') tipoMostrar = 'Competencia';
             // Estado de publicación
             const estadoPublicacion = evaluacion.estadoPublicacion || 'borrador';
             const esBorrador = estadoPublicacion === 'borrador';
@@ -118,7 +120,7 @@ async function renderEvaluaciones() {
             html += `
                 <tr style="background: ${bgColor};">
                     <td style="padding: 12px; border-bottom: 1px solid #ddd;">
-                        <span style="background: ${evaluacion.tipo === 'sucursal' ? '#007bff' : '#6f42c1'}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">
+                        <span style="background: ${evaluacion.tipo === 'sucursal' ? '#007bff' : evaluacion.tipo === 'franquicia' ? '#6f42c1' : '#dc3545'}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-right: 10px;">
                             ${tipoMostrar}
                         </span>
                     </td>
@@ -163,8 +165,7 @@ async function renderEvaluaciones() {
                                 <i class="fas fa-trash"></i>
                             </button>
                             ` : ''}
-                            ${tienePermiso('publicar') && esBorrador ? `
-                            <button onclick="publicarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
+                            ${tienePermiso('publicar') && esBorrador && existeEnFirebase(evaluacion.entidadId, evaluacion.tipo) ? `                            <button onclick="publicarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
                                     class="btn-action btn-publish" 
                                     title="Publicar evaluación">
                                 <i class="fas fa-share"></i>
@@ -443,7 +444,7 @@ async function guardarEvaluacion(entidadValue) {
     });
     
     // Calcular KPI
-    const kpi = totalMaximo > 0 ? Math.round((totalObtenido / totalMaximo) * 100) : 0;
+    const kpi = totalMaximo > 0 ? (totalObtenido / totalMaximo) : 0;
     
     // Obtener información de la entidad
     const entidadInfo = tipo === 'sucursal' ? 
@@ -460,35 +461,66 @@ async function guardarEvaluacion(entidadValue) {
         totalObtenido: totalObtenido,
         totalMaximo: totalMaximo,
         kpi: kpi,
-        estado: kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita mejora',
-        estadoPublicacion: 'borrador', // Todas las evaluaciones nuevas inician como borrador
+        estado: (kpi * 100) >= 95 ? 'Excelente' : (kpi * 100) >= 90 ? 'Bueno' : 'Necesita mejora',
+        estadoPublicacion: 'borrador',
         fechaPublicacion: null
     };
     
     try {
-        // Guardar en Firebase
-        if (window.firebaseDB) {
-            const firebaseId = await window.firebaseDB.guardarEvaluacion(evaluacionData);
-            evaluacionData.firebaseId = firebaseId;
-            console.log('Evaluación guardada en Firebase exitosamente');
+        // Verificar si estamos en modo edición
+        const esEdicion = window.modoEdicion && window.modoEdicion.activo;
+        
+        if (esEdicion) {
+            console.log(`Actualizando evaluación existente: ${entidadId} (${tipo})`);
+            
+            // Para edición, eliminar la evaluación existente y crear una nueva
+            if (window.firebaseDB) {
+                // Eliminar la evaluación existente
+                await window.firebaseDB.eliminarEvaluacion(entidadId, tipo, window.mesSeleccionado);
+                
+                // Crear la nueva evaluación
+                const firebaseId = await window.firebaseDB.guardarEvaluacion(evaluacionData);
+                evaluacionData.firebaseId = firebaseId;
+                console.log('Evaluación actualizada en Firebase exitosamente');
+            }
+        } else {
+            console.log(`Creando nueva evaluación: ${entidadId} (${tipo})`);
+            
+            // Guardar nueva evaluación en Firebase
+            if (window.firebaseDB) {
+                const firebaseId = await window.firebaseDB.guardarEvaluacion(evaluacionData);
+                evaluacionData.firebaseId = firebaseId;
+                console.log('Evaluación guardada en Firebase exitosamente');
+            }
         }
         
-        // Guardar también en almacenamiento local como respaldo
+        // Actualizar también en almacenamiento local
+        const evaluacionLocal = {
+            parametros: evaluacion,
+            totalObtenido: totalObtenido,
+            totalMaximo: totalMaximo,
+            kpi: kpi,
+            estado: evaluacionData.estado,
+            estadoPublicacion: evaluacionData.estadoPublicacion,
+            fechaCreacion: new Date().toISOString(),
+            timestamp: Date.now()
+        };
+        
         if (tipo === 'sucursal') {
             if (!window.evaluaciones.sucursales[entidadId]) {
                 window.evaluaciones.sucursales[entidadId] = {};
             }
-            window.evaluaciones.sucursales[entidadId][window.mesSeleccionado] = evaluacion;
+            window.evaluaciones.sucursales[entidadId][window.mesSeleccionado] = evaluacionLocal;
         } else if (tipo === 'franquicia') {
             if (!window.evaluaciones.franquicias[entidadId]) {
                 window.evaluaciones.franquicias[entidadId] = {};
             }
-            window.evaluaciones.franquicias[entidadId][window.mesSeleccionado] = evaluacion;
+            window.evaluaciones.franquicias[entidadId][window.mesSeleccionado] = evaluacionLocal;
         } else if (tipo === 'competencia') {
             if (!window.evaluaciones.competencia[entidadId]) {
                 window.evaluaciones.competencia[entidadId] = {};
             }
-            window.evaluaciones.competencia[entidadId][window.mesSeleccionado] = evaluacion;
+            window.evaluaciones.competencia[entidadId][window.mesSeleccionado] = evaluacionLocal;
         }
         
         // Cerrar modal
@@ -499,8 +531,6 @@ async function guardarEvaluacion(entidadValue) {
             renderDashboard();
         } else if (window.vistaActual === 'matriz') {
             renderMatriz();
-        } else if (window.vistaActual === 'evaluaciones') {
-            renderEvaluaciones();
         } else if (window.vistaActual === 'graficas') {
             renderGraficas();
         } else if (window.vistaActual === 'competencia') {
@@ -511,7 +541,9 @@ async function guardarEvaluacion(entidadValue) {
         renderEvaluaciones();
         
         // Mostrar mensaje de éxito
-        alert(`Evaluación guardada exitosamente para ${entidadInfo?.nombre} - ${formatearMesLegible(window.mesSeleccionado)}\nKPI: ${kpi}% (${evaluacionData.estado})`);
+        const accion = esEdicion ? 'actualizada' : 'guardada';
+        const kpiPorcentaje = Math.round(kpi * 100);
+        alert(`Evaluación ${accion} exitosamente para ${entidadInfo?.nombre} - ${formatearMesLegible(window.mesSeleccionado)}\nKPI: ${kpiPorcentaje}% (${evaluacionData.estado})`);
         
     } catch (error) {
         console.error('Error guardando evaluación:', error);
@@ -574,8 +606,6 @@ function toggleSeleccionarTodo() {
     
     actualizarTotalPuntos();
 }
-
-
 
 // Función para renderizar gráficas
 function renderGraficas() {
@@ -660,45 +690,37 @@ function generarGraficosKPI() {
     
     if (!canvas1 || !canvas2) return;
     
-    // Obtener datos de KPIs
+    // Obtener datos filtrados por rol usando la función existente
+    const evaluacionesFiltradas = filtrarDatosPorRol(obtenerEvaluacionesDelMes(window.mesSeleccionado));
+    
+    // Obtener datos de KPIs de las evaluaciones filtradas
     let datosKPI = [];
     let entidades = [];
+    let metas = [];
     
-    // Recopilar datos de sucursales
-    if (window.sucursales) {
-        window.sucursales.filter(s => s.activa).forEach(sucursal => {
-            const evaluacion = window.evaluaciones?.sucursales?.[sucursal.id]?.[window.mesSeleccionado];
-            if (evaluacion && evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
-                const kpi = evaluacion.totalMaximo > 0 ? 
-                    Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100) : 0;
-                datosKPI.push(kpi);
-                entidades.push(sucursal.nombre);
-            }
-        });
-    }
-    
-    // Recopilar datos de franquicias
-    if (window.franquicias) {
-        window.franquicias.filter(f => f.activa).forEach(franquicia => {
-            const evaluacion = window.evaluaciones?.franquicias?.[franquicia.id]?.[window.mesSeleccionado];
-            if (evaluacion && evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
-                const kpi = evaluacion.totalMaximo > 0 ? 
-                    Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100) : 0;
-                datosKPI.push(kpi);
-                entidades.push(franquicia.nombre);
-            }
-        });
-    }
+    evaluacionesFiltradas.forEach(evaluacion => {
+        if (evaluacion.kpi !== undefined) {
+            const kpiPorcentaje = Math.round(evaluacion.kpi * 100);
+            datosKPI.push(kpiPorcentaje);
+            entidades.push(evaluacion.entidad);
+            metas.push({
+                entidad: evaluacion.entidad,
+                entidadId: evaluacion.entidadId,
+                tipo: evaluacion.tipo, // 'sucursal' | 'franquicia' | 'competencia'
+                evaluacion: evaluacion.evaluacion || null
+            });
+        }
+    });
     
     // Dibujar gráfico de barras simple
-    dibujarGraficoBarras(canvas1, entidades, datosKPI);
+    dibujarGraficoBarras(canvas1, entidades, datosKPI, metas);
     
     // Dibujar gráfico de distribución
     dibujarGraficoDistribucion(canvas2, datosKPI);
 }
 
 // Función para dibujar gráfico de barras
-function dibujarGraficoBarras(canvas, labels, data) {
+function dibujarGraficoBarras(canvas, labels, data, metas = []) {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
@@ -711,12 +733,20 @@ function dibujarGraficoBarras(canvas, labels, data) {
         ctx.font = '16px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('No hay datos para mostrar', width/2, height/2);
+        // Asegurar que no queden tooltips visibles
+        ocultarTooltipGrafica();
+        // Limpia listeners previos
+        canvas.onmousemove = null;
+        canvas.onmouseleave = null;
         return;
     }
     
     const maxValue = Math.max(...data, 100);
     const barWidth = (width - 60) / data.length;
     const maxBarHeight = height - 60;
+    
+    // Guardar rectángulos de barras para hover
+    const barras = [];
     
     // Dibujar barras
     data.forEach((value, index) => {
@@ -731,6 +761,41 @@ function dibujarGraficoBarras(canvas, labels, data) {
         
         ctx.fillStyle = color;
         ctx.fillRect(x, y, barWidth - 5, barHeight);
+        
+        // Calcular parámetros fallidos (valor < peso), excluyendo los excluidos
+        let fallidos = [];
+        const meta = metas[index];
+        if (meta && meta.evaluacion && meta.evaluacion.parametros && Array.isArray(window.parametros)) {
+            try {
+                const tipoLower = (meta.tipo || '').toLowerCase();
+                const excluidos = (window.obtenerParametrosExcluidos ? window.obtenerParametrosExcluidos(meta.entidadId, tipoLower) : []) || [];
+                const excluidosSet = new Set(excluidos);
+                window.parametros.forEach(param => {
+                    // Normalizar id para comparar con excluidos
+                    const idNorm = param.id.toLowerCase().replace(/[-_]/g, '');
+                    if (excluidosSet.has(idNorm)) return; // saltar excluidos
+                    const valor = parseInt(meta.evaluacion.parametros[param.id] ?? 0, 10);
+                    const peso = parseInt(param.peso ?? 0, 10);
+                    if (peso > 0 && valor < peso) {
+                        fallidos.push(param.nombre);
+                    }
+                });
+            } catch (e) {
+                console.warn('No se pudieron calcular parámetros fallidos para', meta?.entidad, e);
+            }
+        }
+        
+        // Registrar barra para detección de hover
+        barras.push({
+            x,
+            y,
+            w: barWidth - 5,
+            h: barHeight,
+            label: labels[index],
+            value,
+            color,
+            fallidos
+        });
         
         // Etiqueta de valor
         ctx.fillStyle = '#333';
@@ -762,6 +827,50 @@ function dibujarGraficoBarras(canvas, labels, data) {
         ctx.textAlign = 'right';
         ctx.fillText(`${i}%`, 25, y + 3);
     }
+
+    // Listeners para tooltip
+    canvas.onmousemove = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        const bar = barras.find(b => mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h);
+        if (bar) {
+            const estado = bar.value >= 95 ? 'Excelente' : bar.value >= 90 ? 'Bueno' : 'Necesita mejora';
+            // Construir listado compacto de parámetros fallidos
+            const totalFallidos = Array.isArray(bar.fallidos) ? bar.fallidos.length : 0;
+            const lista = (bar.fallidos || []).slice(0, 4).join(', ');
+            const resto = totalFallidos > 4 ? ` … (+${totalFallidos - 4})` : '';
+            const html = `
+                <div class="matriz-tooltip-row">
+                    <div class="matriz-tooltip-icon">🏢</div>
+                    <div class="matriz-tooltip-label">Entidad</div>
+                    <div class="matriz-tooltip-value">${bar.label}</div>
+                </div>
+                <div class="matriz-tooltip-row">
+                    <div class="matriz-tooltip-icon">📊</div>
+                    <div class="matriz-tooltip-label">KPI</div>
+                    <div class="matriz-tooltip-value">${bar.value}%</div>
+                </div>
+                <div class="matriz-tooltip-row">
+                    <div class="matriz-tooltip-icon">📈</div>
+                    <div class="matriz-tooltip-label">Estado</div>
+                    <div class="matriz-tooltip-value">${estado}</div>
+                </div>
+                ${totalFallidos > 0 ? `
+                <div class="matriz-tooltip-row">
+                    <div class="matriz-tooltip-icon">❌</div>
+                    <div class="matriz-tooltip-label">Fallidos</div>
+                    <div class="matriz-tooltip-value">${totalFallidos} ${lista ? `— ${lista}${resto}` : ''}</div>
+                </div>` : ''}
+            `;
+            mostrarTooltipGrafica(html, e.clientX, e.clientY);
+        } else {
+            ocultarTooltipGrafica();
+        }
+    };
+    canvas.onmouseleave = () => {
+        ocultarTooltipGrafica();
+    };
 }
 
 // Función para dibujar gráfico de distribución (dona simple)
@@ -777,6 +886,9 @@ function dibujarGraficoDistribucion(canvas, data) {
         ctx.font = '16px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('No hay datos para mostrar', width/2, height/2);
+        ocultarTooltipGrafica();
+        canvas.onmousemove = null;
+        canvas.onmouseleave = null;
         return;
     }
     
@@ -792,8 +904,9 @@ function dibujarGraficoDistribucion(canvas, data) {
     const centerY = height / 2;
     const radius = Math.min(width, height) / 3;
     
-    // Dibujar sectores
+    // Dibujar sectores y registrar arcos para hover
     let startAngle = 0;
+    const sectores = [];
     
     // Alto (Verde)
     if (alto > 0) {
@@ -804,6 +917,7 @@ function dibujarGraficoDistribucion(canvas, data) {
         ctx.arc(centerX, centerY, radius, startAngle, startAngle + angle);
         ctx.closePath();
         ctx.fill();
+        sectores.push({ start: startAngle, end: startAngle + angle, color: '#28a745', label: 'Alto (≥95%)', count: alto, percent: Math.round((alto/total)*100) });
         startAngle += angle;
     }
     
@@ -816,6 +930,7 @@ function dibujarGraficoDistribucion(canvas, data) {
         ctx.arc(centerX, centerY, radius, startAngle, startAngle + angle);
         ctx.closePath();
         ctx.fill();
+        sectores.push({ start: startAngle, end: startAngle + angle, color: '#ffc107', label: 'Medio (90–94%)', count: medio, percent: Math.round((medio/total)*100) });
         startAngle += angle;
     }
     
@@ -828,6 +943,7 @@ function dibujarGraficoDistribucion(canvas, data) {
         ctx.arc(centerX, centerY, radius, startAngle, startAngle + angle);
         ctx.closePath();
         ctx.fill();
+        sectores.push({ start: startAngle, end: startAngle + angle, color: '#dc3545', label: 'Bajo (<90%)', count: bajo, percent: Math.round((bajo/total)*100) });
     }
     
     // Leyenda
@@ -848,6 +964,45 @@ function dibujarGraficoDistribucion(canvas, data) {
     ctx.fillRect(20, height - 20, 15, 15);
     ctx.fillStyle = '#333';
     ctx.fillText(`Bajo (<90%): ${bajo}`, 40, height - 8);
+
+    // Listeners para tooltip del pastel
+    canvas.onmousemove = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        const dx = mx - centerX;
+        const dy = my - centerY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist > radius) { ocultarTooltipGrafica(); return; }
+        let ang = Math.atan2(dy, dx);
+        if (ang < 0) ang += 2*Math.PI;
+        const sector = sectores.find(s => ang >= s.start && ang <= s.end);
+        if (sector) {
+            const html = `
+                <div class="matriz-tooltip-row">
+                    <div class="matriz-tooltip-icon">🧮</div>
+                    <div class="matriz-tooltip-label">Categoría</div>
+                    <div class="matriz-tooltip-value">${sector.label}</div>
+                </div>
+                <div class="matriz-tooltip-row">
+                    <div class="matriz-tooltip-icon">🔢</div>
+                    <div class="matriz-tooltip-label">Cantidad</div>
+                    <div class="matriz-tooltip-value">${sector.count} / ${total}</div>
+                </div>
+                <div class="matriz-tooltip-row">
+                    <div class="matriz-tooltip-icon">📈</div>
+                    <div class="matriz-tooltip-label">Porcentaje</div>
+                    <div class="matriz-tooltip-value">${sector.percent}%</div>
+                </div>
+            `;
+            mostrarTooltipGrafica(html, e.clientX, e.clientY);
+        } else {
+            ocultarTooltipGrafica();
+        }
+    };
+    canvas.onmouseleave = () => {
+        ocultarTooltipGrafica();
+    };
 }
 
 // Función para generar resumen estadístico
@@ -1211,11 +1366,13 @@ function verEvaluacion(entidadId, tipo) {
     // Crear modal para mostrar detalles de la evaluación
     const totalObtenido = evaluacion.totalObtenido || 0;
     const totalMaximo = evaluacion.totalMaximo || 0;
-    const kpi = totalMaximo > 0 ? Math.round((totalObtenido / totalMaximo) * 100) : 0;
-    const estado = kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita Mejora';
+    // Use the stored KPI value for consistency with the table
+    const kpi = evaluacion.kpi ? (evaluacion.kpi * 100) : (totalMaximo > 0 ? (totalObtenido / totalMaximo) * 100 : 0);
+    const estado = kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita mejora';
     
     console.log(`Ver evaluación: ${entidadId} (${tipo})`);
-    console.log(`Total obtenido: ${totalObtenido}, Total máximo: ${totalMaximo}, KPI: ${kpi}%`);
+    console.log(`Total obtenido: ${totalObtenido}, Total máximo: ${totalMaximo}, KPI: ${kpi.toFixed(1)}%`);
+    console.log(`KPI almacenado: ${evaluacion.kpi}, KPI calculado: ${kpi}`);
     
     let detallesHtml = `
         <div class="modal" id="modalVerEvaluacion" style="display: block; z-index: 10001; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); overflow-y: auto;">
@@ -1285,7 +1442,7 @@ function verEvaluacion(entidadId, tipo) {
                 <td style="padding: 15px 12px; border-bottom: 1px solid #eee; font-weight: 500;">
                     ${nombre}
                 </td>
-                <td style="padding: 15px 12px; border-bottom: 1px solid #eee; text-align: center; font-weight: 600; color: ${estadoColor};">
+                <td style="padding: 15px 12px; border-bottom: 1px solid #eee; text-align: center; font-weight: 600; color: ${estadoColor}; font-size: 16px;">
                     ${valor}
                 </td>
                 <td style="padding: 15px 12px; border-bottom: 1px solid #eee; text-align: center; color: #666;">
@@ -1483,7 +1640,10 @@ function eliminarEvaluacion(entidadId, tipo) {
     console.log(`Intentando eliminar: ${entidadId} (${tipo}) del mes ${window.mesSeleccionado}`);
     
     // Determinar el tipo de entidad correctamente
-    const tipoEntidad = tipo === 'sucursal' ? 'sucursales' : 'franquicias';
+    let tipoEntidad = 'franquicias';
+    if (tipo === 'sucursal') tipoEntidad = 'sucursales';
+    else if (tipo === 'franquicia') tipoEntidad = 'franquicias';
+    else if (tipo === 'competencia') tipoEntidad = 'competencia';
     
     // Verificar si existe la evaluación
     const evaluacionExiste = window.evaluaciones?.[tipoEntidad]?.[entidadId]?.[window.mesSeleccionado];
@@ -1674,7 +1834,9 @@ fechaPublicacion: evaluacion.fechaPublicacion,
             const evaluacion = window.evaluaciones.franquicias[franquiciaId][mes];
             if (evaluacion) {
                 const franquicia = window.franquicias?.find(f => f.id === franquiciaId);
-                if (franquicia) {
+                if (franquicia || true) { // Procesar todas las evaluaciones
+                    const nombreFranquicia = franquicia ? franquicia.nombre : franquiciaId;
+                    
                     // Calcular KPI directamente de los totales almacenados
                     const totalObtenido = evaluacion.totalObtenido || 0;
                     const totalMaximo = evaluacion.totalMaximo || 0;
@@ -1702,11 +1864,13 @@ fechaPublicacion: evaluacion.fechaPublicacion,
                     
                     evaluacionesDelMes.push({
                         tipo: 'franquicia',
-                        entidad: franquicia.nombre,
+                        entidad: nombreFranquicia,
                         entidadId: franquiciaId,
-                        kpi: kpiPorcentaje / 100, // Guardar como decimal para consistencia
+                        kpi: kpiPorcentaje / 100,
                         estado: kpiPorcentaje >= 95 ? 'Excelente' : kpiPorcentaje >= 90 ? 'Bueno' : 'Necesita Mejora',
                         fecha: fechaFormateada,
+                        estadoPublicacion: evaluacion.estadoPublicacion || 'borrador',
+                        fechaPublicacion: evaluacion.fechaPublicacion || null,
                         evaluacion: evaluacion
                     });
                 }
@@ -1719,7 +1883,7 @@ fechaPublicacion: evaluacion.fechaPublicacion,
         Object.keys(window.evaluaciones.competencia).forEach(competenciaId => {
             const evaluacion = window.evaluaciones.competencia[competenciaId][mes];
             if (evaluacion) {
-                const competencia = window.competencias?.find(c => c.id === competenciaId);
+                const competencia = window.competencia?.find(c => c.id === competenciaId);
                 if (competencia) {
                     // Calcular KPI directamente de los totales almacenados
                     const totalObtenido = evaluacion.totalObtenido || 0;
@@ -1809,8 +1973,11 @@ function integrarDatosFirebase(evaluacionesFirebase) {
             return;
         }
         
-        // Determinar el tipo de entidad (sucursales o franquicias)
-        const tipoEntidad = tipo === 'sucursal' ? 'sucursales' : 'franquicias';
+        // Determinar el tipo de entidad (sucursales, franquicias o competencia)
+        let tipoEntidad = 'franquicias';
+        if (tipo === 'sucursal') tipoEntidad = 'sucursales';
+        else if (tipo === 'franquicia') tipoEntidad = 'franquicias';
+        else if (tipo === 'competencia') tipoEntidad = 'competencia';
         
         // Inicializar estructura si no existe
         if (!window.evaluaciones[tipoEntidad][entidadId]) {
@@ -1833,6 +2000,19 @@ function integrarDatosFirebase(evaluacionesFirebase) {
     });
     
     console.log('Datos de Firebase integrados exitosamente');
+}
+
+// Función para verificar si una evaluación existe en Firebase
+function existeEnFirebase(entidadId, tipo) {
+    // Lista de franquicias que sabemos que existen en Firebase
+    const franquiciasReales = ['cd-carmen', 'jalpa', 'cunduacan', 'cumuapa', 'dosbocas', 'paraiso', 'cardenas', 'citycenter', 'via2'];
+    
+    if (tipo === 'franquicia') {
+        return franquiciasReales.includes(entidadId);
+    }
+    
+    // Para sucursales, asumimos que todas existen (puedes ajustar si es necesario)
+    return true;
 }
 
 // Función para publicar una evaluación (solo admin)
@@ -1862,7 +2042,11 @@ async function publicarEvaluacion(entidadId, tipo) {
                 console.log('Evaluación publicada en Firebase exitosamente');
                 
                 // También actualizar en estructura local si existe
-                const tipoEntidad = tipo === 'sucursal' ? 'sucursales' : 'franquicias';
+                let tipoEntidad = 'franquicias';
+                if (tipo === 'sucursal') tipoEntidad = 'sucursales';
+                else if (tipo === 'franquicia') tipoEntidad = 'franquicias';
+                else if (tipo === 'competencia') tipoEntidad = 'competencia';
+                
                 if (window.evaluaciones?.[tipoEntidad]?.[entidadId]?.[window.mesSeleccionado]) {
                     window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado].estadoPublicacion = 'publicado';
                     window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado].fechaPublicacion = new Date();
@@ -1907,4 +2091,46 @@ function obtenerEvaluacion(entidadId, tipo, mes) {
     }
     
     return window.evaluaciones?.[tipoEntidad]?.[entidadId]?.[mes];
+}
+
+// ====== Tooltips HTML reutilizables para gráficas (estilo matriz) ======
+function obtenerTooltipGrafica() {
+    if (!window.__tooltipGrafica) {
+        const div = document.createElement('div');
+        div.className = 'matriz-tooltip-bubble';
+        div.style.position = 'fixed';
+        div.style.display = 'none';
+        div.style.pointerEvents = 'none';
+        div.style.bottom = 'auto';
+        div.style.transform = 'none';
+        document.body.appendChild(div);
+        window.__tooltipGrafica = div;
+    }
+    return window.__tooltipGrafica;
+}
+
+function mostrarTooltipGrafica(html, clientX, clientY) {
+    const tt = obtenerTooltipGrafica();
+    tt.innerHTML = html;
+    tt.style.display = 'block';
+    const offset = 12;
+    let left = clientX + offset;
+    let top = clientY + offset;
+    // Evitar desbordes de viewport
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    // Ancho/alto estimados tras setear HTML
+    tt.style.left = '0px';
+    tt.style.top = '0px';
+    const rect = tt.getBoundingClientRect();
+    if (left + rect.width > vw - 8) left = clientX - rect.width - offset;
+    if (top + rect.height > vh - 8) top = clientY - rect.height - offset;
+    tt.style.left = left + 'px';
+    tt.style.top = top + 'px';
+    tt.style.zIndex = 1000;
+}
+
+function ocultarTooltipGrafica() {
+    const tt = obtenerTooltipGrafica();
+    tt.style.display = 'none';
 }

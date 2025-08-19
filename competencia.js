@@ -2,7 +2,7 @@
 // Sistema de evaluación para competidores del mercado
 
 // Datos de competencia
-window.competencia = [
+window.competencia = window.competencia || [
     {
         id: 'cacep',
         nombre: 'CACEP',

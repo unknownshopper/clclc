@@ -35,34 +35,54 @@ function calcularPorcentajeEvaluacion(entidadId, tipo, evaluacion) {
     
     let parametrosAplicables = window.parametros;
     
-    // Aplicar exclusiones si existen
-    if (window.parametrosExcluidosPorSucursal && tipo === 'sucursal' && window.parametrosExcluidosPorSucursal[entidadId]) {
-        const excluidos = window.parametrosExcluidosPorSucursal[entidadId];
-        parametrosAplicables = parametrosAplicables.filter(p => !excluidos.includes(p.nombre));
+    // Obtener parámetros excluidos usando la misma lógica que en matriz.js
+    let parametrosExcluidos = [];
+    if (tipo === 'sucursal' && window.parametrosExcluidosPorSucursal && window.parametrosExcluidosPorSucursal[entidadId]) {
+        parametrosExcluidos = window.parametrosExcluidosPorSucursal[entidadId]
+            .map(nombre => {
+                const param = window.parametros.find(p => 
+                    p.nombre.trim().toLowerCase() === nombre.trim().toLowerCase()
+                );
+                return param ? param.id.toLowerCase().replace(/[-_]/g, '') : null;
+            })
+            .filter(id => id !== null);
+    } else if (tipo === 'franquicia' && window.parametrosExcluidosPorFranquicia && window.parametrosExcluidosPorFranquicia[entidadId]) {
+        parametrosExcluidos = window.parametrosExcluidosPorFranquicia[entidadId]
+            .map(nombre => {
+                const param = window.parametros.find(p => 
+                    p.nombre.trim().toLowerCase() === nombre.trim().toLowerCase()
+                );
+                return param ? param.id.toLowerCase().replace(/[-_]/g, '') : null;
+            })
+            .filter(id => id !== null);
     }
     
-    if (window.parametrosExcluidosPorFranquicia && tipo === 'franquicia' && window.parametrosExcluidosPorFranquicia[entidadId]) {
-        const excluidos = window.parametrosExcluidosPorFranquicia[entidadId];
-        parametrosAplicables = parametrosAplicables.filter(p => !excluidos.includes(p.nombre));
-    }
+    // Filtrar parámetros excluidos
+    parametrosAplicables = parametrosAplicables.filter(param => 
+        !parametrosExcluidos.includes(param.id.toLowerCase().replace(/[-_]/g, ''))
+    );
     
     // Filtrar parámetros que aplican a la entidad
     if (tipo === 'sucursal') {
-        parametrosAplicables = parametrosAplicables.filter(p => 
-            p.aplicaATodas || (p.sucursalesEspecificas && p.sucursalesEspecificas.includes(entidadId))
-        );
+        parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaASucursales && p.aplicaASucursales.includes(entidadId)));
+    } else if (tipo === 'franquicia') {
+        parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaAFranquicias && p.aplicaAFranquicias.includes(entidadId)));
     }
     
-    const puntajeMaximo = parametrosAplicables.reduce((total, param) => total + param.peso, 0);
-    let puntajeObtenido = 0;
+    // Calcular puntaje máximo posible
+    const puntajeMaximo = parametrosAplicables.reduce((total, param) => total + (param.peso || 1), 0);
     
+    if (puntajeMaximo === 0) return 0;
+    
+    // Calcular puntaje obtenido
+    let puntajeObtenido = 0;
     parametrosAplicables.forEach(param => {
-        if (evaluacion[param.id] !== undefined) {
-            puntajeObtenido += parseInt(evaluacion[param.id]) || 0;
+        if (evaluacion.parametros && evaluacion.parametros[param.id] !== undefined) {
+            puntajeObtenido += parseInt(evaluacion.parametros[param.id]) || 0;
         }
     });
     
-    return puntajeMaximo > 0 ? Math.round((puntajeObtenido / puntajeMaximo) * 100) : 0;
+    return Math.round((puntajeObtenido / puntajeMaximo) * 100);
 }
 
 // Función para poblar selector de mes

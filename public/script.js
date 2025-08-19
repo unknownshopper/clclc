@@ -157,6 +157,12 @@ function poblarSelectorMes() {
             renderEvaluaciones();
         } else if (window.vistaActual === 'graficas') {
             renderGraficas();
+        } else if (window.vistaActual === 'competencia') {
+            if (typeof renderCompetencia === 'function') {
+                renderCompetencia();
+            } else {
+                console.warn('renderCompetencia no está disponible. Asegúrate de incluir competencia.js.');
+            }
         }
         
         // Siempre actualizar evaluaciones para que los datos estén listos
@@ -400,6 +406,13 @@ function cambiarVista(vista) {
         case 'graficas':
             renderGraficas();
             break;
+        case 'competencia':
+            if (typeof renderCompetencia === 'function') {
+                renderCompetencia();
+            } else {
+                console.warn('renderCompetencia no está disponible. Asegúrate de incluir competencia.js.');
+            }
+            break;
     }
 }
 
@@ -428,12 +441,11 @@ async function renderEvaluaciones() {
                 const sucursal = window.sucursales?.find(s => s.id === sucursalId);
                 if (sucursal) {
                     const kpi = calcularPorcentajeEvaluacion(sucursalId, 'sucursal', evaluacion);
-                    const estado = kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita Mejora';
                     evaluacionesDelMes.push({
                         tipo: 'Sucursal',
                         entidad: sucursal.nombre,
                         kpi: kpi,
-                        estado: estado,
+                        estado: kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita Mejora',
                         fecha: evaluacion.fechaCreacion || 'N/A'
                     });
                 }
@@ -449,12 +461,11 @@ async function renderEvaluaciones() {
                 const franquicia = window.franquicias?.find(f => f.id === franquiciaId);
                 if (franquicia) {
                     const kpi = calcularPorcentajeEvaluacion(franquiciaId, 'franquicia', evaluacion);
-                    const estado = kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita Mejora';
                     evaluacionesDelMes.push({
                         tipo: 'Franquicia',
                         entidad: franquicia.nombre,
                         kpi: kpi,
-                        estado: estado,
+                        estado: kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita Mejora',
                         fecha: evaluacion.fechaCreacion || 'N/A'
                     });
                 }
@@ -682,7 +693,7 @@ function cargarParametrosEvaluacion(entidadValue) {
         
         html += `
             <div style="margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; padding: 10px;">
-                <h4 style="margin: 0 0 10px 0; color: #0077cc; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                <h4 style="margin: 0; color: #0077cc; border-bottom: 1px solid #eee; padding-bottom: 5px;">
                     ${nombreCategoria} (${categoria.length} parámetros)
                 </h4>
         `;
@@ -919,6 +930,28 @@ function renderMatriz() {
     
     if (entidades.length === 0) {
         html += '<p>No hay entidades activas para mostrar.</p>';
+        document.getElementById('matriz').innerHTML = html;
+        return;
+    }
+
+    // NUEVO: Verificar si hay evaluaciones del mes para mostrar; si no, no renderizar la tabla
+    let tieneDatos = false;
+    const mes = window.mesSeleccionado;
+    for (const entidad of entidades) {
+        const tipoLower = entidad.tipo.toLowerCase();
+        const evaluacion = tipoLower === 'sucursal'
+            ? window.evaluaciones?.sucursales?.[entidad.id]?.[mes]
+            : window.evaluaciones?.franquicias?.[entidad.id]?.[mes];
+        if (evaluacion) { tieneDatos = true; break; }
+    }
+
+    if (!tieneDatos) {
+        html += `
+            <div style="text-align: center; padding: 40px; color: #666; background: #f8f9fa; border-radius: 8px;">
+                <h3>Matriz no disponible</h3>
+                <p>No hay evaluaciones para ${formatearMesLegible(window.mesSeleccionado)}.</p>
+            </div>
+        `;
         document.getElementById('matriz').innerHTML = html;
         return;
     }

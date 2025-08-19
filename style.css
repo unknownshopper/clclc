@@ -71,6 +71,25 @@ main {
     background: #717171;
     color: #fff;
 }
+.matriz td[style*="background-color: #000000"] {
+    background-color: #000000 !important;
+    color: #fff !important;
+}
+
+.matriz td[style*="background-color:#000000"] {
+    background-color: #000000 !important;
+    color: #fff !important;
+}
+
+/* Asegurar que las celdas excluidas tengan el estilo correcto */
+.matriz td {
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Estilo para hover en filas, excepto en celdas excluidas */
+.matriz tr:hover > td:not([style*="background-color: #000000"]):not([style*="background-color:#000000"]) {
+    background-color: #e3f2fd !important;
+}
 .kpi-box {
     display: inline-block;
     background: #f2f8ff;
@@ -823,3 +842,97 @@ footer p {
     color: #155724;
     border: 1px solid #c3e6cb;
 }
+
+/* ===== Matriz tooltips styled like dashboard cards ===== */
+.matriz-tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.matriz-tooltip-bubble {
+  display: none;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 120%;
+  min-width: 260px;
+  max-width: 360px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f9fb 100%);
+  color: #1a2533;
+  border: 1px solid rgba(20, 36, 55, 0.12);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.16), 0 3px 8px rgba(0,0,0,0.08);
+  text-align: left;
+  white-space: normal; /* permitir saltos de línea */
+  z-index: 100;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.matriz-tooltip-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 40px; /* left-aligned arrow for better alignment under bubble */
+  border-width: 8px;
+  border-style: solid;
+  border-color: rgba(20, 36, 55, 0.12) transparent transparent transparent; /* border */
+}
+
+.matriz-tooltip-bubble::before {
+  content: '';
+  position: absolute;
+  top: calc(100% - 1px);
+  left: 40px;
+  border-width: 7px;
+  border-style: solid;
+  border-color: #ffffff transparent transparent transparent; /* fill */
+}
+
+/* Grid-like rows inside tooltip */
+.matriz-tooltip-row {
+  display: grid;
+  grid-template-columns: auto 96px 1fr;
+  gap: 8px 10px;
+  align-items: start; /* alinear arriba para valores multi-línea */
+  padding: 4px 0;
+}
+
+/* optional subtle dividers between rows */
+.matriz-tooltip-row + .matriz-tooltip-row {
+  border-top: 1px dashed rgba(0,0,0,0.06);
+}
+
+.matriz-tooltip-icon {
+  width: 16px;
+  text-align: center;
+  opacity: 0.9;
+}
+
+.matriz-tooltip-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.matriz-tooltip-value {
+  color: #1f2d3d;
+  white-space: normal; /* permitir wrapping en valores */
+  word-break: break-word; /* romper palabras largas si es necesario */
+}
+
+/* Párrafo dentro de tooltip para listas largas (p.ej., parámetros fallidos) */
+.matriz-tooltip-paragraph {
+  margin-top: 4px;
+  color: inherit;
+  white-space: normal;
+  line-height: 1.35;
+}
+
+/* Show on hover */
+.matriz-tooltip:hover .matriz-tooltip-bubble {
+  display: block;
+}
+
+/* Ensure tooltips overlay in table */
+.matriz-table td, .matriz-table th { position: relative; }

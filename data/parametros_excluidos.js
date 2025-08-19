@@ -4,42 +4,45 @@
 window.parametrosExcluidosPorSucursal = {
     // Usa el ID real de cada sucursal/franquicia aquí:
     "altabrisa": [
-      "Contacto visual y saludo",
-      "APP Cabaña Cash",
       "Jardineras y macetas",
       "Puertas y vidrios",
       "Música y volumen",
-      "Estado de baños"
+      "Estado de baños",
+      "Tiempo en fila"
     ],
     "americas": [
-      "Pin personalizador",
       "Jardineras y macetas",
       "Puertas y vidrios",
       "Música y volumen",
-      "Estado de baños"
+      "Estado de baños",
+      "Tiempo en fila"
     ],
     "centro": [
       "Jardineras y macetas",
       "Música y volumen",
-      "Estado de botes de basura"
+      "Estado de botes de basura",
+      "Tiempo en fila"
     ],
     "crystal": [
       "Jardineras y macetas",
       "Puertas y vidrios",
       "Música y volumen",
-      "Estado de baños"
+      "Estado de baños",
+      "Tiempo en fila"
     ],
     "galerias": [
       "Jardineras y macetas",
       "Puertas y vidrios",
       "Música y volumen",
-      "Estado de baños"
+      "Estado de baños",
+      "Tiempo en fila"
     ],
     "angeles": [
       "Jardineras y macetas",
       "Puertas y vidrios",
       "Música y volumen",
-      "Estado de baños"
+      "Estado de baños",
+      "Tiempo en fila"
     ],
     "guayabal": [
       "Uso de tableta",
@@ -54,15 +57,17 @@ window.parametrosExcluidosPorSucursal = {
       "Puertas y vidrios",
       "Música y volumen",
       "Limpieza de mesas y sillas",
-      "Estado de muebles",
       "Estado de baños",
       "Estado de botes de basura",
       "Limpieza de barra",
       "Estado de muebles"
     ],
+
     "deportiva": [
-      "Puertas y vidrios"
+      "Puertas y vidrios",
+      "Tiempo en fila"
     ],
+
     "movil-la-venta": [
       "Atención en mesa",
       "Uso de tableta",
@@ -76,9 +81,12 @@ window.parametrosExcluidosPorSucursal = {
       "Limpieza de barra",
       "Estado de muebles"
     ],
+
     "olmeca": [
-      "Jardineras y macetas"
+      "Jardineras y macetas",
+      "Tiempo en fila"
     ],
+    
     "pista": [
       "Atención en mesa",
       "Uso de tableta",
@@ -90,14 +98,16 @@ window.parametrosExcluidosPorSucursal = {
       "Estado de baños",
       "Estado de botes de basura",
       "Climatización",
-      "Estado de muebles"
+      "Estado de muebles",
+      "Tiempo en fila"
     ],
     "walmart-carrizal": [
       "Uso de tableta",
       "Jardineras y macetas",
       "Puertas y vidrios",
       "Música y volumen",
-      "Estado de baños"
+      "Estado de baños",
+      "Tiempo en fila"
     ],
     "walmart-deportiva": [
       "Atención en mesa",
@@ -109,80 +119,77 @@ window.parametrosExcluidosPorSucursal = {
       "Limpieza de pisos",
       "Estado de baños",
       "Estado de botes de basura",
-      "Estado de muebles"
+      "Estado de muebles",
+      "Tiempo en fila"
     ],
     "walmart-universidad": [
       "Uso de tableta",
       "Jardineras y macetas",
       "Puertas y vidrios",
       "Música y volumen",
-      "Estado de baños"
+      "Estado de baños",
+      "Tiempo en fila"
     ],
     "usuma": [
       "Jardineras y macetas",
       "Música y volumen",
-      "Estado de botes de basura"
-    ],
-    "dosbocas": [
-      "Atención en mesa",
-      "Uso de tableta",
-      "Jardineras y macetas",
-      "Puertas y vidrios",
-      "Música y volumen",
-      "Limpieza de mesas y sillas",
-      "Limpieza de pisos",
-      "Estado de baños",
       "Estado de botes de basura",
-      "Limpieza de barra",
-      "Estado de muebles"
-    ]
+      "Tiempo en fila"
+    ],
+   
   };
 
   // Mapea el ID de la franquicia al array de parámetros excluidos
 window.parametrosExcluidosPorFranquicia = {
   // Franquicias cafetería
   "via2": [
-    "Contacto visual y saludo",
     "Jardineras y macetas",
     "Puertas y vidrios",
     "Música y volumen",
-    "Estado de baños"
+    "Estado de baños",
+    "Tiempo en fila"
   ],
   "citycenter": [
     "Jardineras y macetas",
     "Puertas y vidrios",
     "Música y volumen",
-    "Estado de baños"
+    "Estado de baños",
+    "Tiempo en fila"
   ],
   "cardenas": [
     "Jardineras y macetas",
     "Puertas y vidrios",
     "Música y volumen",
-    "Estado de baños"
+    "Estado de baños",
+    "Tiempo en fila"
   ],
   "paraiso": [
     "Jardineras y macetas",
     "Puertas y vidrios",
     "Música y volumen",
-    "Estado de baños"
+    "Estado de baños",
+    "Tiempo en fila"
   ],
   "cunduacan": [
     "Jardineras y macetas",
     "Puertas y vidrios",
     "Música y volumen",
-    "Estado de baños"
+    "Estado de baños",
+    "Tiempo en fila"
   ],
   "jalpa": [
     "Jardineras y macetas",
     "Puertas y vidrios",
     "Música y volumen",
-    "Estado de baños"
+    "Estado de baños",
+    "Tiempo en fila"
   ],
   "cd-carmen": [
     "Jardineras y macetas",
     "Puertas y vidrios",
     "Música y volumen",
-    "Estado de baños"
+    "Estado de baños",
+    "Tiempo en fila"
   ],
 
   // Franquicias móviles
