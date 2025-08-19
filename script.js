@@ -1680,55 +1680,130 @@ function eliminarEvaluacion(entidadId, tipo) {
 }
 
 // Función para ver video de una evaluación
+
+// Función para ver video de una evaluación
 function verVideo(entidadId, tipo) {
     console.log(`Ver video: ${entidadId} (${tipo})`);
-    
+
     const entidad = tipo === 'sucursal' ? 
         window.sucursales.find(s => s.id === entidadId)
         : window.franquicias.find(f => f.id === entidadId);
-    
     const nombreEntidad = entidad ? entidad.nombre : entidadId;
-    
-    // Crear modal para mostrar video
-    const videoHtml = `
-        <div class="modal" id="modalVideo" style="display: block; z-index: 10001; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); overflow-y: auto;">
-            <div class="modal-content" style="max-width: 900px; margin: 50px auto; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                <div class="modal-header" style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                    <h2 style="margin: 0; color: #333;"><i class="fas fa-video"></i> Video de Evaluación - ${nombreEntidad}</h2>
-                    <button onclick="cerrarModalVideo()" class="btn-close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
-                </div>
-                <div class="modal-body" style="padding: 20px;">
-                    <div style="text-align: center; padding: 20px;">
-                        <p style="margin-bottom: 20px; color: #666;">
-                            Video de evaluación para <strong>${nombreEntidad}</strong> - ${formatearMesLegible(window.mesSeleccionado)}
-                        </p>
-                        
-                        <!-- Placeholder para video - aquí podrías integrar con YouTube, Vimeo, etc. -->
-                        <div style="background: #f8f9fa; border: 2px dashed #ddd; padding: 60px; border-radius: 8px; margin: 20px 0;">
-                            <i class="fas fa-video" style="font-size: 4rem; color: #ccc; margin-bottom: 20px;"></i>
-                            <h3 style="color: #666; margin-bottom: 10px;">Video no disponible</h3>
-                            <p style="color: #999;">
-                                El video de evaluación para esta entidad aún no ha sido subido.<br>
-                                <small>Entidad: ${entidadId} | Tipo: ${tipo} | Mes: ${window.mesSeleccionado}</small>
-                            </p>
-                            
-                            ${tienePermiso('editar') ? `
-                            <button onclick="subirVideo('${entidadId}', '${tipo}')" 
-                                    style="background: #6f42c1; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 15px;">
-                                <i class="fas fa-upload"></i> Subir Video
-                            </button>
-                            ` : ''}
+
+    const mes = window.mesSeleccionado;
+    const linksMes = window.videoLinks?.[mes] || {};
+    const urlOriginal = linksMes[entidadId];
+
+    // Helper local para construir URL de embed de YouTube sin controles
+    const construirYouTubeEmbed = (url) => {
+        if (!url) return null;
+        try {
+            let videoId = null;
+            const u = new URL(url);
+            if (u.hostname.includes('youtu.be')) {
+                // Formato corto: youtu.be/VIDEOID
+                videoId = u.pathname.replace('/', '').split('/')[0];
+            } else if (u.hostname.includes('youtube.com')) {
+                if (u.pathname === '/watch') {
+                    videoId = u.searchParams.get('v');
+                } else if (u.pathname.startsWith('/embed/')) {
+                    videoId = u.pathname.split('/')[2];
+                } else if (u.pathname.startsWith('/shorts/')) {
+                    videoId = u.pathname.split('/')[2];
+                }
+            }
+            if (!videoId) return null;
+            // Parámetros para minimizar UI de YouTube
+            const params = new URLSearchParams({
+                rel: '0',              // no relacionados fuera del canal
+                controls: '1',         // mostrar controles de reproducción
+                modestbranding: '1',   // menos branding
+                iv_load_policy: '3',   // ocultar anotaciones
+                fs: '1',               // permitir fullscreen
+                disablekb: '0',        // habilitar teclado
+                playsinline: '1',      // inline en móvil
+                autoplay: '1'          // reproducir al abrir (iniciado por clic del usuario)
+            });
+            return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+        } catch (e) {
+            return null;
+        }
+        
+    };
+
+    if (urlOriginal) {
+        const embedUrl = construirYouTubeEmbed(urlOriginal);
+        if (embedUrl) {
+            // Construir modal con iframe embed
+            const legibleMes = typeof formatearMesLegible === 'function' ? formatearMesLegible(mes) : mes;
+            const videoHtml = `
+                <div class="modal" id="modalVideo" style="display: block; z-index: 10001; position: fixed; inset: 0; background-color: rgba(0,0,0,0.6);">
+                    <div class="modal-content" style="max-width: 960px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); overflow: hidden;">
+                        <div class="modal-header" style="padding: 14px 18px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                            <h2 style="margin: 0; color: #333; font-size: 1.1rem;"><i class="fas fa-video"></i> Video de Evaluación - ${nombreEntidad} • ${legibleMes}</h2>
+                            <button onclick="cerrarModalVideo()" class="btn-close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; line-height: 1;">&times;</button>
+                        </div>
+                        <div class="modal-body" style="padding: 0; background:#000;">
+                            <div style="position: relative; width: 100%; padding-top: 56.25%; /* 16:9 */ background:#000;">
+                                <iframe
+                                     src="${embedUrl}"
+                                     title="Video de evaluación"
+                                     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+                                     frameborder="0"
+                                     allow="autoplay; encrypted-media; picture-in-picture"
+                                     allowfullscreen
+                                 ></iframe>
+                                <a href="https://www.youtube.com/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label="Abrir YouTube"
+                                    title="Abrir YouTube"
+                                    style="position:absolute; bottom:0; right:0; width: 90px; height: 90px; z-index: 4; display:block;">
+                                </a>
+                                <!-- Mensaje para deshabilitar la copia de enlace (arriba-derecha) -->
+                                <div
+                                    title="No se puede copiar el enlace"
+                                    style="position:absolute; top:8px; right:8px; background: rgba(0,0,0,0.65); color:#fff; padding:6px 10px; border-radius: 14px; font-size:12px; z-index: 3; user-select:none; cursor:not-allowed;"
+                                    onclick="event.stopPropagation(); event.preventDefault();"
+                                >
+                                    
+                                </div>
+                                <!-- Layer superior para bloquear enlaces (título y copiar vínculo) -->
+                                <div
+                                    title="No se puede copiar el enlace"
+                                    style="
+                                        position:absolute;
+                                        top:0; left:0;
+                                        width:100%;
+                                        height:35%;        /* Ajusta 30–40% si hace falta */
+                                        z-index: 2;        /* Debajo del chip (z-index: 3), encima del iframe */
+                                        cursor:not-allowed;
+                                    "
+                                    onclick="event.stopPropagation(); event.preventDefault();"
+                                    onmousedown="event.stopPropagation(); event.preventDefault();"
+                                    onmouseup="event.stopPropagation(); event.preventDefault();"
+                                ></div>
+                             </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="padding: 10px 14px; border-top: 1px solid #eee; display:flex; justify-content:flex-end; gap:8px;">
+                            <button onclick="cerrarModalVideo()" class="btn btn-secondary">Cerrar</button>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button onclick="cerrarModalVideo()" class="btn btn-secondary">Cerrar</button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', videoHtml);
+                </div>`;
+            document.body.insertAdjacentHTML('beforeend', videoHtml);
+            return;
+        } else {
+            // Si no es un enlace válido de YouTube, abrir en nueva pestaña como fallback
+            const win = window.open(urlOriginal, '_blank', 'noopener');
+            if (!win) alert('El navegador bloqueó la ventana emergente. Permite pop-ups para abrir el video.');
+            return;
+        }
+    }
+
+    // Fallback cuando no hay enlace
+    const legibleMes = typeof formatearMesLegible === 'function' ? formatearMesLegible(mes) : mes;
+    alert(`No hay enlace de video registrado para ${nombreEntidad} en ${legibleMes}.`);
 }
 
 // Función para cerrar modal de video

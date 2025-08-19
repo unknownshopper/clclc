@@ -21,6 +21,10 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
 
+      // Import video links
+      import { videoLinks } from './data/video_links.js';
+      window.videoLinks = videoLinks;
+
       // Firebase functions for evaluations
       window.firebaseDB = {
         // Guardar evaluación en Firestore
