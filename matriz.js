@@ -355,6 +355,9 @@ function renderMatrizCompleta() {
     
     document.getElementById('matriz').innerHTML = html;
     console.log('Matriz completa renderizada exitosamente');
+    
+    // Inicializar soporte de tooltips para dispositivos táctiles y clics
+    inicializarTooltipsMatrizTouch();
 }
 
 /**
@@ -397,5 +400,82 @@ function renderMatriz() {
 // Exportar funciones para uso global
 window.renderMatrizCompleta = renderMatrizCompleta;
 window.obtenerParametrosExcluidos = obtenerParametrosExcluidos;
+
+/**
+ * Inicializa comportamiento de tooltips en celdas para touch/click
+ * - Tap/click en una celda: alterna su tooltip
+ * - Click fuera, scroll o Escape: cierra todos
+ */
+function inicializarTooltipsMatrizTouch() {
+    const contenedor = document.querySelector('#matriz .matriz-wrapper');
+    const tabla = document.querySelector('#matriz .matriz-table');
+    if (!contenedor || !tabla) return;
+
+    // Evitar múltiples bindings por render
+    if (contenedor.__tooltipsTouchInit) return;
+    contenedor.__tooltipsTouchInit = true;
+
+    const cerrarTodos = () => {
+        tabla.querySelectorAll('td.show-tooltip, th.show-tooltip').forEach(el => el.classList.remove('show-tooltip'));
+    };
+
+    // Delegación de eventos para abrir/cerrar
+    contenedor.addEventListener('click', (e) => {
+        const cell = e.target.closest('td, th');
+        if (!cell || !tabla.contains(cell)) return;
+        const tieneTooltip = cell.querySelector('.matriz-tooltip-bubble');
+        if (!tieneTooltip) return;
+
+        // Si ya estaba activa, cerrar; si no, cerrar otras y abrir esta
+        const estabaActiva = cell.classList.contains('show-tooltip');
+        cerrarTodos();
+        if (!estabaActiva) {
+            cell.classList.add('show-tooltip');
+        }
+        // Evitar que el click burbujee y cierre inmediatamente por el document
+        e.stopPropagation();
+    });
+
+    // Cerrar al hacer scroll dentro del contenedor
+    contenedor.addEventListener('scroll', () => cerrarTodos(), { passive: true });
+
+    // Cerrar al hacer click fuera
+    document.addEventListener('click', (e) => {
+        if (!contenedor.contains(e.target)) cerrarTodos();
+    });
+
+    // Cerrar con tecla Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') cerrarTodos();
+    });
+
+    // Smart flip: posicionar tooltip debajo si no hay espacio arriba (desktop)
+    contenedor.addEventListener('mouseover', (e) => {
+        const cell = e.target.closest('td, th');
+        if (!cell || !tabla.contains(cell)) return;
+        const bubble = cell.querySelector('.matriz-tooltip-bubble');
+        if (!bubble) return;
+
+        // Medir bubble sin parpadear: mostrar oculto temporalmente
+        const prevDisplay = bubble.style.display;
+        const prevVisibility = bubble.style.visibility;
+        bubble.style.visibility = 'hidden';
+        bubble.style.display = 'block';
+        const bubbleRect = bubble.getBoundingClientRect();
+        bubble.style.display = prevDisplay || '';
+        bubble.style.visibility = prevVisibility || '';
+
+        const thead = tabla.querySelector('thead');
+        const headerBottom = thead ? thead.getBoundingClientRect().bottom : 0;
+        const cellTop = cell.getBoundingClientRect().top;
+        const spaceAbove = cellTop - headerBottom;
+
+        if (spaceAbove < bubbleRect.height + 12) {
+            cell.classList.add('tooltip-below');
+        } else {
+            cell.classList.remove('tooltip-below');
+        }
+    }, { passive: true });
+}
 
 console.log('Módulo matriz.js cargado exitosamente');

@@ -440,7 +440,7 @@ main {
 #loginModal .btn-primary:hover {
     transform: translateY(-3px);
     box-shadow: 0 12px 35px rgba(40, 167, 69, 0.4);
-    background: linear-gradient(135deg, #218838, #1e7e34, #138496);
+    background: linear-gradient(135deg, #218838, #1ea085, #138496);
 }
 
 #loginModal .btn-primary:hover::before {
@@ -935,8 +935,55 @@ footer p {
   display: block;
 }
 
+/* Show tooltip on touch (when cell is toggled) */
+.matriz-table td.show-tooltip .matriz-tooltip-bubble,
+.matriz-table th.show-tooltip .matriz-tooltip-bubble {
+  display: block;
+}
+
+/* Bring active cell above neighbors so tooltip isn't clipped */
+.matriz-table td.show-tooltip, .matriz-table th.show-tooltip {
+  z-index: 5;
+}
+
 /* Ensure tooltips overlay in table */
 .matriz-table td, .matriz-table th { position: relative; }
+
+/* Raise stacking so tooltips are above sticky header */
+.matriz-table .matriz-tooltip-bubble {
+  z-index: 2000; /* above thead (z-index:10) */
+}
+
+.matriz-table td:hover,
+.matriz-table th:hover {
+  z-index: 1500; /* ensure cell sits above neighbors and header */
+}
+
+.matriz-table td.show-tooltip,
+.matriz-table th.show-tooltip {
+  z-index: 1500; /* keep active cell above header */
+}
+
+/* Flip tooltip below when needed */
+.matriz-table td.tooltip-below .matriz-tooltip-bubble,
+.matriz-table th.tooltip-below .matriz-tooltip-bubble {
+  bottom: auto;
+  top: 120%;
+}
+.matriz-table td.tooltip-below .matriz-tooltip-bubble::after,
+.matriz-table th.tooltip-below .matriz-tooltip-bubble::after {
+  top: auto;
+  bottom: 100%;
+  border-color: rgba(20, 36, 55, 0.12) transparent transparent transparent; /* reset first */
+  border-color: transparent transparent rgba(20, 36, 55, 0.12) transparent; /* arrow border below */
+}
+.matriz-table td.tooltip-below .matriz-tooltip-bubble::before,
+.matriz-table th.tooltip-below .matriz-tooltip-bubble::before {
+  top: auto;
+  bottom: calc(100% - 1px);
+  border-color: #ffffff transparent transparent transparent; /* reset first */
+  border-color: transparent transparent #ffffff transparent; /* arrow fill below */
+}
 
 /* ===== Responsive Matriz Wrapper & Table ===== */
 .matriz-wrapper {
