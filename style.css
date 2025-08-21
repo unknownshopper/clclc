@@ -261,7 +261,7 @@ main {
   margin-top: 16px;
   cursor: pointer;
   transition: background 0.15s, box-shadow 0.15s;
-  box-shadow: 0 2px 8px rgba(0,119,204,0.07);
+  box-shadow: 0 2px 8px rgba(0,119,204,0.07), 0 2px 8px rgba(0,0,0,0.10);
   font-weight: 600;
   letter-spacing: 0.01em;
 }
@@ -740,15 +740,11 @@ footer {
 }
 
 .logo-TUS {
-    height: 60px;
+    height: 28px;
     width: auto;
-    margin-bottom: 1rem;
-    border-radius: 8px;
+    margin-bottom: 0;
+    vertical-align: middle;
     transition: transform 0.3s ease;
-}
-
-.logo-TUS:hover {
-    transform: scale(1.05);
 }
 
 footer p {
@@ -759,6 +755,21 @@ footer p {
     letter-spacing: 0.5px;
 }
 
+/* Make footer links look like normal text */
+footer a {
+    color: inherit;
+    text-decoration: none;
+    font-weight: inherit;
+}
+footer a:visited {
+    color: inherit;
+}
+footer a:hover,
+footer a:focus {
+    text-decoration: none;
+    opacity: 0.85;
+}
+
 /* Responsive footer */
 @media (max-width: 768px) {
     footer {
@@ -767,7 +778,7 @@ footer p {
     }
     
     .logo-TUS {
-        height: 50px;
+        height: 22px;
     }
     
     footer p {
