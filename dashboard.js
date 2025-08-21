@@ -28,9 +28,20 @@ function renderDashboard() {
             <h2 style="color: #0077cc; margin-bottom: 10px; text-align: center;">
                 Dashboard - ${formatearMesLegible(window.mesSeleccionado)}
             </h2>
-            <p style="text-align: center; color: #666; margin-bottom: 30px;">
+            <p style="text-align: center; color: #666; margin-bottom: 15px;">
                 Resumen ejecutivo de evaluaciones del período (${usuarioActual.rol})
             </p>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <button onclick="descargarReporteDashboard()" 
+                        style="background: #0d6efd; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 15px; margin-right:8px;">
+                    <i class="fas fa-download"></i> Descargar CSV
+                </button>
+                <button onclick="descargarReporteDashboardXLSX()" 
+                        style="background: #1f8f4e; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 15px;">
+                    <i class="fas fa-file-excel"></i> Descargar XLSX
+                </button>
+                <div style="margin-top: 6px; color: #6c757d; font-size: 12px;">Descarga CSV de todas las sucursales y franquicias visibles</div>
+            </div>
         </div>
     `;
     
@@ -126,6 +137,24 @@ function renderDashboard() {
                 <div style="position: absolute; top: 8px; right: 8px; color: #721c24; font-size: 16px;">🚨</div>
             </div>
         </div>
+        
+        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h3 style="text-align: center; margin-bottom: 20px;">
+                <i class="fas fa-trophy" style="color: #ffd700;"></i> Top 10 Ranking
+            </h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #0077cc; color: white;">
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">#</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Entidad</th>
+                            <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">KPI</th>
+                            <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Estado</th>
+                            <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Fecha</th>
+                            ${tienePermiso('ver') || tienePermiso('editar') || tienePermiso('eliminar') ? '<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Acciones</th>' : ''}
+                        </tr>
+                    </thead>
+                    <tbody>
     `;
     
     // Ranking de mejores entidades (Top 10)
@@ -133,26 +162,6 @@ function renderDashboard() {
         const ranking = evaluacionesFiltradas
             .sort((a, b) => (b.kpi || 0) - (a.kpi || 0))
             .slice(0, 10);
-        
-        html += `
-            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                <h3 style="text-align: center; margin-bottom: 20px;">
-                    <i class="fas fa-trophy" style="color: #ffd700;"></i> Top 10 Ranking
-                </h3>
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #0077cc; color: white;">
-                                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">#</th>
-                                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Entidad</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">KPI</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Estado</th>
-                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Fecha</th>
-                                ${tienePermiso('ver') || tienePermiso('editar') || tienePermiso('eliminar') ? '<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Acciones</th>' : ''}
-                            </tr>
-                        </thead>
-                        <tbody>
-        `;
         
         ranking.forEach((item, index) => {
             const kpiPorcentaje = ((item.kpi || 0) * 100).toFixed(1);
@@ -297,4 +306,278 @@ function renderDashboard() {
     }
     
     contentContainer.innerHTML = html;
+}
+
+// ===== Exportar Reporte CSV (Todas las entidades visibles) =====
+function descargarReporteDashboard() {
+    try {
+        // Asegurar autenticación
+        if (!usuarioActual) {
+            alert('Debe iniciar sesión para descargar el reporte.');
+            return;
+        }
+
+        // Obtener datos del mes actual y aplicar filtro por rol/publicación
+        const todas = obtenerEvaluacionesDelMes(window.mesSeleccionado);
+        const filtradas = filtrarDatosPorRol(todas);
+
+        // Incluir todas las sucursales y franquicias visibles para el usuario
+        const entidades = filtradas.filter(e => (e.tipo === 'sucursal' || e.tipo === 'franquicia'));
+
+        if (entidades.length === 0) {
+            alert('No hay evaluaciones de sucursales o franquicias para este período con sus permisos actuales.');
+            return;
+        }
+
+        const csv = generarCSVReporte(entidades, window.mesSeleccionado);
+        const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' }); // BOM para Excel
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const rol = (usuarioActual?.rol || 'rol').toLowerCase();
+        a.href = url;
+        a.download = `reporte_${window.mesSeleccionado}_${rol}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error('Error generando/descargando el reporte:', err);
+        alert('Ocurrió un error al generar el reporte.');
+    }
+}
+
+function generarCSVReporte(items, mes) {
+    // Construir mapa de parámetros por id para obtener nombres y pesos
+    const mapaParametros = {};
+    if (Array.isArray(window.parametros)) {
+        window.parametros.forEach(p => { if (p && p.id) mapaParametros[p.id] = p; });
+    }
+
+    // Utilidades y metadatos
+    const escapeCsv = (val) => {
+        if (val === null || val === undefined) return '';
+        const s = String(val);
+        if (s.includes('"') || s.includes(',') || s.includes('\n')) {
+            return '"' + s.replaceAll('"', '""') + '"';
+        }
+        return s;
+    };
+
+    const promedioKpi = items.length
+        ? (items.reduce((sum, e) => sum + (e.kpi || 0), 0) / items.length * 100).toFixed(1)
+        : '0.0';
+
+    const headers = [
+        'Mes',
+        'Tipo',
+        'Entidad',
+        'EntidadID',
+        'KPI (%)',
+        'Estado',
+        'Publicación',
+        'Fecha',
+        'Total Obtenido',
+        'Total Máximo',
+        'Parámetros fallados',
+        'Detalle fallos (Nombre [peso])'
+    ];
+
+    const rows = [];
+
+    // Sección de metadatos del reporte
+    const meta = [
+        ['Reporte de Evaluaciones - Café La Cabaña'],
+        ['Logo', 'logch.png'],
+        ['Generado', new Date().toLocaleString('es-MX', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })],
+        ['Mes', formatearMesLegible(mes)],
+        ['Usuario', `${usuarioActual?.nombre || ''} (${usuarioActual?.rol || ''})`],
+        ['Total de entidades', items.length],
+        ['Promedio KPI (%)', promedioKpi]
+    ];
+    meta.forEach(line => rows.push(line.map(escapeCsv).join(',')));
+    rows.push(''); // línea en blanco separadora
+    rows.push(headers.join(','));
+
+    items.forEach(e => {
+        const ev = e.evaluacion || {};
+        const params = ev.parametros || {};
+        const totalObtenido = ev.totalObtenido ?? Math.round((e.kpi || 0) * (ev.totalMaximo || 0));
+        const totalMaximo = ev.totalMaximo ?? 0;
+        const kpiPct = ((e.kpi || 0) * 100).toFixed(1);
+
+        // Identificar parámetros fallados (valor 0)
+        const idsFallados = Object.keys(params).filter(pid => (params[pid] || 0) === 0);
+        const nombresFallados = idsFallados.map(pid => mapaParametros[pid]?.nombre || pid);
+        const detalleFallados = idsFallados.map(pid => {
+            const p = mapaParametros[pid];
+            if (p) return `${p.nombre} [${p.peso} pts]`;
+            return pid;
+        });
+
+        const row = [
+            formatearMesLegible(mes),
+            e.tipo === 'sucursal' ? 'Sucursal' : (e.tipo === 'franquicia' ? 'Franquicia' : e.tipo),
+            e.entidad,
+            e.entidadId,
+            kpiPct,
+            e.estado,
+            e.estadoPublicacion || 'borrador',
+            e.fecha || '',
+            totalObtenido,
+            totalMaximo,
+            nombresFallados.join('; '),
+            detalleFallados.join('; ')
+        ].map(escapeCsv).join(',');
+
+        rows.push(row);
+    });
+
+    return rows.join('\n');
+}
+
+// ===== Exportar XLSX con logo y metadatos =====
+async function descargarReporteDashboardXLSX() {
+    try {
+        if (!usuarioActual) {
+            alert('Debe iniciar sesión para descargar el reporte.');
+            return;
+        }
+        if (typeof ExcelJS === 'undefined') {
+            alert('No se encontró ExcelJS. Verifique que el script de ExcelJS esté cargado en index.html.');
+            return;
+        }
+
+        const todas = obtenerEvaluacionesDelMes(window.mesSeleccionado);
+        const filtradas = filtrarDatosPorRol(todas);
+        const entidades = filtradas.filter(e => (e.tipo === 'sucursal' || e.tipo === 'franquicia'));
+        if (entidades.length === 0) {
+            alert('No hay evaluaciones de sucursales o franquicias para este período con sus permisos actuales.');
+            return;
+        }
+
+        const workbook = new ExcelJS.Workbook();
+        const ws = workbook.addWorksheet('Reporte');
+
+        // Cargar logo desde raíz
+        let imageId;
+        try {
+            const resp = await fetch('logch.png');
+            const buf = await resp.arrayBuffer();
+            imageId = workbook.addImage({ buffer: buf, extension: 'png' });
+        } catch (e) {
+            console.warn('No se pudo cargar el logo logch.png:', e);
+        }
+
+        // Estilos básicos
+        ws.properties.defaultColWidth = 18;
+        ws.getColumn(1).width = 22;
+
+        // Título y metadatos
+        const titulo = 'Reporte de Evaluaciones - Café La Cabaña';
+        ws.mergeCells('A1', 'F1');
+        ws.getCell('A1').value = titulo;
+        ws.getCell('A1').font = { size: 16, bold: true, color: { argb: 'FF0D6EFD' } };
+
+        const fechaGen = new Date().toLocaleString('es-MX', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const promedioKpi = entidades.length ? (entidades.reduce((s, e) => s + (e.kpi || 0), 0) / entidades.length * 100).toFixed(1) : '0.0';
+
+        const metaRows = [
+            ['Logo', 'logch.png'],
+            ['Generado', fechaGen],
+            ['Mes', formatearMesLegible(window.mesSeleccionado)],
+            ['Usuario', `${usuarioActual?.nombre || ''} (${usuarioActual?.rol || ''})`],
+            ['Total de entidades', entidades.length],
+            ['Promedio KPI (%)', promedioKpi]
+        ];
+        const startRow = 3;
+        metaRows.forEach((r, i) => {
+            ws.getCell(startRow + i, 1).value = r[0];
+            ws.getCell(startRow + i, 2).value = r[1];
+            ws.getCell(startRow + i, 1).font = { bold: true };
+        });
+
+        // Insertar logo si está disponible
+        if (imageId) {
+            ws.addImage(imageId, {
+                tl: { col: 4, row: 0.2 },
+                ext: { width: 160, height: 80 }
+            });
+        }
+
+        // Encabezados de la tabla
+        const headerRowIndex = startRow + metaRows.length + 2; // espacio
+        const headers = ['Mes', 'Tipo', 'Entidad', 'EntidadID', 'KPI (%)', 'Estado', 'Publicación', 'Fecha', 'Total Obtenido', 'Total Máximo', 'Parámetros fallados', 'Detalle fallos (Nombre [peso])'];
+        ws.getRow(headerRowIndex).values = headers;
+        ws.getRow(headerRowIndex).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        ws.getRow(headerRowIndex).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0077CC' } };
+
+        // Mapa de parámetros para nombres/pesos
+        const mapaParametros = {};
+        if (Array.isArray(window.parametros)) {
+            window.parametros.forEach(p => { if (p && p.id) mapaParametros[p.id] = p; });
+        }
+
+        // Datos
+        let r = headerRowIndex + 1;
+        entidades.forEach(e => {
+            const ev = e.evaluacion || {};
+            const params = ev.parametros || {};
+            const totalObtenido = ev.totalObtenido ?? Math.round((e.kpi || 0) * (ev.totalMaximo || 0));
+            const totalMaximo = ev.totalMaximo ?? 0;
+            const kpiPct = ((e.kpi || 0) * 100).toFixed(1);
+
+            const idsFallados = Object.keys(params).filter(pid => (params[pid] || 0) === 0);
+            const nombresFallados = idsFallados.map(pid => mapaParametros[pid]?.nombre || pid);
+            const detalleFallados = idsFallados.map(pid => {
+                const p = mapaParametros[pid];
+                return p ? `${p.nombre} [${p.peso} pts]` : pid;
+            });
+
+            ws.getRow(r).values = [
+                formatearMesLegible(window.mesSeleccionado),
+                e.tipo === 'sucursal' ? 'Sucursal' : (e.tipo === 'franquicia' ? 'Franquicia' : e.tipo),
+                e.entidad,
+                e.entidadId,
+                Number(kpiPct),
+                e.estado,
+                e.estadoPublicacion || 'borrador',
+                e.fecha || '',
+                totalObtenido,
+                totalMaximo,
+                nombresFallados.join('; '),
+                detalleFallados.join('; ')
+            ];
+            r++;
+        });
+
+        // Bordes suaves para tabla
+        const lastCol = headers.length;
+        for (let i = headerRowIndex; i < r; i++) {
+            for (let c = 1; c <= lastCol; c++) {
+                ws.getCell(i, c).border = {
+                    top: { style: 'thin', color: { argb: 'FFDDDDDD' } },
+                    left: { style: 'thin', color: { argb: 'FFDDDDDD' } },
+                    bottom: { style: 'thin', color: { argb: 'FFDDDDDD' } },
+                    right: { style: 'thin', color: { argb: 'FFDDDDDD' } },
+                };
+                ws.getCell(i, c).alignment = { vertical: 'middle', horizontal: c === 1 ? 'left' : 'center', wrapText: true };
+            }
+        }
+
+        // Descargar
+        const arrayBuffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const rol = (usuarioActual?.rol || 'rol').toLowerCase();
+        a.href = url;
+        a.download = `reporte_${window.mesSeleccionado}_${rol}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error('Error generando/descargando XLSX:', err);
+        alert('Ocurrió un error al generar el XLSX.');
+    }
 }
