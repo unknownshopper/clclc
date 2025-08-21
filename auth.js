@@ -163,12 +163,13 @@ function filtrarDatosPorRol(evaluaciones) {
             return evaluacionesFranquiciasPublicadas;
             
         case 'dg':
-            // DG puede ver sucursales y franquicias (solo publicadas)
+        case 'capacitacion':
+            // DG y Capacitación pueden ver sucursales y franquicias (solo publicadas)
             const evaluacionesDg = evaluaciones.filter(eval => 
                 eval.tipo === 'sucursal' || eval.tipo === 'franquicia'
             );
             const evaluacionesDgPublicadas = filtrarPorPublicacion(evaluacionesDg);
-            console.log(`DG: filtrando ${evaluacionesDgPublicadas.length} evaluaciones publicadas (sucursales + franquicias) de ${evaluacionesDg.length} total`);
+            console.log(`DG/Capacitación: filtrando ${evaluacionesDgPublicadas.length} evaluaciones publicadas (sucursales + franquicias) de ${evaluacionesDg.length} total`);
             return evaluacionesDgPublicadas;
             
         default:
