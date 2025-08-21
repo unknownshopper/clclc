@@ -1314,7 +1314,7 @@ function cargarEntidadesEvaluacion() {
     const rol = usuarioActual.rol;
     
     // Filtrar entidades según el rol del usuario
-    if (rol === 'admin' || rol === 'dg') {
+    if (rol === 'admin' || rol === 'dg' || rol === 'capacitacion') {
         // Admin y DG pueden ver sucursales
         if (window.sucursales) {
             window.sucursales.filter(s => s.activa).forEach(sucursal => {
@@ -1326,7 +1326,7 @@ function cargarEntidadesEvaluacion() {
         }
     }
     
-    if (rol === 'admin' || rol === 'dg' || rol === 'franquicias') {
+    if (rol === 'admin' || rol === 'dg' || rol === 'capacitacion' || rol === 'franquicias') {
         // Admin, DG y Franquicias pueden ver franquicias
         if (window.franquicias) {
             window.franquicias.filter(f => f.activa).forEach(franquicia => {
