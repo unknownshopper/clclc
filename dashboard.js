@@ -98,10 +98,10 @@ function renderDashboard() {
                 <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;">📊</div>
             </div>
             <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 12px; color: white; text-align: center; position: relative; cursor: help;"
-                 title="Promedio de KPI de todas las evaluaciones del mes. Meta: ≥95% para excelencia">
+                 title="Promedio de KPI de todas las evaluaciones del mes. Meta: 100% para excelencia">
                 <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">KPI Promedio</h3>
                 <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">${promedioKPI}%</div>
-                <small style="opacity: 0.8;">Meta: ≥95%</small>
+                <small style="opacity: 0.8;">Meta: 100%</small>
                 <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;">🎯</div>
             </div>
             <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 12px; color: white; text-align: center;">
