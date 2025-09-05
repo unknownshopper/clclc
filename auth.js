@@ -2,7 +2,7 @@
 let usuarioActual = null;
 
 // Función para iniciar sesión
-function iniciarSesion() {
+async function iniciarSesion() {
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
     const errorDiv = document.getElementById('loginError');
@@ -19,6 +19,18 @@ function iniciarSesion() {
     const usuario = window.usuarios.find(u => u.email === email && u.password === password);
     
     if (usuario) {
+        // Para cumplir con las reglas de Firestore, solo el admin inicia sesión en Firebase
+        try {
+            if (usuario.rol === 'admin') {
+                await window.firebaseAuth?.signInAdmin(email, password);
+            } else {
+                await window.firebaseAuth?.signOut();
+            }
+        } catch (e) {
+            console.error('Error autenticando con Firebase:', e);
+            mostrarErrorLogin('No se pudo autenticar con Firebase. Verifica tus credenciales.');
+            return;
+        }
         usuarioActual = usuario;
         localStorage.setItem('usuarioActual', JSON.stringify(usuario));
         
@@ -58,9 +70,10 @@ function mostrarInfoUsuario() {
 }
 
 // Función para cerrar sesión
-function cerrarSesion() {
+async function cerrarSesion() {
     usuarioActual = null;
     localStorage.removeItem('usuarioActual');
+    try { await window.firebaseAuth?.signOut(); } catch (e) { console.warn('Error en signOut Firebase:', e); }
     
     // Ocultar información del usuario
     document.getElementById('userInfo').style.display = 'none';
