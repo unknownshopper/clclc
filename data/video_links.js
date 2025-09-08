@@ -53,7 +53,7 @@ export const videoLinks = {
       "usuma": "https://youtu.be/ikWd6xWtqhI",
       "walmart-carrizal": "https://youtu.be/AZrTGb3spSY",
       "walmart-universidad": "https://youtu.be/cFETl9jTOsg",
-      "walmart-deportiva": "#"
+      "walmart-deportiva": "https://youtu.be/9nSDbztZRNI"
     }
     
     
