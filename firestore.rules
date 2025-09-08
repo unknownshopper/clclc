@@ -2,20 +2,20 @@ rules_version = '2'
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Colección de evaluaciones
     match /evaluaciones/{document} {
       // Lecturas:
-      // - Público: solo evaluaciones publicadas
-      // - Autenticados (admin): pueden leer TODO (incluye borradores y documentos antiguos sin campo)
+      // - Público/otros roles: solo 'publicado'
+      // - Admin: puede leer TODO (incluye borradores)
       allow read: if resource.data.estadoPublicacion == 'publicado'
-                  || request.auth != null;
+                  || (request.auth != null
+                      && request.auth.token.email == 'unknownshoppersmx@gmail.com');
 
       // Escrituras: solo la cuenta admin
       allow create, update, delete: if request.auth != null
                                     && request.auth.token.email == 'unknownshoppersmx@gmail.com';
     }
 
-    // Denegar todo lo demás por defecto
+    // Denegar todo lo demás
     match /{document=**} {
       allow read, write: if false;
     }
