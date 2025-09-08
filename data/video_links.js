@@ -46,13 +46,14 @@ export const videoLinks = {
       "deportiva": "https://youtu.be/CFg0eMDN_aI",
       "galerias": "https://youtu.be/Us0L58I-m1M",
       "guayabal": "https://youtu.be/NvDnHW5qMXI",
-      "movildeportiva": "https://youtu.be/SWOcPTZlT7E",
-      "movilventa": "https://youtu.be/h-h701FM8iI",
+      "movil-deportiva": "https://youtu.be/SWOcPTZlT7E",
+      "movil-la-venta": "https://youtu.be/h-h701FM8iI",
       "olmeca": "https://youtu.be/0Ohd5Ikbw-g",
       "pista": "https://youtu.be/FH96PRl9HhA",
       "usuma": "https://youtu.be/ikWd6xWtqhI",
       "walmart-carrizal": "https://youtu.be/AZrTGb3spSY",
-      "walmart-universidad": "https://youtu.be/cFETl9jTOsg"
+      "walmart-universidad": "https://youtu.be/cFETl9jTOsg",
+      "walmart-deportiva": "#"
     }
     
     
