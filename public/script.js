@@ -9,9 +9,8 @@ window.evaluaciones = {
 // Función para obtener el mes anterior
 function obtenerMesAnterior() {
     const ahora = new Date();
-    const mesAnterior = new Date(ahora.getFullYear(), ahora.getMonth() - 1, 1);
-    const año = mesAnterior.getFullYear();
-    const mes = (mesAnterior.getMonth() + 1).toString().padStart(2, '0');
+    const año = ahora.getFullYear();
+    const mes = (ahora.getMonth() + 1).toString().padStart(2, '0');
     return `${año}-${mes}`;
 }
 
@@ -405,6 +404,9 @@ function cambiarVista(vista) {
             break;
         case 'graficas':
             renderGraficas();
+            break;
+        case 'historico':
+            renderHistorico();
             break;
         case 'competencia':
             if (typeof renderCompetencia === 'function') {
@@ -1354,6 +1356,77 @@ function generarResumenEstadistico() {
             </div>
         </div>
     `;
+}
+
+// ===== HISTÓRICO =====
+function obtenerListaMeses(quantidad = 12) {
+    const meses = [];
+    const ahora = new Date();
+    for (let i = cantidad - 1; i >= 0; i--) {
+        const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
+        const año = fecha.getFullYear();
+        const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+        meses.push(`${año}-${mes}`);
+    }
+    return meses;
+}
+
+function calcularKPIGlobalDelMes(mes) {
+    let kpis = [];
+
+    if (window.sucursales) {
+        window.sucursales.filter(s => s.activa).forEach(sucursal => {
+            const evaluacion = window.evaluaciones?.sucursales?.[sucursal.id]?.[mes];
+            if (evaluacion && window.parametros) {
+                const kpi = calcularPorcentajeEvaluacion(sucursal.id, 'sucursal', evaluacion);
+                kpis.push(kpi);
+            }
+        });
+    }
+
+    if (window.franquicias) {
+        window.franquicias.filter(f => f.activa).forEach(franquicia => {
+            const evaluacion = window.evaluaciones?.franquicias?.[franquicia.id]?.[mes];
+            if (evaluacion && window.parametros) {
+                const kpi = calcularPorcentajeEvaluacion(franquicia.id, 'franquicia', evaluacion);
+                kpis.push(kpi);
+            }
+        });
+    }
+
+    if (kpis.length === 0) return 0;
+    return Math.round(kpis.reduce((a, b) => a + b, 0) / kpis.length);
+}
+
+function renderHistorico() {
+    const container = document.getElementById('historico');
+    if (!container) return;
+
+    const meses = obtenerListaMeses(12);
+    const labels = meses.map(formatearMesLegible);
+    const datos = meses.map(m => calcularKPIGlobalDelMes(m));
+
+    const html = `
+        <div style="margin-bottom: 30px;">
+            <h2 style="color: #0077cc; margin-bottom: 10px; text-align: center;">
+                Histórico - Resultados Globales por Mes
+            </h2>
+            <p style="text-align: center; color: #666; margin-bottom: 20px;">
+                Promedio de KPI de todas las entidades activas en cada mes
+            </p>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <canvas id="graficoHistorico" width="800" height="380" style="max-width: 100%;"></canvas>
+        </div>
+    `;
+
+    container.innerHTML = html;
+
+    const canvas = document.getElementById('graficoHistorico');
+    if (!canvas) return;
+
+    // Reutilizar el gráfico de barras simple
+    dibujarGraficoBarras(canvas, labels, datos);
 }
 
 // Inicialización de la aplicación

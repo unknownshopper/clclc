@@ -266,6 +266,7 @@
         <button class="tab-btn" data-section="evaluaciones">Evaluaciones</button>
         <button class="tab-btn" data-section="matriz">Matriz</button>
         <button class="tab-btn" data-section="graficas">Gráficas</button>
+        <button class="tab-btn" data-section="historico">Histórico</button>
         <button class="tab-btn" data-section="competencia">Competencia</button>
     </nav>
     <main>
@@ -287,6 +288,13 @@
         <section id="competencia" class="tab-section" style="display:none">
             <!-- Contenido de la sección de competencia -->
         </section>
+        <section id="historico" class="tab-section" style="display:none">
+            <div style="margin-bottom: 20px;">
+                <h2 style="color:#0077cc; text-align:center;">Histórico - Resultados Globales por Mes</h2>
+                <p style="text-align:center; color:#666;">Promedio de KPI por mes considerando permisos del usuario</p>
+            </div>
+            <canvas id="graficoHistorico" width="800" height="380" style="max-width:100%;"></canvas>
+        </section>
     </main>
     <script src="data/sucursales.js"></script>
     <script src="data/franquicias.js"></script>
@@ -298,6 +306,7 @@
     <script src="auth.js"></script>
     <script src="utils.js"></script>
     <script src="dashboard.js"></script>
+    <script src="data/historico.js"></script>
     <script src="script.js"></script>
     <style>
         /* Estilos para la tabla de evaluaciones */

@@ -33,6 +33,13 @@ function cambiarVista(vista) {
         case 'graficas':
             renderGraficas();
             break;
+        case 'historico':
+            if (typeof renderHistorico === 'function') {
+                renderHistorico();
+            } else {
+                console.warn('renderHistorico no está disponible. Asegúrate de incluir data/historico.js.');
+            }
+            break;
         case 'competencia':
             renderCompetencia();
             break;
