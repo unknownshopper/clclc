@@ -1723,15 +1723,20 @@ function verVideo(entidadId, tipo) {
             // Parámetros para minimizar UI de YouTube
             const params = new URLSearchParams({
                 rel: '0',              // no relacionados fuera del canal
-                controls: '1',         // mostrar controles de reproducción
+                controls: '0',         // ocultar controles
                 modestbranding: '1',   // menos branding
                 iv_load_policy: '3',   // ocultar anotaciones
-                fs: '1',               // permitir fullscreen
-                disablekb: '0',        // habilitar teclado
+                fs: '0',               // deshabilitar fullscreen
+                disablekb: '1',        // deshabilitar teclado
                 playsinline: '1',      // inline en móvil
-                autoplay: '1'          // reproducir al abrir (iniciado por clic del usuario)
+                autoplay: '0',         // inicia en pausa, se controla con clic
+                enablejsapi: '1'       // habilitar control por JS
             });
-            return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+            // especificar origen por seguridad del IFrame API
+            try { params.set('origin', window.location.origin); } catch (e) {}
+            const finalUrl = `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+            try { console.debug('YouTube embed URL:', finalUrl); } catch (e) {}
+            return finalUrl;
         } catch (e) {
             return null;
         }
@@ -1753,42 +1758,25 @@ function verVideo(entidadId, tipo) {
                         <div class="modal-body" style="padding: 0; background:#000;">
                             <div style="position: relative; width: 100%; padding-top: 56.25%; /* 16:9 */ background:#000;">
                                 <iframe
+                                     id="ytplayer"
                                      src="${embedUrl}"
                                      title="Video de evaluación"
                                      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
                                      frameborder="0"
-                                     allow="autoplay; encrypted-media; picture-in-picture"
-                                     allowfullscreen
+                                     allow="autoplay; encrypted-media"
                                  ></iframe>
-                                <a href="https://www.youtube.com/"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label="Abrir YouTube"
-                                    title="Abrir YouTube"
-                                    style="position:absolute; bottom:0; right:0; width: 90px; height: 90px; z-index: 4; display:block;">
-                                </a>
-                                <!-- Mensaje para deshabilitar la copia de enlace (arriba-derecha) -->
+                                <!-- Capa completa para capturar clics y alternar play/pausa -->
                                 <div
-                                    title="No se puede copiar el enlace"
-                                    style="position:absolute; top:8px; right:8px; background: rgba(0,0,0,0.65); color:#fff; padding:6px 10px; border-radius: 14px; font-size:12px; z-index: 3; user-select:none; cursor:not-allowed;"
-                                    onclick="event.stopPropagation(); event.preventDefault();"
-                                >
-                                    
-                                </div>
-                                <!-- Layer superior para bloquear enlaces (título y copiar vínculo) -->
+                                    id="ytOverlay"
+                                    data-playing="0"
+                                    onclick="toggleYTPlayPause(this)"
+                                    ondblclick="event.preventDefault(); event.stopPropagation();"
+                                    style="position:absolute; inset:0; z-index: 5; cursor: pointer;"
+                                ></div>
+                                <!-- Máscara inferior para ocultar visualmente la barra de controles de YouTube -->
                                 <div
-                                    title="No se puede copiar el enlace"
-                                    style="
-                                        position:absolute;
-                                        top:0; left:0;
-                                        width:100%;
-                                        height:35%;        /* Ajusta 30–40% si hace falta */
-                                        z-index: 2;        /* Debajo del chip (z-index: 3), encima del iframe */
-                                        cursor:not-allowed;
-                                    "
-                                    onclick="event.stopPropagation(); event.preventDefault();"
-                                    onmousedown="event.stopPropagation(); event.preventDefault();"
-                                    onmouseup="event.stopPropagation(); event.preventDefault();"
+                                    aria-hidden="true"
+                                    style="position:absolute; left:0; right:0; bottom:0; height:88px; z-index:6; pointer-events:none; background: linear-gradient(transparent, rgba(0,0,0,0.9));"
                                 ></div>
                              </div>
                             </div>
@@ -1818,6 +1806,22 @@ function cerrarModalVideo() {
     const modal = document.getElementById('modalVideo');
     if (modal) {
         modal.remove();
+    }
+}
+
+// Alterna reproducción del iframe de YouTube usando postMessage
+function toggleYTPlayPause(overlayEl) {
+    try {
+        const modal = document.getElementById('modalVideo');
+        if (!modal) return;
+        const iframe = modal.querySelector('iframe#ytplayer');
+        if (!iframe || !iframe.contentWindow) return;
+        const isPlaying = overlayEl.getAttribute('data-playing') === '1';
+        const payload = JSON.stringify({ event: 'command', func: isPlaying ? 'pauseVideo' : 'playVideo', args: [] });
+        iframe.contentWindow.postMessage(payload, '*');
+        overlayEl.setAttribute('data-playing', isPlaying ? '0' : '1');
+    } catch (e) {
+        console.warn('No se pudo controlar el reproductor de YouTube:', e);
     }
 }
 
