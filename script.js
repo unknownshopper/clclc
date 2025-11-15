@@ -46,6 +46,100 @@ function cambiarVista(vista) {
     }
 }
 
+// Editar (forzar actualización) del enlace de video (solo admin)
+async function editarVideo(entidadId, tipo) {
+    try {
+        if (!tienePermiso('admin')) {
+            alert('Solo un administrador puede editar el enlace de video.');
+            return;
+        }
+        const mes = window.mesSeleccionado;
+        const evalActual = typeof obtenerEvaluacion === 'function' ? obtenerEvaluacion(entidadId, tipo, mes) : null;
+        const urlActual = evalActual && evalActual.videoUrl ? evalActual.videoUrl : '';
+        const entidad = tipo === 'sucursal' ? 
+            window.sucursales.find(s => s.id === entidadId)
+            : window.franquicias.find(f => f.id === entidadId);
+        const nombreEntidad = entidad ? entidad.nombre : entidadId;
+        let videoUrl = prompt(`Editar enlace de YouTube para ${nombreEntidad} (${formatearMesLegible(mes)}):`, urlActual) || '';
+        videoUrl = videoUrl.trim();
+        if (!videoUrl) return;
+        const estadoActual = (evalActual && evalActual.estadoPublicacion) ? evalActual.estadoPublicacion : 'borrador';
+        if (window.firebaseDB && typeof window.firebaseDB.actualizarEstadoPublicacion === 'function') {
+            const ok = await window.firebaseDB.actualizarEstadoPublicacion(entidadId, tipo, mes, estadoActual, videoUrl);
+            if (!ok) throw new Error('No se pudo guardar el enlace de video en Firebase');
+        }
+        let tipoEntidad = 'franquicias';
+        if (tipo === 'sucursal') tipoEntidad = 'sucursales';
+        else if (tipo === 'franquicia') tipoEntidad = 'franquicias';
+        else if (tipo === 'competencia') tipoEntidad = 'competencia';
+        if (window.evaluaciones?.[tipoEntidad]?.[entidadId]?.[mes]) {
+            window.evaluaciones[tipoEntidad][entidadId][mes].videoUrl = videoUrl;
+        }
+        alert('Enlace de video actualizado correctamente.');
+        if (window.vistaActual === 'evaluaciones') {
+            renderEvaluaciones();
+        }
+    } catch (e) {
+        console.error('Error en editarVideo:', e);
+        alert('Ocurrió un error al actualizar el video.');
+    }
+}
+
+// Manejo de botón de video en Evaluaciones: ver si existe; subir si no existe (solo admin)
+async function manejarVideo(entidadId, tipo) {
+    try {
+        const mes = window.mesSeleccionado;
+        const evalActual = typeof obtenerEvaluacion === 'function' ? obtenerEvaluacion(entidadId, tipo, mes) : null;
+        const urlLocal = evalActual && evalActual.videoUrl ? evalActual.videoUrl : null;
+        const linksMes = window.videoLinks?.[mes] || {};
+        const urlMapeada = linksMes[entidadId];
+        const existe = !!(urlLocal || urlMapeada);
+
+        if (existe) {
+            return verVideo(entidadId, tipo);
+        }
+
+        if (!tienePermiso('admin')) {
+            alert('Aún no hay video cargado para esta evaluación. Sólo un administrador puede agregar el enlace de video.');
+            return;
+        }
+
+        const entidad = tipo === 'sucursal' ? 
+            window.sucursales.find(s => s.id === entidadId)
+            : window.franquicias.find(f => f.id === entidadId);
+        const nombreEntidad = entidad ? entidad.nombre : entidadId;
+
+        let videoUrl = prompt(`Agregar enlace de YouTube para ${nombreEntidad} (${formatearMesLegible(mes)}):`, '') || '';
+        videoUrl = videoUrl.trim();
+        if (!videoUrl) return;
+
+        // Mantener el estado de publicación actual al actualizar sólo el video
+        const estadoActual = (evalActual && evalActual.estadoPublicacion) ? evalActual.estadoPublicacion : 'borrador';
+
+        if (window.firebaseDB && typeof window.firebaseDB.actualizarEstadoPublicacion === 'function') {
+            const ok = await window.firebaseDB.actualizarEstadoPublicacion(entidadId, tipo, mes, estadoActual, videoUrl);
+            if (!ok) throw new Error('No se pudo guardar el enlace de video en Firebase');
+        }
+
+        // Actualizar estructura local
+        let tipoEntidad = 'franquicias';
+        if (tipo === 'sucursal') tipoEntidad = 'sucursales';
+        else if (tipo === 'franquicia') tipoEntidad = 'franquicias';
+        else if (tipo === 'competencia') tipoEntidad = 'competencia';
+        if (window.evaluaciones?.[tipoEntidad]?.[entidadId]?.[mes]) {
+            window.evaluaciones[tipoEntidad][entidadId][mes].videoUrl = videoUrl;
+        }
+
+        alert('Enlace de video guardado correctamente.');
+        if (window.vistaActual === 'evaluaciones') {
+            renderEvaluaciones();
+        }
+    } catch (e) {
+        console.error('Error en manejarVideo:', e);
+        alert('Ocurrió un error al guardar/ver el video.');
+    }
+}
+
 // Función para renderizar evaluaciones
 async function renderEvaluaciones() {
     const container = document.getElementById('evaluaciones');
@@ -123,6 +217,9 @@ async function renderEvaluaciones() {
             // Estado de publicación
             const estadoPublicacion = evaluacion.estadoPublicacion || 'borrador';
             const esBorrador = estadoPublicacion === 'borrador';
+            const evalLocal = typeof obtenerEvaluacion === 'function' ? obtenerEvaluacion(evaluacion.entidadId, evaluacion.tipo, window.mesSeleccionado) : null;
+            const linksMes = window.videoLinks?.[window.mesSeleccionado] || {};
+            const hasVideo = (evalLocal && evalLocal.videoUrl) || linksMes[evaluacion.entidadId];
             
             html += `
                 <tr style="background: ${bgColor};">
@@ -158,6 +255,20 @@ async function renderEvaluaciones() {
                                     title="Ver evaluación">
                                 <i class="fas fa-eye"></i>
                             </button>
+                            <button onclick="manejarVideo('${evaluacion.entidadId}', '${evaluacion.tipo}')"
+                                    class="btn-action btn-video" 
+                                    title="${hasVideo ? 'Ver video de evaluación' : 'Agregar enlace de video'}"
+                                    style="${hasVideo ? 'background:#28a745;color:#fff;' : 'background:#6c757d;color:#fff;'}">
+                                <i class="fas fa-video"></i>
+                            </button>
+                            ${tienePermiso('admin') ? `
+                            <button onclick="editarVideo('${evaluacion.entidadId}', '${evaluacion.tipo}')"
+                                    class="btn-action btn-edit-video" 
+                                    title="Editar enlace de video"
+                                    style="background:#17a2b8;color:#fff;">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            ` : ''}
                             ${tienePermiso('editar') ? `
                             <button onclick="editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
                                     class="btn-action btn-edit" 
@@ -178,11 +289,6 @@ async function renderEvaluaciones() {
                                 <i class="fas fa-share"></i>
                             </button>
                             ` : ''}
-                            <button onclick="verVideo('${evaluacion.entidadId}', '${evaluacion.tipo}')"
-                                    class="btn-action btn-video" 
-                                    title="Ver video de evaluación">
-                                <i class="fas fa-video"></i>
-                            </button>
                         </div>
                     </td>
                     ` : ''}
@@ -1698,8 +1804,11 @@ function verVideo(entidadId, tipo) {
     const nombreEntidad = entidad ? entidad.nombre : entidadId;
 
     const mes = window.mesSeleccionado;
+    const evalActual = typeof obtenerEvaluacion === 'function' ? obtenerEvaluacion(entidadId, tipo, mes) : null;
+    const urlLocal = evalActual && evalActual.videoUrl ? evalActual.videoUrl : null;
     const linksMes = window.videoLinks?.[mes] || {};
-    const urlOriginal = linksMes[entidadId];
+    const urlMapeada = linksMes[entidadId];
+    const urlOriginal = urlLocal || urlMapeada;
 
     // Helper local para construir URL de embed de YouTube sin controles
     const construirYouTubeEmbed = (url) => {
@@ -2081,7 +2190,8 @@ function integrarDatosFirebase(evaluacionesFirebase) {
             fechaPublicacion: evaluacion.fechaPublicacion ? 
                 (evaluacion.fechaPublicacion.toDate ? evaluacion.fechaPublicacion.toDate() : evaluacion.fechaPublicacion) : null,
             fechaCreacion: evaluacion.fechaCreacion || evaluacion.created_at || new Date().toISOString(),
-            timestamp: evaluacion.timestamp || Date.now()
+            timestamp: evaluacion.timestamp || Date.now(),
+            videoUrl: evaluacion.videoUrl || null
         };
     });
     
@@ -2121,8 +2231,12 @@ async function publicarEvaluacion(entidadId, tipo) {
     try {
         // Actualizar en Firebase
         if (window.firebaseDB) {
+            let videoUrl = '';
+            try {
+                videoUrl = prompt('Ingrese el enlace de video (YouTube) para esta evaluación (opcional):', '') || '';
+            } catch (e) { videoUrl = ''; }
             // Buscar y actualizar la evaluación en Firebase usando query
-            const success = await window.firebaseDB.actualizarEstadoPublicacion(entidadId, tipo, window.mesSeleccionado, 'publicado');
+            const success = await window.firebaseDB.actualizarEstadoPublicacion(entidadId, tipo, window.mesSeleccionado, 'publicado', videoUrl && videoUrl.trim() ? videoUrl.trim() : null);
             
             if (success) {
                 console.log('Evaluación publicada en Firebase exitosamente');
@@ -2136,6 +2250,9 @@ async function publicarEvaluacion(entidadId, tipo) {
                 if (window.evaluaciones?.[tipoEntidad]?.[entidadId]?.[window.mesSeleccionado]) {
                     window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado].estadoPublicacion = 'publicado';
                     window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado].fechaPublicacion = new Date();
+                    if (videoUrl && videoUrl.trim()) {
+                        window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado].videoUrl = videoUrl.trim();
+                    }
                 }
                 
                 alert(`Evaluación de ${nombreEntidad} publicada exitosamente.\nAhora es visible para todos los roles autorizados.`);

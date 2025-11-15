@@ -188,8 +188,8 @@
           }
         },
 
-        // Actualizar estado de publicación de una evaluación
-        async actualizarEstadoPublicacion(entidadId, tipo, mes, nuevoEstado) {
+        // Actualizar estado de publicación de una evaluación (opcionalmente con videoUrl)
+        async actualizarEstadoPublicacion(entidadId, tipo, mes, nuevoEstado, videoUrl = null) {
           try {
             // Buscar la evaluación por entidadId, tipo y mes
             const q = query(
@@ -210,15 +210,20 @@
             const updatePromises = [];
             querySnapshot.forEach((doc) => {
               console.log(`Actualizando estado de publicación del documento: ${doc.id}`);
-              updatePromises.push(updateDoc(doc.ref, {
+              const payload = {
                 estadoPublicacion: nuevoEstado,
                 fechaPublicacion: new Date(),
                 timestampPublicacion: Date.now()
-              }));
+              };
+              if (videoUrl && typeof videoUrl === 'string' && videoUrl.trim().length > 0) {
+                payload.videoUrl = videoUrl.trim();
+                payload.videoUrlUpdatedAt = new Date();
+              }
+              updatePromises.push(updateDoc(doc.ref, payload));
             });
     
             await Promise.all(updatePromises);
-            console.log(`Estado de publicación actualizado: ${entidadId} (${tipo}) - ${mes} -> ${nuevoEstado}`);
+            console.log(`Estado de publicación actualizado: ${entidadId} (${tipo}) - ${mes} -> ${nuevoEstado}${videoUrl ? ' con videoUrl' : ''}`);
             return true;
           } catch (error) {
             console.error('Error actualizando estado de publicación:', error);

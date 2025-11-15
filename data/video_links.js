@@ -74,6 +74,24 @@ export const videoLinks = {
       "walmart-carrizal": "https://youtu.be/4N8tA0t3Prc",
       "walmart-deportiva": "https://youtu.be/EO7RQL1Ej44",
       "walmart-universidad": "https://youtu.be/JSp3CA42X1A"
+    },
+    "2025-11": { // Agosto 2025
+    "americas": "https://youtu.be/gZbRrr7ir6Q",
+    "angeles": "https://youtu.be/vPoLuRP4Cec",
+    "altabrisa": "https://youtu.be/3m9e7EDPnhE",
+    "centro": "https://youtu.be/Z4aoVm2Riks",
+    "crystal": "https://youtu.be/WQz4SuzVF1s",
+    "deportiva": "https://youtu.be/Z15jaD_bzPc",
+    "galerias": "https://youtu.be/ZeluC4bONFQ",
+    "guayabal": "https://youtu.be/-Pil1II2UuU",
+    "movil-deportiva": "https://youtu.be/onHvkDDlnXI",
+    "movil-la-venta": "https://youtu.be/vSPA7m7ds0k",
+    "olmeca": "https://youtu.be/8PLeWqPQLL4",
+    "pista": "https://youtu.be/Ajc8_755o0g",
+    "usuma": "https://youtu.be/lrxwBWek3bw",
+    "walmart-carrizal": "https://youtu.be/cJINaCCuImA",
+    "walmart-deportiva": "https://youtu.be/6p5rwBlVWWE",
+    "walmart-universidad": "https://youtu.be/9cktEGZrjvA"
     }
     
     
