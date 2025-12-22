@@ -106,15 +106,16 @@ function renderMatrizCompleta() {
     
     console.log(`Mostrando ${window.parametros.length} parámetros para ${entidades.length} entidades`);
     
-    // Crear tabla de matriz con scroll horizontal
+    // Crear tabla de matriz con scroll horizontal y arrastre con mouse
     html += `
-        <div class="matriz-wrapper">
-            <table class="matriz-table">
-                <thead>
-                    <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); position: sticky; top: 0; z-index: 10;">
-                        <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; color: #495057; min-width: 150px; position: sticky; left: 0; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">Entidad</th>
-                        <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; color: #495057; min-width: 80px; position: sticky; left: 150px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">Tipo</th>
-                        <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: 600; color: #495057; min-width: 100px; position: sticky; left: 230px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">KPI General</th>
+        <div class="matriz-drag-container" id="matrizDragContainer">
+            <div class="matriz-wrapper" id="matrizWrapper">
+                <table class="matriz-table">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); position: sticky; top: 0; z-index: 10;">
+                            <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; color: #495057; min-width: 150px; position: sticky; left: 0; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">Entidad</th>
+                            <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; color: #495057; min-width: 80px; position: sticky; left: 150px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">Tipo</th>
+                            <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: 600; color: #495057; min-width: 100px; position: sticky; left: 230px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">KPI General</th>
     `;
     
     // Agregar columnas para TODOS los parámetros (32)
@@ -313,6 +314,21 @@ function renderMatrizCompleta() {
                 </tbody>
             </table>
         </div>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; border: 1px solid #dee2e6;">
+            <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; font-weight: 600;">
+                <i class="fas fa-hand-pointer" style="margin-right: 8px; color: #6c757d;"></i>
+                Controles de Navegación
+            </h4>
+            <div style="display: flex; gap: 10px; align-items: center; font-size: 12px; color: #6c757d;">
+                <span><i class="fas fa-mouse"></i> Arrastra con el mouse para mover la tabla</span>
+                <span>|</span>
+                <span><i class="fas fa-arrows-alt-h"></i> Scroll horizontal disponible</span>
+                <span>|</span>
+                <span><i class="fas fa-columns"></i> Primeras 3 columnas fijas</span>
+            </div>
+        </div>
         
         <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; border: 1px solid #dee2e6;">
             <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; font-weight: 600;">
@@ -358,6 +374,178 @@ function renderMatrizCompleta() {
     
     // Inicializar soporte de tooltips para dispositivos táctiles y clics
     inicializarTooltipsMatrizTouch();
+    
+    // Inicializar funcionalidad de arrastre con mouse e inercia
+    inicializarArrastreMatriz();
+}
+
+/**
+ * Inicializa la funcionalidad de arrastre con mouse e inercia para la matriz
+ */
+function inicializarArrastreMatriz() {
+    const container = document.getElementById('matrizDragContainer');
+    const wrapper = document.getElementById('matrizWrapper');
+    
+    if (!container || !wrapper) return;
+    
+    let isDragging = false;
+    let startX = 0;
+    let scrollLeft = 0;
+    let velocity = 0;
+    let animationFrame = null;
+    let lastX = 0;
+    let lastTime = 0;
+    const sensitivity = 1.3;
+    const inertiaDecay = 0.92;
+    const inertiaThreshold = 0.4;
+    
+    // Función para aplicar inercia
+    function applyInertia() {
+        if (Math.abs(velocity) > inertiaThreshold) {
+            wrapper.scrollLeft -= velocity;
+            velocity *= inertiaDecay;
+            animationFrame = requestAnimationFrame(applyInertia);
+        } else {
+            velocity = 0;
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+                animationFrame = null;
+            }
+        }
+    }
+    
+    // Mouse down - iniciar arrastre
+    container.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        container.style.cursor = 'grabbing';
+        container.style.userSelect = 'none';
+        
+        startX = e.pageX - container.offsetLeft;
+        scrollLeft = wrapper.scrollLeft;
+        lastX = startX;
+        lastTime = Date.now();
+        
+        // Detener cualquier animación de inercia en curso
+        if (animationFrame) {
+            cancelAnimationFrame(animationFrame);
+            animationFrame = null;
+        }
+        velocity = 0;
+        
+        e.preventDefault();
+    });
+    
+    // Mouse move - arrastrar
+    container.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        
+        e.preventDefault();
+        
+        const x = e.pageX - container.offsetLeft;
+        const walk = (x - startX) * sensitivity;
+        wrapper.scrollLeft = scrollLeft - walk;
+        
+        // Calcular velocidad para inercia
+        const currentTime = Date.now();
+        const deltaTime = currentTime - lastTime;
+        const deltaX = x - lastX;
+        
+        if (deltaTime > 0) {
+            velocity = deltaX / deltaTime * 10; // Ajustar velocidad
+        }
+        
+        lastX = x;
+        lastTime = currentTime;
+    });
+    
+    // Mouse up - detener arrastre y aplicar inercia
+    container.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+        
+        isDragging = false;
+        container.style.cursor = 'grab';
+        container.style.userSelect = '';
+        
+        // Aplicar inercia si hay velocidad suficiente
+        if (Math.abs(velocity) > inertiaThreshold) {
+            applyInertia();
+        }
+    });
+    
+    // Mouse leave - detener arrastre
+    container.addEventListener('mouseleave', () => {
+        if (isDragging) {
+            isDragging = false;
+            container.style.cursor = 'grab';
+            container.style.userSelect = '';
+            
+            // Aplicar inercia si hay velocidad suficiente
+            if (Math.abs(velocity) > inertiaThreshold) {
+                applyInertia();
+            }
+        }
+    });
+    
+    // Cambiar cursor al pasar sobre el área arrastrable
+    container.addEventListener('mouseenter', () => {
+        if (wrapper.scrollWidth > container.clientWidth) {
+            container.style.cursor = 'grab';
+        }
+    });
+    
+    container.addEventListener('mouseleave', () => {
+        container.style.cursor = '';
+    });
+    
+    function getTouchX(e) {
+        const t = e.touches && e.touches[0] ? e.touches[0] : (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0] : null);
+        return t ? t.pageX - container.offsetLeft : 0;
+    }
+    
+    container.addEventListener('touchstart', (e) => {
+        if (!e.touches || e.touches.length === 0) return;
+        isDragging = true;
+        startX = getTouchX(e);
+        scrollLeft = wrapper.scrollLeft;
+        lastX = startX;
+        lastTime = Date.now();
+        if (animationFrame) {
+            cancelAnimationFrame(animationFrame);
+            animationFrame = null;
+        }
+        velocity = 0;
+    }, { passive: true });
+    
+    container.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const x = getTouchX(e);
+        const walk = (x - startX) * sensitivity;
+        wrapper.scrollLeft = scrollLeft - walk;
+        const currentTime = Date.now();
+        const deltaTime = currentTime - lastTime;
+        const deltaX = x - lastX;
+        if (deltaTime > 0) {
+            velocity = deltaX / deltaTime * 10;
+        }
+        lastX = x;
+        lastTime = currentTime;
+        if (Math.abs(deltaX) > 0) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    function endTouchDrag() {
+        if (!isDragging) return;
+        isDragging = false;
+        if (Math.abs(velocity) > inertiaThreshold) {
+            applyInertia();
+        }
+    }
+    
+    container.addEventListener('touchend', endTouchDrag, { passive: true });
+    container.addEventListener('touchcancel', endTouchDrag, { passive: true });
+    
+    console.log('Funcionalidad de arrastre con inercia inicializada');
 }
 
 /**

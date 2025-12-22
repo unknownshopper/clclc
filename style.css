@@ -4,6 +4,166 @@ body {
     margin: 0;
     padding: 0;
 }
+
+/* Estilos para la matriz con arrastre */
+.matriz-drag-container {
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    background: #fff;
+    position: relative;
+    cursor: grab;
+    user-select: none;
+    transition: box-shadow 0.3s ease;
+}
+
+.matriz-drag-container:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.matriz-drag-container:active {
+    cursor: grabbing;
+}
+
+.matriz-wrapper {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #6c757d #f8f9fa;
+}
+
+.matriz-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.matriz-wrapper::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.matriz-wrapper::-webkit-scrollbar-thumb {
+    background: #6c757d;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.matriz-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #495057;
+}
+
+.matriz-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 100%;
+    font-size: 12px;
+}
+
+.matriz-table th,
+.matriz-table td {
+    border: 1px solid #dee2e6;
+    position: relative;
+}
+
+/* Efectos visuales para columnas fijas */
+.matriz-table th:nth-child(1),
+.matriz-table th:nth-child(2),
+.matriz-table th:nth-child(3),
+.matriz-table td:nth-child(1),
+.matriz-table td:nth-child(2),
+.matriz-table td:nth-child(3) {
+    position: sticky;
+    z-index: 5;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+}
+
+/* Efecto hover mejorado */
+.matriz-table tbody tr:hover td {
+    background-color: #e3f2fd !important;
+    transition: background-color 0.2s ease;
+}
+
+/* Animaciones para tooltips */
+.matriz-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.matriz-tooltip-bubble {
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(33, 37, 41, 0.95);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.matriz-tooltip:hover .matriz-tooltip-bubble {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-4px);
+}
+
+.matriz-tooltip-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 2px 0;
+}
+
+.matriz-tooltip-icon {
+    font-size: 10px;
+    opacity: 0.8;
+}
+
+.matriz-tooltip-label {
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+.matriz-tooltip-value {
+    opacity: 1;
+}
+
+/* Indicador visual de área arrastrable */
+.matriz-drag-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.05) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .matriz-drag-container {
+        touch-action: pan-y;
+    }
+    
+    .matriz-table {
+        font-size: 10px;
+    }
+    
+    .matriz-table th,
+    .matriz-table td {
+        padding: 6px 4px;
+        min-width: 40px;
+    }
+}
 header {
     background: #2d3e50;
     color: #fff;

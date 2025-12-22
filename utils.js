@@ -18,6 +18,14 @@ function obtenerMesAnterior() {
     return `${año}-${mes}`;
 }
 
+// Función para obtener el mes actual (YYYY-MM)
+function obtenerMesActual() {
+    const ahora = new Date();
+    const año = ahora.getFullYear();
+    const mes = (ahora.getMonth() + 1).toString().padStart(2, '0');
+    return `${año}-${mes}`;
+}
+
 // Función para formatear mes legible
 function formatearMesLegible(mesString) {
     if (!mesString) return 'Mes no seleccionado';

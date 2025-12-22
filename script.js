@@ -1204,8 +1204,8 @@ function generarResumenEstadistico() {
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('Iniciando aplicación...');
     
-    // Establecer mes anterior como predeterminado
-    window.mesSeleccionado = obtenerMesAnterior();
+    // Establecer mes actual como predeterminado para el dashboard
+    window.mesSeleccionado = typeof obtenerMesActual === 'function' ? obtenerMesActual() : obtenerMesAnterior();
     
     // Inicializar estructura de evaluaciones si no existe
     if (!window.evaluaciones) {
@@ -1271,8 +1271,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     const autenticado = verificarAutenticacion();
     
     if (autenticado) {
-        // Si está autenticado, mostrar dashboard
+        // Si está autenticado, mostrar dashboard y asegurar selector en mes actual
         cambiarVista('dashboard');
+        // Asegurar que el selector de mes muestre el mes actual
+        const selector = document.getElementById('mes-selector');
+        if (selector && typeof formatearMesLegible === 'function') {
+            // Reasignar selección al mes actual si no coincide
+            const mesActual = typeof obtenerMesActual === 'function' ? obtenerMesActual() : window.mesSeleccionado;
+            if (mesActual && selector.value !== mesActual) {
+                selector.value = mesActual;
+            }
+        }
         // aplicarRestriccionesPorRol();
         console.log(`Sistema inicializado para usuario: ${usuarioActual.nombre} (${usuarioActual.rol})`);
     } else {
