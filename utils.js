@@ -120,8 +120,13 @@ function poblarSelectorMes() {
         selector.appendChild(option);
     }
     
+    // Asegurar que el selector refleje el mes seleccionado actual
+    if (window.mesSeleccionado) {
+        selector.value = window.mesSeleccionado;
+    }
+    
     // Event listener para cambio de mes
-    selector.addEventListener('change', function() {
+    selector.onchange = function() {
         window.mesSeleccionado = this.value;
         console.log(`Mes seleccionado cambiado a: ${this.value}`);
         
@@ -141,5 +146,5 @@ function poblarSelectorMes() {
         // Siempre actualizar evaluaciones para que los datos estén listos
         renderEvaluaciones();
         
-    });
+    };
 }

@@ -5,6 +5,13 @@ body {
     padding: 0;
 }
 
+ body.logged-out header,
+ body.logged-out nav,
+ body.logged-out main,
+ body.logged-out footer {
+     display: none;
+ }
+
 /* Estilos para la matriz con arrastre */
 .matriz-drag-container {
     overflow: hidden;

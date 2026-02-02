@@ -141,9 +141,14 @@ function poblarSelectorMes() {
         
         selector.appendChild(option);
     }
+
+    // Asegurar que el selector refleje el mes seleccionado actual
+    if (window.mesSeleccionado) {
+        selector.value = window.mesSeleccionado;
+    }
     
     // Event listener para cambio de mes
-    selector.addEventListener('change', function() {
+    selector.onchange = function() {
         window.mesSeleccionado = this.value;
         console.log(`Mes seleccionado cambiado a: ${this.value}`);
         
@@ -166,7 +171,7 @@ function poblarSelectorMes() {
         
         // Siempre actualizar evaluaciones para que los datos estén listos
         renderEvaluaciones();
-    });
+    };
 }
 
 // Función para renderizar dashboard
@@ -1433,8 +1438,8 @@ function renderHistorico() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Iniciando aplicación...');
     
-    // Establecer mes anterior como predeterminado
-    window.mesSeleccionado = obtenerMesAnterior();
+    // Establecer mes en curso como predeterminado
+    window.mesSeleccionado = typeof obtenerMesActual === 'function' ? obtenerMesActual() : obtenerMesAnterior();
     
     // Verificar que los datos estén cargados
     if (!window.parametros || !window.sucursales || !window.franquicias) {

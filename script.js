@@ -1206,6 +1206,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Establecer mes actual como predeterminado para el dashboard
     window.mesSeleccionado = typeof obtenerMesActual === 'function' ? obtenerMesActual() : obtenerMesAnterior();
+
+    let ultimoMesConDatos = null;
     
     // Inicializar estructura de evaluaciones si no existe
     if (!window.evaluaciones) {
@@ -1244,7 +1246,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 });
             }
             
-            console.log('Meses con datos reales en Firebase:', Array.from(mesesConDatos).sort());
+            const mesesOrdenados = Array.from(mesesConDatos).sort();
+            ultimoMesConDatos = mesesOrdenados.length > 0 ? mesesOrdenados[mesesOrdenados.length - 1] : null;
+            console.log('Meses con datos reales en Firebase:', mesesOrdenados);
             console.log('Mes seleccionado actualmente:', window.mesSeleccionado);
             
         } catch (error) {
@@ -1252,13 +1256,23 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
     
-    // Generar datos de muestra solo si no hay datos en Firebase
+    // Si el mes en curso no tiene evaluaciones pero sí hay datos en otros meses, caer al último mes con datos
     const evaluacionesExistentes = obtenerEvaluacionesDelMes(window.mesSeleccionado);
-    if (evaluacionesExistentes.length === 0) {
-        console.log('No hay evaluaciones en Firebase, generando datos de muestra...');
-        generarDatosEjemplo();
+    if (evaluacionesExistentes.length === 0 && ultimoMesConDatos) {
+        console.log(`Mes ${window.mesSeleccionado} sin datos. Cambiando automáticamente al último mes con datos: ${ultimoMesConDatos}`);
+        window.mesSeleccionado = ultimoMesConDatos;
+    }
+
+    // Generar datos de muestra solo si no hay datos en ningún mes y la función existe
+    const evaluacionesTrasFallback = obtenerEvaluacionesDelMes(window.mesSeleccionado);
+    if (evaluacionesTrasFallback.length === 0) {
+        console.log('No hay evaluaciones para el mes seleccionado.');
+        if (typeof generarDatosEjemplo === 'function') {
+            console.log('Generando datos de muestra...');
+            generarDatosEjemplo();
+        }
     } else {
-        console.log(`Encontradas ${evaluacionesExistentes.length} evaluaciones existentes para ${window.mesSeleccionado}`);
+        console.log(`Encontradas ${evaluacionesTrasFallback.length} evaluaciones existentes para ${window.mesSeleccionado}`);
     }
     
     // Poblar selector de mes
@@ -1273,15 +1287,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (autenticado) {
         // Si está autenticado, mostrar dashboard y asegurar selector en mes actual
         cambiarVista('dashboard');
-        // Asegurar que el selector de mes muestre el mes actual
-        const selector = document.getElementById('mes-selector');
-        if (selector && typeof formatearMesLegible === 'function') {
-            // Reasignar selección al mes actual si no coincide
-            const mesActual = typeof obtenerMesActual === 'function' ? obtenerMesActual() : window.mesSeleccionado;
-            if (mesActual && selector.value !== mesActual) {
-                selector.value = mesActual;
-            }
-        }
         // aplicarRestriccionesPorRol();
         console.log(`Sistema inicializado para usuario: ${usuarioActual.nombre} (${usuarioActual.rol})`);
     } else {

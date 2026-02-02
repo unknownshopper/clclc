@@ -1,5 +1,6 @@
 // ===== SISTEMA DE AUTENTICACIÓN Y CONTROL DE ACCESO =====
 let usuarioActual = null;
+ window.firebaseAdminAuthenticated = window.firebaseAdminAuthenticated || false;
 
 // Función para iniciar sesión
 async function iniciarSesion() {
@@ -16,20 +17,41 @@ async function iniciarSesion() {
     }
     
     // Buscar usuario en la base de datos
-    const usuario = window.usuarios.find(u => u.email === email && u.password === password);
+    let usuario = window.usuarios.find(u => u.email === email && u.password === password);
+    const usuarioPorEmail = window.usuarios.find(u => u.email === email);
+    
+    // Caso especial: admin puede validar contraseña contra Firebase aunque el password local no coincida
+    if (!usuario && usuarioPorEmail?.rol === 'admin') {
+        try {
+            await window.firebaseAuth?.signInAdmin(email, password);
+            window.firebaseAdminAuthenticated = true;
+            usuario = usuarioPorEmail;
+        } catch (e) {
+            console.error('Error autenticando admin con Firebase:', e);
+            window.firebaseAdminAuthenticated = false;
+            mostrarErrorLogin('Email o contraseña incorrectos');
+            return;
+        }
+    }
     
     if (usuario) {
         // Para cumplir con las reglas de Firestore, solo el admin inicia sesión en Firebase
         try {
             if (usuario.rol === 'admin') {
                 await window.firebaseAuth?.signInAdmin(email, password);
+                window.firebaseAdminAuthenticated = true;
             } else {
                 await window.firebaseAuth?.signOut();
+                window.firebaseAdminAuthenticated = false;
             }
         } catch (e) {
             console.error('Error autenticando con Firebase:', e);
-            mostrarErrorLogin('No se pudo autenticar con Firebase. Verifica tus credenciales.');
-            return;
+            // No bloquear el acceso a la app si el login local es válido.
+            // Sin Firebase Auth, el admin no podrá ejecutar acciones de escritura en Firestore.
+            window.firebaseAdminAuthenticated = false;
+            if (usuario.rol === 'admin') {
+                mostrarErrorLogin('Entraste, pero no se pudo autenticar con Firebase. Acciones de admin (crear/editar/eliminar/publicar) quedarán deshabilitadas.');
+            }
         }
         usuarioActual = usuario;
         localStorage.setItem('usuarioActual', JSON.stringify(usuario));
@@ -74,6 +96,7 @@ async function cerrarSesion() {
     usuarioActual = null;
     localStorage.removeItem('usuarioActual');
     try { await window.firebaseAuth?.signOut(); } catch (e) { console.warn('Error en signOut Firebase:', e); }
+    window.firebaseAdminAuthenticated = false;
     
     // Ocultar información del usuario
     document.getElementById('userInfo').style.display = 'none';
@@ -94,6 +117,10 @@ function verificarAutenticacion() {
     
     if (usuarioGuardado) {
         usuarioActual = JSON.parse(usuarioGuardado);
+        // Reestablecer estado conservador: si se recarga la página no asumimos que Firebase Auth sigue válido.
+        if (usuarioActual?.rol === 'admin') {
+            window.firebaseAdminAuthenticated = false;
+        }
         document.getElementById('loginModal').style.display = 'none';
         document.body.classList.remove('logged-out');
         mostrarInfoUsuario();
@@ -122,9 +149,10 @@ function aplicarRestriccionesPorRol() {
     
     if (rol === 'admin') {
         // Admin puede hacer todo
-        if (btnNuevaEvaluacion) btnNuevaEvaluacion.style.display = 'inline-block';
-        botonesEditar.forEach(btn => btn.style.display = 'inline-flex');
-        botonesEliminar.forEach(btn => btn.style.display = 'inline-flex');
+        const puedeEscribir = !!window.firebaseAdminAuthenticated;
+        if (btnNuevaEvaluacion) btnNuevaEvaluacion.style.display = puedeEscribir ? 'inline-block' : 'none';
+        botonesEditar.forEach(btn => btn.style.display = puedeEscribir ? 'inline-flex' : 'none');
+        botonesEliminar.forEach(btn => btn.style.display = puedeEscribir ? 'inline-flex' : 'none');
     } else {
         // Otros roles no pueden crear, editar o eliminar
         if (btnNuevaEvaluacion) btnNuevaEvaluacion.style.display = 'none';
@@ -151,7 +179,7 @@ function filtrarDatosPorRol(evaluaciones) {
             return evals;
         } else {
             // Otros roles solo ven evaluaciones publicadas
-            return evals.filter(eval => eval.estadoPublicacion === 'publicado');
+            return evals.filter(ev => ev.estadoPublicacion === 'publicado');
         }
     };
     
@@ -163,14 +191,14 @@ function filtrarDatosPorRol(evaluaciones) {
             
         case 'gop':
             // GOP puede ver evaluaciones de sucursales (solo publicadas)
-            const evaluacionesGop = evaluaciones.filter(eval => eval.tipo === 'sucursal');
+            const evaluacionesGop = evaluaciones.filter(ev => ev.tipo === 'sucursal');
             const evaluacionesGopPublicadas = filtrarPorPublicacion(evaluacionesGop);
             console.log(`GOP: filtrando ${evaluacionesGopPublicadas.length} sucursales publicadas de ${evaluacionesGop.length} total`);
             return evaluacionesGopPublicadas;
             
         case 'franquicias':
             // Franquicias solo puede ver evaluaciones de franquicias (solo publicadas)
-            const evaluacionesFranquicias = evaluaciones.filter(eval => eval.tipo === 'franquicia');
+            const evaluacionesFranquicias = evaluaciones.filter(ev => ev.tipo === 'franquicia');
             const evaluacionesFranquiciasPublicadas = filtrarPorPublicacion(evaluacionesFranquicias);
             console.log(`Franquicias: filtrando ${evaluacionesFranquiciasPublicadas.length} franquicias publicadas de ${evaluacionesFranquicias.length} total`);
             return evaluacionesFranquiciasPublicadas;
@@ -178,8 +206,8 @@ function filtrarDatosPorRol(evaluaciones) {
         case 'dg':
         case 'capacitacion':
             // DG y Capacitación pueden ver sucursales y franquicias (solo publicadas)
-            const evaluacionesDg = evaluaciones.filter(eval => 
-                eval.tipo === 'sucursal' || eval.tipo === 'franquicia'
+            const evaluacionesDg = evaluaciones.filter(ev => 
+                ev.tipo === 'sucursal' || ev.tipo === 'franquicia'
             );
             const evaluacionesDgPublicadas = filtrarPorPublicacion(evaluacionesDg);
             console.log(`DG/Capacitación: filtrando ${evaluacionesDgPublicadas.length} evaluaciones publicadas (sucursales + franquicias) de ${evaluacionesDg.length} total`);
@@ -196,13 +224,14 @@ function tienePermiso(accion) {
     if (!usuarioActual) return false;
     
     const rol = usuarioActual.rol;
+    const adminEscrituraOk = rol === 'admin' && !!window.firebaseAdminAuthenticated;
     
     switch (accion) {
         case 'crear':
         case 'editar':
         case 'eliminar':
         case 'publicar':
-            return rol === 'admin';
+            return adminEscrituraOk;
         case 'ver':
             return true; // Todos pueden ver (pero con filtros)
         case 'admin':
