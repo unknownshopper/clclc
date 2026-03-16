@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poderansia (DG) - Reglas de Competitividad</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="header-content" style="justify-content: center;">
+            <div class="logo" style="justify-content: center;">
+                <img src="logo.png" alt="Café La Cabaña" class="logo-img"> <br>
+                <h1>Poderansia (DG)</h1>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <a href="ponderancia.html" class="tab-btn" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+            <i class="fas fa-arrow-left"></i>
+            Volver a Pondera IA
+        </a>
+        <a href="index.html" class="tab-btn" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+            <i class="fas fa-house"></i>
+            Sistema
+        </a>
+    </nav>
+
+    <main>
+        <section class="tab-section">
+            <div style="display:flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                <div>
+                    <h2 style="margin: 0 0 6px 0; color:#2d3e50;">Reglas de Competitividad</h2>
+                    <div style="color:#6c757d; font-size: 13px; line-height: 1.35; max-width: 900px;">
+                        Documento de criterio para Dirección General: evita que el KPI se “infle” con instalaciones/operación cuando falta lo vital: atención y venta.
+                    </div>
+                </div>
+                <div style="display:flex; gap: 10px; align-items:center;">
+                    <span style="display:inline-flex; align-items:center; gap:8px; background: rgba(220,53,69,0.10); color:#dc3545; border: 1px solid rgba(220,53,69,0.22); padding: 6px 10px; border-radius: 999px; font-weight: 900; font-size: 12px;">
+                        <i class="fas fa-lock"></i>
+                        Solo DG
+                    </span>
+                    <span style="display:inline-flex; align-items:center; gap:8px; background: rgba(40,167,69,0.12); color:#218838; border: 1px solid rgba(40,167,69,0.25); padding: 6px 10px; border-radius: 999px; font-weight: 900; font-size: 12px;">
+                        <i class="fas fa-bullseye"></i>
+                        Estocada final
+                    </span>
+                </div>
+            </div>
+
+            <div id="reglasCompetitividad"></div>
+        </section>
+    </main>
+
+    <script src="data/parametros.js"></script>
+    <script>
+        const REGLAS_COMPETITIVIDAD = {
+            vitales: [
+                {
+                    id: 'bienvenida_contacto_visual',
+                    titulo: 'Contacto visual y saludo',
+                    motivo: 'Sin bienvenida no hay servicio: define percepción y abre (o cierra) la oportunidad de venta.'
+                },
+                {
+                    id: 'conocimiento_productos',
+                    titulo: 'Conocimiento de productos',
+                    motivo: 'Sin conocimiento, no existe recomendación ni upsell real; afecta conversión y ticket promedio.'
+                },
+                {
+                    id: 'venta_cruzada',
+                    titulo: 'Venta cruzada',
+                    motivo: 'Es la señal más clara de intención comercial; si no ocurre, el resultado no puede considerarse competitivo.'
+                },
+                {
+                    id: 'bienvenida_agradecimiento',
+                    titulo: 'Agradecimiento y despedida',
+                    motivo: 'Cierra la experiencia, refuerza recompra y deja marca de hospitalidad.'
+                }
+            ],
+            techoKpi: [
+                {
+                    condicion: 'Falla "Contacto visual y saludo" o "Agradecimiento y despedida"',
+                    techo: 94,
+                    impacto: 'No puede ser “Excelente”, aunque instalaciones/operación salgan perfectas.'
+                },
+                {
+                    condicion: 'Falla "Venta cruzada"',
+                    techo: 89,
+                    impacto: 'No puede ser “Bueno”; obliga capacitación/seguimiento comercial.'
+                },
+                {
+                    condicion: 'Falla "Venta cruzada" y "Conocimiento de productos"',
+                    techo: 84,
+                    impacto: 'Resultado “No competitivo”: hay que entrenar ventas y producto.'
+                }
+            ]
+        };
+
+        function getParametroNombrePorId(paramId) {
+            const p = Array.isArray(window.parametros) ? window.parametros.find(x => x.id === paramId) : null;
+            return (p && p.nombre) ? p.nombre : paramId;
+        }
+
+        function renderReglasCompetitividad() {
+            const container = document.getElementById('reglasCompetitividad');
+            if (!container) return;
+
+            const vitales = REGLAS_COMPETITIVIDAD.vitales.map(v => {
+                const nombre = getParametroNombrePorId(v.id);
+                return { ...v, nombre };
+            });
+
+            const htmlV = vitales.map(v => (
+                '<div style="padding: 12px 14px; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%); box-shadow: 0 2px 8px rgba(0,0,0,0.06);">'
+                + '<div style="display:flex; align-items:center; justify-content: space-between; gap: 10px;">'
+                + '<div style="font-weight: 900; color:#1a2533;">' + (v.titulo || v.nombre) + '</div>'
+                + '<div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \'Liberation Mono\', \'Courier New\', monospace; font-size: 12px; color:#6c757d;">' + v.id + '</div>'
+                + '</div>'
+                + '<div style="margin-top: 6px; color:#6c757d; font-size: 12px; line-height: 1.35;">' + (v.motivo || '') + '</div>'
+                + '</div>'
+            )).join('');
+
+            const htmlTecho = REGLAS_COMPETITIVIDAD.techoKpi.map(r => (
+                '<tr>'
+                + '<td style="padding: 10px 12px; border-bottom: 1px solid #eef2f6; color:#1a2533;">' + r.condicion + '</td>'
+                + '<td style="padding: 10px 12px; border-bottom: 1px solid #eef2f6; text-align: right; font-weight: 900; color:#dc3545; width: 120px;">' + r.techo + '</td>'
+                + '<td style="padding: 10px 12px; border-bottom: 1px solid #eef2f6; color:#6c757d;">' + r.impacto + '</td>'
+                + '</tr>'
+            )).join('');
+
+            container.innerHTML =
+                '<div style="display:flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; justify-content: space-between;">'
+                + '<div style="flex: 1; min-width: 320px;">'
+                + '<div style="color:#6c757d; font-size: 13px; line-height: 1.35; margin-bottom: 12px;">'
+                + 'Parámetros vitales: si la interacción con el cliente y el esfuerzo comercial fallan, el resultado no se considera competitivo.'
+                + '</div>'
+                + '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">'
+                + htmlV
+                + '</div>'
+                + '</div>'
+                + '<div style="flex: 1; min-width: 320px;">'
+                + '<div style="border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.06); overflow:hidden;">'
+                + '<div style="padding: 12px 14px; background: linear-gradient(135deg, #2d3e50 0%, #1b2736 100%); color: #fff; font-weight: 900; display:flex; align-items:center; gap: 10px;">'
+                + '<i class="fas fa-shield-alt"></i> Techo de KPI (si falla lo vital)'
+                + '</div>'
+                + '<div style="overflow:auto;">'
+                + '<table style="width:100%; border-collapse: collapse; min-width: 520px;">'
+                + '<thead style="background:#f8f9fa; color:#495057;">'
+                + '<tr>'
+                + '<th style="padding: 10px 12px; text-align:left; font-size: 12px; letter-spacing: 0.2px;">Condición</th>'
+                + '<th style="padding: 10px 12px; text-align:right; font-size: 12px; letter-spacing: 0.2px;">KPI máx</th>'
+                + '<th style="padding: 10px 12px; text-align:left; font-size: 12px; letter-spacing: 0.2px;">Impacto</th>'
+                + '</tr>'
+                + '</thead>'
+                + '<tbody>' + htmlTecho + '</tbody>'
+                + '</table>'
+                + '</div>'
+                + '</div>'
+                + '</div>'
+                + '</div>';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderReglasCompetitividad();
+        });
+    </script>
+</body>
+</html>
