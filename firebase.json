@@ -15,12 +15,17 @@
       "package.json",
       "package-lock.json",
       "README.md",
+      "poderansia.html",
       ".github/**",
       ".windsurf/**",
       "**/.*",
       "**/node_modules/**"
     ],
     "rewrites": [
+      {
+        "source": "/ponderancia.html",
+        "destination": "/ponderancia.html"
+      },
       {
         "source": "**",
         "destination": "/index.html"
