@@ -48,28 +48,46 @@ function renderDashboard() {
     // Obtener evaluaciones del mes y aplicar filtro por rol
     const todasLasEvaluaciones = obtenerEvaluacionesDelMes(window.mesSeleccionado);
     const evaluacionesFiltradas = filtrarDatosPorRol(todasLasEvaluaciones);
+
+    const kpi2Utils = window.kpi2Utils || null;
+    const debeMostrarKPI2 = (mes) => {
+        if (kpi2Utils && typeof kpi2Utils.debeMostrarKPI2 === 'function') return kpi2Utils.debeMostrarKPI2(mes);
+        return !!mes && mes >= '2026-02';
+    };
+    const calcularKPI2Dashboard = (entidadId, tipo, evaluacionLocal) => {
+        if (kpi2Utils && typeof kpi2Utils.calcularKPI2 === 'function') return kpi2Utils.calcularKPI2(entidadId, tipo, evaluacionLocal);
+        return null;
+    };
     
     console.log(`Dashboard - Evaluaciones totales: ${todasLasEvaluaciones.length}, Filtradas: ${evaluacionesFiltradas.length}`);
     
     // Contar evaluaciones por tipo
-    const sucursalesCount = evaluacionesFiltradas.filter(eval => eval.tipo === 'sucursal').length;
-    const franquiciasCount = evaluacionesFiltradas.filter(eval => eval.tipo === 'franquicia').length;
+    const sucursalesCount = evaluacionesFiltradas.filter(ev => ev.tipo === 'sucursal').length;
+    const franquiciasCount = evaluacionesFiltradas.filter(ev => ev.tipo === 'franquicia').length;
     const totalEvaluaciones = evaluacionesFiltradas.length;
     
     // Recopilar todos los KPIs de las evaluaciones filtradas
     let kpis = [];
+    let kpis2 = [];
     
-    evaluacionesFiltradas.forEach(eval => {
-        if (eval.kpi !== undefined) {
-            const kpiPorcentaje = eval.kpi * 100;
+    evaluacionesFiltradas.forEach(ev => {
+        if (ev.kpi !== undefined) {
+            const kpiPorcentaje = ev.kpi * 100;
             kpis.push(kpiPorcentaje);
+
+            if (debeMostrarKPI2(window.mesSeleccionado)) {
+                const kpi2 = calcularKPI2Dashboard(ev.entidadId, ev.tipo, ev.evaluacion || null);
+                if (typeof kpi2 === 'number') {
+                    kpis2.push(kpi2 * 100);
+                }
+            }
             
             // DEBUG: Mostrar datos detallados de cada evaluación
-            console.log(`DEBUG - ${eval.entidad} (${eval.tipo}):`, {
+            console.log(`DEBUG - ${ev.entidad} (${ev.tipo}):`, {
                 kpi: kpiPorcentaje,
-                totalObtenido: eval.evaluacion?.totalObtenido,
-                totalMaximo: eval.evaluacion?.totalMaximo,
-                estado: eval.estado
+                totalObtenido: ev.evaluacion?.totalObtenido,
+                totalMaximo: ev.evaluacion?.totalMaximo,
+                estado: ev.estado
             });
         }
     });
@@ -84,6 +102,7 @@ function renderDashboard() {
     
     // Calcular estadísticas
     const promedioKPI = kpis.length > 0 ? Math.round(kpis.reduce((a, b) => a + b, 0) / kpis.length) : 0;
+    const promedioKPI2 = kpis2.length > 0 ? Math.round(kpis2.reduce((a, b) => a + b, 0) / kpis2.length) : 0;
     const alto = kpis.filter(k => k >= 95).length;
     const medio = kpis.filter(k => k >= 90 && k < 95).length;
     const bajo = kpis.filter(k => k < 90).length;
@@ -104,6 +123,16 @@ function renderDashboard() {
                 <small style="opacity: 0.8;">Meta: 100%</small>
                 <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;">🎯</div>
             </div>
+
+            ${debeMostrarKPI2(window.mesSeleccionado) ? `
+            <div style="background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%); padding: 20px; border-radius: 12px; color: white; text-align: center; position: relative; cursor: help;"
+                 title="Promedio de KPI2 (PONDERA IA) de todas las evaluaciones del mes. Se calcula al vuelo a partir de los parámetros guardados.">
+                <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">KPI2 Promedio</h3>
+                <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">${promedioKPI2}%</div>
+                <small style="opacity: 0.8;">PONDERA IA</small>
+                <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;">🧠</div>
+            </div>
+            ` : ''}
             <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 12px; color: white; text-align: center;">
                 <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">Desglose por Tipo</h3>
                 <div style="font-size: 18px; font-weight: bold; margin: 10px 0;">
@@ -149,6 +178,7 @@ function renderDashboard() {
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">#</th>
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Entidad</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">KPI</th>
+                            ${debeMostrarKPI2(window.mesSeleccionado) ? '<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">KPI2</th>' : ''}
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Estado</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Fecha</th>
                             ${tienePermiso('ver') || tienePermiso('editar') || tienePermiso('eliminar') ? '<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Acciones</th>' : ''}
@@ -166,6 +196,8 @@ function renderDashboard() {
         ranking.forEach((item, index) => {
             const kpiPorcentaje = ((item.kpi || 0) * 100).toFixed(1);
             const estadoColor = item.estado === 'Excelente' ? '#28a745' : item.estado === 'Bueno' ? '#ffc107' : '#dc3545';
+            const kpi2 = debeMostrarKPI2(window.mesSeleccionado) ? calcularKPI2Dashboard(item.entidadId, item.tipo, item.evaluacion || null) : null;
+            const kpi2Porcentaje = (typeof kpi2 === 'number') ? (kpi2 * 100).toFixed(1) : null;
             
             html += `
                 <tr style="border-bottom: 1px solid #ddd;">
@@ -174,6 +206,11 @@ function renderDashboard() {
                     <td style="padding: 12px; text-align: center; font-weight: bold; color: ${estadoColor}; font-size: 16px;">
                         ${kpiPorcentaje}%
                     </td>
+                    ${debeMostrarKPI2(window.mesSeleccionado) ? `
+                    <td style="padding: 12px; text-align: center; font-weight: bold; color: #2d3e50; font-size: 16px;" title="KPI2 usa ponderación competitividad (PONDERA IA).">
+                        ${kpi2Porcentaje !== null ? (kpi2Porcentaje + '%') : '—'}
+                    </td>
+                    ` : ''}
                     <td style="padding: 12px; text-align: center;">
                         <span style="color: ${estadoColor}; font-weight: bold;">
                             ${item.estado}

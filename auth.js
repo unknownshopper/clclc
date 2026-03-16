@@ -40,18 +40,32 @@ async function iniciarSesion() {
             if (usuario.rol === 'admin') {
                 await window.firebaseAuth?.signInAdmin(email, password);
                 window.firebaseAdminAuthenticated = true;
+
+                try {
+                    if (window.firebaseDB && typeof window.firebaseDB.cargarEvaluaciones === 'function') {
+                        const evaluacionesFirebase = await window.firebaseDB.cargarEvaluaciones();
+                        if (typeof integrarDatosFirebase === 'function') {
+                            integrarDatosFirebase(evaluacionesFirebase);
+                        }
+                    }
+                } catch (e2) {
+                    console.warn('No se pudieron recargar evaluaciones de Firebase tras login admin:', e2);
+                }
             } else {
                 await window.firebaseAuth?.signOut();
                 window.firebaseAdminAuthenticated = false;
             }
         } catch (e) {
             console.error('Error autenticando con Firebase:', e);
-            // No bloquear el acceso a la app si el login local es válido.
-            // Sin Firebase Auth, el admin no podrá ejecutar acciones de escritura en Firestore.
-            window.firebaseAdminAuthenticated = false;
+            // Para admin, sin Firebase Auth no se pueden consultar borradores ni ejecutar acciones.
+            // Bloquear el login para evitar confusión (p.ej. "no veo borradores").
             if (usuario.rol === 'admin') {
-                mostrarErrorLogin('Entraste, pero no se pudo autenticar con Firebase. Acciones de admin (crear/editar/eliminar/publicar) quedarán deshabilitadas.');
+                window.firebaseAdminAuthenticated = false;
+                mostrarErrorLogin('Credenciales de admin inválidas para Firebase. Usa el email admin y su contraseña de Firebase para ver borradores y administrar evaluaciones.');
+                return;
             }
+            // Para roles no-admin, permitir acceso (solo lectura de publicado)
+            window.firebaseAdminAuthenticated = false;
         }
         usuarioActual = usuario;
         localStorage.setItem('usuarioActual', JSON.stringify(usuario));

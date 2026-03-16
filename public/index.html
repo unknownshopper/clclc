@@ -2,196 +2,22 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Evaluación Café La Cabaña</title>
-    <link rel="stylesheet" href="style.css?v=eaf111a">
-    <!-- Chart.js CDN para gráficass -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Firebase Scripts -->
-    <script type="module">
-      // Import the functions you need from the SDKs you need
-      import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-      import { getFirestore, collection, addDoc, getDocs, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-      // Your web app's Firebase configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyAnfQSqfJSSQ6QBrYyF4rWUhCZmIAqGb90",
-        authDomain: "clclc-24987.firebaseapp.com",
-        projectId: "clclc-24987",
-        storageBucket: "clclc-24987.firebasestorage.app",
-        messagingSenderId: "266489305461",
-        appId: "1:266489305461:web:2ce3fbdc212a61064d5b3c"
-      };
-
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-
-      // Firebase functions for evaluations
-      window.firebaseDB = {
-        // Guardar evaluación en Firestore
-        async guardarEvaluacion(evaluacionData) {
-          try {
-            const docRef = await addDoc(collection(db, 'evaluaciones'), {
-              ...evaluacionData,
-              fechaCreacion: new Date(),
-              timestamp: Date.now()
-            });
-            console.log('Evaluación guardada en Firebase con ID:', docRef.id);
-            return docRef.id;
-          } catch (error) {
-            console.error('Error guardando evaluación en Firebase:', error);
-            throw error;
-          }
-        },
-
-        // Cargar evaluaciones desde Firestore
-        async cargarEvaluaciones(mes = null) {
-          try {
-            let q = collection(db, 'evaluaciones');
-            
-            if (mes) {
-              q = query(q, where('mes', '==', mes), orderBy('fechaCreacion', 'desc'));
-            } else {
-              q = query(q, orderBy('fechaCreacion', 'desc'));
-            }
-            
-            const querySnapshot = await getDocs(q);
-            const evaluaciones = [];
-            
-            querySnapshot.forEach((doc) => {
-              evaluaciones.push({
-                id: doc.id,
-                ...doc.data()
-              });
-            });
-            
-            console.log(`Cargadas ${evaluaciones.length} evaluaciones desde Firebase`);
-            return evaluaciones;
-          } catch (error) {
-            console.error('Error cargando evaluaciones desde Firebase:', error);
-            return [];
-          }
-        },
-
-        // Verificar conexión a Firebase
-        async verificarConexion() {
-          try {
-            await getDocs(query(collection(db, 'evaluaciones'), orderBy('fechaCreacion', 'desc')));
-            console.log('Conexión a Firebase establecida correctamente');
-            return true;
-          } catch (error) {
-            console.error('Error conectando a Firebase:', error);
-            return false;
-          }
-        }
-      };
-
-      console.log('Firebase configurado correctamente');
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirigiendo…</title>
+    <meta http-equiv="refresh" content="0; url=/">
+    <script>
+      try { window.location.replace('/'); } catch (e) {}
     </script>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 24px; color: #2d3e50; }
+      a { color: #0077cc; }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Reportes de Evaluaciones</h1>
-        <p>Sistema de evaluación mensual de Sucursales y Franquicias para Café La Cabaña</p>
-    </header>
-    
-    <nav>
-        <button class="tab-btn" data-section="dashboard">Dashboard</button>
-        <button class="tab-btn" data-section="evaluaciones">Evaluaciones</button>
-        <button class="tab-btn" data-section="matriz">Matriz</button>
-        <button class="tab-btn" data-section="graficas">Gráficas</button>
-        <button class="tab-btn" data-section="historico">Histórico</button>
-        <button class="tab-btn" data-section="competencia">Competencia</button>
-    </nav>
-    <main>
-        <section id="dashboard" class="tab-section">
-            <div class="mes-selector-container">
-                <label for="mes-selector">Mes de evaluación:</label>
-                <select id="mes-selector"></select>
-            </div>
-            <!-- KPIs y resumen general -->
-        </section>
-        <section id="evaluaciones" class="tab-section" style="display:none"></section>
-        <section id="matriz" class="tab-section" style="display:none">
-            <h2>Matriz de Evaluación (Sucursales y Franquicias)</h2>
-            <div id="tabla-matriz-container"></div>
-        </section>
-        <section id="graficas" class="tab-section" style="display:none">
-            <canvas id="graficaResultados" width="600" height="300"></canvas>
-        </section>
-        <section id="competencia" class="tab-section" style="display:none"></section>
-        <section id="historico" class="tab-section" style="display:none"></section>
-    </main>
-    <script src="data/sucursales.js"></script>
-    <script src="data/franquicias.js"></script>
-    <script src="data/parametros.js"></script>
-    <script src="data/parametros_excluidos.js"></script>
-    <script src="data/competencia.js"></script>
-    <script src="competencia.js"></script>
-    <script src="script.js?v=dffba1e"></script>
-    <style>
-        /* Estilos para la tabla de evaluaciones */
-        .evaluaciones-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .evaluaciones-table th,
-        .evaluaciones-table td {
-            padding: 8px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-        
-        .evaluaciones-table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-        
-        /* Estilos para las celdas de KPI */
-        .kpi-alto {
-            background-color: #b7e1cd;
-            color: #0b5394;
-            font-weight: bold;
-            text-align: center;
-        }
-        
-        .kpi-medio {
-            background-color: #ffe599;
-            color: #7f6000;
-            font-weight: bold;
-            text-align: center;
-        }
-        
-        .kpi-bajo {
-            background-color: #f4cccc;
-            color: #990000;
-            font-weight: bold;
-            text-align: center;
-        }
-        
-        .kpi-na {
-            background-color: #f3f3f3;
-            color: #666666;
-            text-align: center;
-            font-style: italic;
-        }
-    </style>
-    <!-- Modal para nueva evaluación -->
-    <div id="modal-nueva-evaluacion">
-      <div class="modal-box">
-        <button onclick="cerrarModalEvaluacion()" class="close-btn">&times;</button>
-        <h2>Nueva evaluación</h2>
-        <label for="select-entidad-evaluacion">Sucursal/Franquicia:</label>
-        <select id="select-entidad-evaluacion" style="width:100%;margin-bottom:16px;">
-          <option value="">Selecciona una opción</option>
-          <!-- Opciones generadas por JS -->
-        </select>
-        <div id="parametros-evaluacion-container"></div>
-        <div id="total-puntos-evaluacion" style="margin:18px 0 0 0;font-weight:600;font-size:1.08em;color:#0077cc;">Total de puntos: 0</div>
-        <button id="btn-guardar-evaluacion" style="margin-top:16px;display:none;">Guardar evaluación</button>
-      </div>
+    <div>
+      <h1>Redirigiendo al sistema…</h1>
+      <p>Si no te redirige automáticamente, abre:</p>
+      <p><a href="/">/</a></p>
     </div>
 </body>
 </html>

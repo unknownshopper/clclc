@@ -37,12 +37,23 @@ window.firebaseDB = {
   // Cargar evaluaciones desde Firestore
   async cargarEvaluaciones(mes = null) {
     try {
-      let q = collection(db, 'evaluaciones');
-      
-      if (mes) {
-        q = query(q, where('mes', '==', mes), orderBy('fechaCreacion', 'desc'));
+      // En no-admin, solo leer 'publicado' para evitar fallos por permisos cuando hay borradores
+      const esAdminFirebase = !!window.firebaseAdminAuthenticated;
+      const base = collection(db, 'evaluaciones');
+
+      let q;
+      if (esAdminFirebase) {
+        if (mes) {
+          q = query(base, where('mes', '==', mes), orderBy('fechaCreacion', 'desc'));
+        } else {
+          q = query(base, orderBy('fechaCreacion', 'desc'));
+        }
       } else {
-        q = query(q, orderBy('fechaCreacion', 'desc'));
+        if (mes) {
+          q = query(base, where('mes', '==', mes), where('estadoPublicacion', '==', 'publicado'));
+        } else {
+          q = query(base, where('estadoPublicacion', '==', 'publicado'));
+        }
       }
       
       const querySnapshot = await getDocs(q);

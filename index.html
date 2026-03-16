@@ -112,12 +112,25 @@
         // Cargar evaluaciones desde Firestore
         async cargarEvaluaciones(mes = null) {
           try {
-            let q = collection(db, 'evaluaciones');
-            
-            if (mes) {
-              q = query(q, where('mes', '==', mes), orderBy('fechaCreacion', 'desc'));
+            // IMPORTANTE: Para usuarios NO autenticados como admin en Firebase,
+            // Firestore rechazará queries que incluyan documentos no autorizados (p.ej. borradores).
+            // Por ello, en modo no-admin solo consultamos 'publicado'.
+            const esAdminFirebase = !!window.firebaseAdminAuthenticated;
+            const base = collection(db, 'evaluaciones');
+
+            let q;
+            if (esAdminFirebase) {
+              if (mes) {
+                q = query(base, where('mes', '==', mes), orderBy('fechaCreacion', 'desc'));
+              } else {
+                q = query(base, orderBy('fechaCreacion', 'desc'));
+              }
             } else {
-              q = query(q, orderBy('fechaCreacion', 'desc'));
+              if (mes) {
+                q = query(base, where('mes', '==', mes), where('estadoPublicacion', '==', 'publicado'));
+              } else {
+                q = query(base, where('estadoPublicacion', '==', 'publicado'));
+              }
             }
             
             const querySnapshot = await getDocs(q);
@@ -274,6 +287,7 @@
         <button class="tab-btn" data-section="historico">Histórico</button>
         <button class="tab-btn" data-section="competencia">Competencia</button>
     </nav>
+    <div id="mesSelectorGlobalHost" style="padding: 0 18px;"></div>
     <main>
         <section id="dashboard" class="tab-section">
             <div class="mes-selector-container">
@@ -282,18 +296,24 @@
             </div>
             <!-- KPIs y resumen general -->
         </section>
-        <section id="evaluaciones" class="tab-section" style="display:none"></section>
+        <section id="evaluaciones" class="tab-section" style="display:none">
+            <div class="mes-selector-container" data-mes-selector-host="evaluaciones"></div>
+        </section>
         <section id="matriz" class="tab-section" style="display:none">
+            <div class="mes-selector-container" data-mes-selector-host="matriz"></div>
             <h2>Matriz de Evaluación (Sucursales y Franquicias)</h2>
             <div id="tabla-matriz-container"></div>
         </section>
         <section id="graficas" class="tab-section" style="display:none">
+            <div class="mes-selector-container" data-mes-selector-host="graficas"></div>
             <canvas id="graficaResultados" width="600" height="300"></canvas>
         </section>
         <section id="competencia" class="tab-section" style="display:none">
+            <div class="mes-selector-container" data-mes-selector-host="competencia"></div>
             <!-- Contenido de la sección de competencia -->
         </section>
         <section id="historico" class="tab-section" style="display:none">
+            <div class="mes-selector-container" data-mes-selector-host="historico"></div>
             <div style="margin-bottom: 20px;">
                 <h2 style="color:#0077cc; text-align:center;">Histórico - Resultados Globales por Mes</h2>
                 <p style="text-align:center; color:#666;">Promedio de KPI por mes considerando permisos del usuario</p>
@@ -312,6 +332,7 @@
     <script src="utils.js"></script>
     <script src="dashboard.js"></script>
     <script src="data/historico.js"></script>
+    <script src="competencia.js"></script>
     <script src="script.js?v=dffba1e"></script>
     <style>
         /* Estilos para la tabla de evaluaciones */

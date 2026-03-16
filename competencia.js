@@ -82,14 +82,63 @@ function renderCompetencia() {
         <div class="competidores-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
     `;
     
-    // Obtener evaluaciones de competencia para el mes actual
+    const obtenerTodasEvaluacionesCompetencia = () => {
+        const res = [];
+        if (!window.evaluaciones || !window.evaluaciones.competencia) return res;
+        const compMap = window.evaluaciones.competencia;
+        Object.keys(compMap).forEach(competidorId => {
+            const porMes = compMap[competidorId] || {};
+            Object.keys(porMes).forEach(mes => {
+                const ev = porMes[mes];
+                if (!ev) return;
+                const competidor = (Array.isArray(window.competencia) ? window.competencia.find(c => c.id === competidorId) : null);
+                const nombre = competidor ? competidor.nombre : competidorId;
+                const totalObtenido = ev.totalObtenido || 0;
+                const totalMaximo = ev.totalMaximo || 0;
+                const kpiPorcentaje = totalMaximo > 0 ? Math.round((totalObtenido / totalMaximo) * 100) : 0;
+                res.push({
+                    tipo: 'competencia',
+                    entidad: nombre,
+                    entidadId: competidorId,
+                    mes,
+                    kpi: kpiPorcentaje / 100,
+                    kpiPorcentaje,
+                    estado: kpiPorcentaje >= 95 ? 'Excelente' : kpiPorcentaje >= 90 ? 'Bueno' : 'Necesita Mejora',
+                    fecha: ev.fechaCreacion || ev.created_at || '',
+                    timestamp: ev.timestamp || 0,
+                    evaluacion: ev
+                });
+            });
+        });
+        res.sort((a, b) => {
+            if (a.mes !== b.mes) return (b.mes || '').localeCompare(a.mes || '');
+            return (b.timestamp || 0) - (a.timestamp || 0);
+        });
+        return res;
+    };
+
+    const getUltimaEvaluacionPorCompetidor = (competidorId) => {
+        try {
+            const all = obtenerTodasEvaluacionesCompetencia();
+            return all.find(e => e.entidadId === competidorId) || null;
+        } catch (e) {
+            return null;
+        }
+    };
+
+    // Para compatibilidad: evaluaciones del mes actual (si existen)
     const evaluacionesCompetencia = obtenerEvaluacionesCompetencia(window.mesSeleccionado);
+    const todasHistoricas = obtenerTodasEvaluacionesCompetencia();
     
     window.competencia.filter(comp => comp.activa).forEach(competidor => {
-        const evaluacion = evaluacionesCompetencia.find(eval => eval.entidadId === competidor.id);
+        const evaluacionMes = evaluacionesCompetencia.find(ev => ev.entidadId === competidor.id);
+        const ultima = getUltimaEvaluacionPorCompetidor(competidor.id);
+
+        const evaluacion = evaluacionMes || ultima;
         const kpi = evaluacion ? Math.round(evaluacion.kpi * 100) : 0;
         const estado = evaluacion ? evaluacion.estado : 'Sin evaluar';
         const estadoColor = kpi >= 95 ? '#28a745' : kpi >= 90 ? '#ffc107' : '#dc3545';
+        const mesTexto = evaluacion ? (evaluacion.mes ? formatearMesLegible(evaluacion.mes) : '') : '';
         
         html += `
             <div class="competidor-card" style="
@@ -111,6 +160,7 @@ function renderCompetencia() {
                         <div style="font-size: 12px; color: ${estadoColor};">
                             ${estado}
                         </div>
+                        ${mesTexto ? `<div style="font-size: 11px; color: #6c757d; margin-top: 4px;">Última: ${mesTexto}</div>` : ''}
                     </div>
                 </div>
                 
@@ -158,6 +208,37 @@ function renderCompetencia() {
         <div style="margin-top: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
             <h3 style="text-align: center; margin-bottom: 20px;">Estadísticas de Competencia</h3>
             <div id="estadisticas-competencia"></div>
+        </div>
+
+        <div style="margin-top: 18px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h3 style="text-align: center; margin-bottom: 20px;">Histórico de Competencia</h3>
+            <div style="overflow-x:auto;">
+                <table style="width: 100%; border-collapse: collapse; min-width: 720px;">
+                    <thead>
+                        <tr style="background: #0077cc; color: white;">
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Mes</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Competidor</th>
+                            <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">KPI</th>
+                            <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${todasHistoricas.length ? todasHistoricas.map(row => {
+                            const estadoColor = row.kpiPorcentaje >= 95 ? '#28a745' : row.kpiPorcentaje >= 90 ? '#ffc107' : '#dc3545';
+                            return `
+                                <tr style="border-bottom: 1px solid #eee;">
+                                    <td style="padding: 12px; color: #2d3e50;">${typeof formatearMesLegible === 'function' ? formatearMesLegible(row.mes) : row.mes}</td>
+                                    <td style="padding: 12px; color: #2d3e50;">${row.entidad}</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 800; color: ${estadoColor};">${row.kpiPorcentaje}%</td>
+                                    <td style="padding: 12px; text-align: center; color: ${estadoColor}; font-weight: 700;">${row.estado}</td>
+                                </tr>
+                            `;
+                        }).join('') : `
+                            <tr><td colspan="4" style="padding: 16px; text-align:center; color:#6c757d;">No hay evaluaciones históricas de competencia registradas.</td></tr>
+                        `}
+                    </tbody>
+                </table>
+            </div>
         </div>
     `;
     

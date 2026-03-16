@@ -254,6 +254,33 @@
             </div>
         </header>
 
+        <section class="reporte-header" style="margin-bottom: 14px;">
+            <div style="display:flex; align-items:flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+                <div style="min-width: 280px;">
+                    <h2 style="margin: 0; font-size: 16px; font-weight: 900; color:#2d3e50;">Respaldo metodológico (alineación ISO)</h2>
+                    <div style="margin-top: 8px; font-size: 12px; line-height: 1.4; color:#6c757d;">
+                        Este documento describe un esquema de medición y ponderación para auditoría de experiencia. La alineación ISO se refiere al <strong>método</strong> (proceso, control y evidencia), no a la validación de los <strong>valores numéricos</strong> de cada ponderancia.
+                    </div>
+                </div>
+                <div style="flex: 1 1 360px;">
+                    <div style="display:grid; grid-template-columns: 1fr; gap: 8px;">
+                        <div style="padding: 10px 12px; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; background: #fff;">
+                            <div style="font-weight: 900; color:#2d3e50; font-size: 12px;">ISO 9001 (gestión de calidad)</div>
+                            <div style="margin-top: 2px; color:#6c757d; font-size: 12px; line-height: 1.35;">Proceso estandarizado de evaluación, control documental, trazabilidad de cambios de ponderancias por versión y resguardo de evidencias.</div>
+                        </div>
+                        <div style="padding: 10px 12px; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; background: #fff;">
+                            <div style="font-weight: 900; color:#2d3e50; font-size: 12px;">ISO 10004 (medición de satisfacción)</div>
+                            <div style="margin-top: 2px; color:#6c757d; font-size: 12px; line-height: 1.35;">Criterios orientados a experiencia del cliente, consistencia de medición y uso de resultados para identificar oportunidades y priorizar acciones.</div>
+                        </div>
+                        <div style="padding: 10px 12px; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; background: #fff;">
+                            <div style="font-weight: 900; color:#2d3e50; font-size: 12px;">ISO 10002 (gestión de quejas)</div>
+                            <div style="margin-top: 2px; color:#6c757d; font-size: 12px; line-height: 1.35;">Retroalimentación y cierre de brechas: los hallazgos pueden conectarse con causas, acciones correctivas y seguimiento.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <nav style="margin-bottom: 12px;">
             <!-- <a href="index.html" class="tab-btn" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
                 <i class="fas fa-arrow-left"></i>
@@ -557,6 +584,18 @@
 
                 tbody.appendChild(tr);
             });
+
+            const trTotal = document.createElement('tr');
+            trTotal.style.borderTop = '2px solid #dee2e6';
+            trTotal.style.background = '#eef4ff';
+            trTotal.innerHTML = (
+                '<td style="padding: 12px 14px; font-weight: 900; color:#2d3e50;">' + (filtrados.length + 1) + '</td>' +
+                '<td style="padding: 12px 14px; font-weight: 900; color:#2d3e50;">TOTAL</td>' +
+                '<td style="padding: 12px 14px; font-weight: 800; color:#2d3e50;">Suma total de puntuaciones</td>' +
+                '<td style="padding: 12px 14px; text-align: right; font-weight: 900; color:#0077cc;">' + totalAll + '</td>' +
+                '<td style="padding: 12px 14px; text-align: right; font-weight: 900; color:#28a745;">' + totalIAAll + '</td>'
+            );
+            tbody.appendChild(trTotal);
         }
 
         document.addEventListener('DOMContentLoaded', function() {

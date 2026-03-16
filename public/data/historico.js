@@ -123,96 +123,96 @@ function renderHistorico() {
 
     const ctxC = canvasC.getContext('2d');
 
-      const minC = Math.min(...datosC1, ...datosC2);
-      const maxC = Math.max(...datosC1, ...datosC2);
-      const paddingC = 5;
-      const yMinC = Math.max(0, Math.floor((minC - paddingC) / 5) * 5);
-      const yMaxC = Math.min(100, Math.ceil((maxC + paddingC) / 5) * 5);
+    const minC = Math.min(...datosC1, ...datosC2);
+    const maxC = Math.max(...datosC1, ...datosC2);
+    const paddingC = 5;
+    const yMinC = Math.max(0, Math.floor((minC - paddingC) / 5) * 5);
+    const yMaxC = Math.min(100, Math.ceil((maxC + paddingC) / 5) * 5);
 
-      new Chart(ctxC, {
-        type: 'line',
-        data: {
-          labels: labelsC,
-          datasets: [
-            {
-              label: 'KPI Global (%)',
-              data: datosC1,
-              borderColor: '#0a84ff',
-              backgroundColor: 'rgba(10,132,255,0.08)',
-              pointBackgroundColor: '#0a84ff',
-              pointBorderColor: '#ffffff',
-              pointBorderWidth: 2,
-              pointRadius: 5,
-              pointHoverRadius: 8,
-              borderWidth: 3,
-              cubicInterpolationMode: 'monotone',
-              tension: 0.35,
-              fill: false,
-            },
-            {
-              label: 'KPI2 Global (%)',
-              data: datosC2,
-              borderColor: '#a855f7',
-              backgroundColor: 'rgba(168,85,247,0.08)',
-              pointBackgroundColor: '#a855f7',
-              pointBorderColor: '#ffffff',
-              pointBorderWidth: 2,
-              pointRadius: 5,
-              pointHoverRadius: 8,
-              borderWidth: 3,
-              cubicInterpolationMode: 'monotone',
-              tension: 0.35,
-              fill: false,
-            },
-            {
-              label: 'Meta 95%',
-              data: new Array(labelsC.length).fill(95),
-              borderColor: '#22c55e',
-              borderDash: [6, 6],
-              pointRadius: 0,
-              borderWidth: 2,
-              fill: false,
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: true,
-              labels: { color: '#2c3e50', usePointStyle: true, pointStyle: 'circle' }
-            },
-            tooltip: {
-              mode: 'index',
-              intersect: false,
-              callbacks: {
-                title: (items) => items[0]?.label || '',
-                label: (c) => {
-                  const idx = c.dataIndex;
-                  const val = c.parsed.y;
-                  const cnt = c.datasetIndex === 0 ? countsC1[idx] : countsC2[idx];
-                  return ` ${val}%  ·  ${cnt} evals`;
-                }
+    new Chart(ctxC, {
+      type: 'line',
+      data: {
+        labels: labelsC,
+        datasets: [
+          {
+            label: 'KPI Global (%)',
+            data: datosC1,
+            borderColor: '#0a84ff',
+            backgroundColor: 'rgba(10,132,255,0.08)',
+            pointBackgroundColor: '#0a84ff',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 8,
+            borderWidth: 3,
+            cubicInterpolationMode: 'monotone',
+            tension: 0.35,
+            fill: false,
+          },
+          {
+            label: 'KPI2 Global (%)',
+            data: datosC2,
+            borderColor: '#a855f7',
+            backgroundColor: 'rgba(168,85,247,0.08)',
+            pointBackgroundColor: '#a855f7',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 8,
+            borderWidth: 3,
+            cubicInterpolationMode: 'monotone',
+            tension: 0.35,
+            fill: false,
+          },
+          {
+            label: 'Meta 95%',
+            data: new Array(labelsC.length).fill(95),
+            borderColor: '#22c55e',
+            borderDash: [6, 6],
+            pointRadius: 0,
+            borderWidth: 2,
+            fill: false,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            labels: { color: '#2c3e50', usePointStyle: true, pointStyle: 'circle' }
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            callbacks: {
+              title: (items) => items[0]?.label || '',
+              label: (c) => {
+                const idx = c.dataIndex;
+                const val = c.parsed.y;
+                const cnt = c.datasetIndex === 0 ? countsC1[idx] : countsC2[idx];
+                return ` ${val}%  ·  ${cnt} evals`;
               }
             }
-          },
-          scales: {
-            x: {
-              grid: { display: false },
-              ticks: { color: '#6b7280' }
-            },
-            y: {
-              min: yMinC,
-              max: yMaxC,
-              grid: { color: 'rgba(0,0,0,0.06)' },
-              ticks: { color: '#6b7280', callback: (v) => v + '%' }
-            }
-          },
-          interaction: { mode: 'nearest', intersect: false },
-          animation: { duration: 800, easing: 'easeOutQuart' }
+          }
         },
-        plugins: [shadowLine]
-      });
-    }
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: '#6b7280' }
+          },
+          y: {
+            min: yMinC,
+            max: yMaxC,
+            grid: { color: 'rgba(0,0,0,0.06)' },
+            ticks: { color: '#6b7280', callback: (v) => v + '%' }
+          }
+        },
+        interaction: { mode: 'nearest', intersect: false },
+        animation: { duration: 800, easing: 'easeOutQuart' }
+      },
+      plugins: [shadowLine]
+    });
+  }
 }

@@ -8,6 +8,16 @@
  */
 function renderMatrizCompleta() {
     console.log('Renderizando matriz completa para mes:', window.mesSeleccionado);
+
+    const kpi2Utils = window.kpi2Utils || null;
+    const debeMostrarKPI2 = (mes) => {
+        if (kpi2Utils && typeof kpi2Utils.debeMostrarKPI2 === 'function') return kpi2Utils.debeMostrarKPI2(mes);
+        return !!mes && mes >= '2026-02';
+    };
+    const calcularKPI2Matriz = (entidadId, tipo, evaluacionLocal) => {
+        if (kpi2Utils && typeof kpi2Utils.calcularKPI2 === 'function') return kpi2Utils.calcularKPI2(entidadId, tipo, evaluacionLocal);
+        return null;
+    };
     
     // Nueva verificación dinámica por rol y estado de publicación
     let evaluacionesVisibles = [];
@@ -116,6 +126,7 @@ function renderMatrizCompleta() {
                             <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; color: #495057; min-width: 150px; position: sticky; left: 0; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">Entidad</th>
                             <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; color: #495057; min-width: 80px; position: sticky; left: 150px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">Tipo</th>
                             <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: 600; color: #495057; min-width: 100px; position: sticky; left: 230px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">KPI General</th>
+                            ${debeMostrarKPI2(window.mesSeleccionado) ? '<th style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: 600; color: #495057; min-width: 100px; position: sticky; left: 330px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">KPI2</th>' : ''}
     `;
     
     // Agregar columnas para TODOS los parámetros (32)
@@ -166,6 +177,17 @@ function renderMatrizCompleta() {
             kpiGeneral = `${porcentaje}%`;
             kpiColor = porcentaje >= 95 ? '#28a745' : porcentaje >= 90 ? '#ffc107' : '#dc3545';
         }
+
+        let kpi2General = '—';
+        let kpi2Color = '#999';
+        if (debeMostrarKPI2(window.mesSeleccionado)) {
+            const kpi2 = calcularKPI2Matriz(entidad.id, tipoLower, evaluacion || null);
+            if (typeof kpi2 === 'number') {
+                const porcentaje2 = Math.round(kpi2 * 100);
+                kpi2General = `${porcentaje2}%`;
+                kpi2Color = porcentaje2 >= 95 ? '#28a745' : porcentaje2 >= 90 ? '#ffc107' : '#dc3545';
+            }
+        }
         
         // Obtener parámetros excluidos para esta entidad
         const parametrosExcluidos = obtenerParametrosExcluidos(entidad.id, tipoLower);
@@ -193,11 +215,19 @@ function renderMatrizCompleta() {
                                 <div class="matriz-tooltip-label">KPI General</div>
                                 <div class="matriz-tooltip-value">${kpiGeneral}</div>
                             </div>
+                            ${debeMostrarKPI2(window.mesSeleccionado) ? `
+                            <div class="matriz-tooltip-row">
+                                <div class="matriz-tooltip-icon">🧠</div>
+                                <div class="matriz-tooltip-label">KPI2</div>
+                                <div class="matriz-tooltip-value">${kpi2General}</div>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
                 </td>
                 <td style="border: 1px solid #ddd; padding: 12px 8px; position: sticky; left: 150px; background-color: ${rowBg}; z-index: 5;">${entidad.tipo}</td>
                 <td style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: bold; color: ${kpiColor}; position: sticky; left: 230px; background-color: ${rowBg}; z-index: 5;">${kpiGeneral}</td>
+                ${debeMostrarKPI2(window.mesSeleccionado) ? `<td style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: bold; color: ${kpi2Color}; position: sticky; left: 330px; background-color: ${rowBg}; z-index: 5;">${kpi2General}</td>` : ''}
         `;
         
         // Mostrar estado de TODOS los parámetros

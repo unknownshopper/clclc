@@ -16,6 +16,12 @@ function cambiarVista(vista) {
     if (seccionActiva) {
         seccionActiva.style.display = 'block';
     }
+
+    try {
+        moverSelectorMesAGlobal();
+    } catch (e) {
+        console.warn('No se pudo mover el selector de mes:', e);
+    }
     
     window.vistaActual = vista;
     
@@ -34,16 +40,268 @@ function cambiarVista(vista) {
             renderGraficas();
             break;
         case 'historico':
-            if (typeof renderHistorico === 'function') {
-                renderHistorico();
-            } else {
-                console.warn('renderHistorico no está disponible. Asegúrate de incluir data/historico.js.');
-            }
+            asegurarHistoricoCargado()
+                .then(() => {
+                    if (typeof renderHistorico === 'function') {
+                        renderHistorico();
+                    } else {
+                        try {
+                            renderHistoricoFallback();
+                        } catch (e) {
+                            console.warn('renderHistorico no está disponible. Asegúrate de incluir data/historico.js.');
+                        }
+                    }
+                })
+                .catch((e) => {
+                    console.warn('No se pudo cargar el módulo histórico:', e);
+                    try {
+                        renderHistoricoFallback();
+                    } catch (e2) {}
+                });
             break;
         case 'competencia':
             renderCompetencia();
             break;
     }
+}
+
+function moverSelectorMesAGlobal() {
+    const host = document.getElementById('mesSelectorGlobalHost');
+    const selector = document.getElementById('mes-selector');
+    if (!host || !selector) return;
+
+    const contenedor = selector.closest('.mes-selector-container');
+    if (!contenedor) return;
+
+    // Evitar trabajo si ya está en el host
+    if (contenedor.parentElement === host) return;
+
+    host.appendChild(contenedor);
+}
+
+function moverSelectorMesASeccion(vista) {
+    const selector = document.getElementById('mes-selector');
+    if (!selector) return;
+
+    const contenedorActual = selector.closest('.mes-selector-container');
+    if (!contenedorActual) return;
+
+    const host = document.querySelector(`#${vista} [data-mes-selector-host="${vista}"]`);
+    if (!host) return;
+
+    if (contenedorActual === host) return;
+
+    // Mover todo el contenedor para conservar label y estilos
+    host.replaceWith(contenedorActual);
+    contenedorActual.setAttribute('data-mes-selector-host', vista);
+}
+
+function asegurarHistoricoCargado() {
+    if (typeof renderHistorico === 'function') return Promise.resolve();
+    if (window.__cargandoHistoricoPromise) return window.__cargandoHistoricoPromise;
+
+    const bust = window.__historicoCacheBust || (window.__historicoCacheBust = Date.now());
+
+    const cargarScript = (src) => new Promise((resolve, reject) => {
+        try {
+            const s = document.createElement('script');
+            s.src = src;
+            s.async = true;
+            s.onload = () => resolve();
+            s.onerror = () => reject(new Error('No se pudo cargar ' + src));
+            document.head.appendChild(s);
+        } catch (e) {
+            reject(e);
+        }
+    });
+
+    window.__cargandoHistoricoPromise = cargarScript(`data/historico.js?v=${bust}`)
+        .catch(() => cargarScript(`public/data/historico.js?v=${bust}`))
+        .catch((e) => {
+            window.__cargandoHistoricoPromise = null;
+            throw e;
+        });
+
+    return window.__cargandoHistoricoPromise;
+}
+
+function renderHistoricoFallback() {
+    const container = document.getElementById('historico');
+    if (!container) return;
+
+    const obtenerMesesUltimos = (n = 12) => {
+        const meses = [];
+        const ahora = new Date();
+        for (let i = n - 1; i >= 0; i--) {
+            const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
+            const año = fecha.getFullYear();
+            const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+            meses.push(`${año}-${mes}`);
+        }
+        return meses;
+    };
+
+    const calcularKPIGlobalMesConFiltros = (mes) => {
+        if (typeof obtenerEvaluacionesDelMes !== 'function') return { kpi: 0, count: 0 };
+        if (typeof filtrarDatosPorRol !== 'function') return { kpi: 0, count: 0 };
+        const todas = obtenerEvaluacionesDelMes(mes) || [];
+        const filtradas = filtrarDatosPorRol(todas) || [];
+        const count = filtradas.length;
+        if (count === 0) return { kpi: 0, count: 0 };
+        const sum = filtradas.reduce((acc, ev) => acc + ((ev.kpi || 0) * 100), 0);
+        return { kpi: Math.round(sum / count), count };
+    };
+
+    const calcularKPI2GlobalMesConFiltros = (mes) => {
+        if (typeof obtenerEvaluacionesDelMes !== 'function') return { kpi: 0, count: 0 };
+        if (typeof filtrarDatosPorRol !== 'function') return { kpi: 0, count: 0 };
+        const todas = obtenerEvaluacionesDelMes(mes) || [];
+        const filtradas = filtrarDatosPorRol(todas) || [];
+        const kpi2Utils = window.kpi2Utils || null;
+        let sum = 0;
+        let count = 0;
+        filtradas.forEach(ev => {
+            const kpi2 = (kpi2Utils && typeof kpi2Utils.calcularKPI2 === 'function')
+                ? kpi2Utils.calcularKPI2(ev.entidadId, ev.tipo, ev.evaluacion)
+                : null;
+            if (typeof kpi2 === 'number') {
+                sum += (kpi2 * 100);
+                count += 1;
+            }
+        });
+        if (count === 0) return { kpi: 0, count: 0 };
+        return { kpi: Math.round(sum / count), count };
+    };
+
+    const meses = obtenerMesesUltimos(12);
+    const resultados = meses.map(m => ({
+        mes: m,
+        label: (typeof formatearMesLegible === 'function' ? formatearMesLegible(m) : m),
+        res: calcularKPIGlobalMesConFiltros(m),
+        res2: calcularKPI2GlobalMesConFiltros(m)
+    }));
+
+    const comparables = resultados.filter(r => r.res.count > 0 && r.res2.count > 0);
+    const labelsC = comparables.map(r => r.label);
+    const datosC1 = comparables.map(r => r.res.kpi);
+    const datosC2 = comparables.map(r => r.res2.kpi);
+    const countsC1 = comparables.map(r => r.res.count);
+    const countsC2 = comparables.map(r => r.res2.count);
+
+    container.innerHTML = `
+        <div style="margin-bottom: 20px;">
+            <h2 style="color:#0077cc; text-align:center;">Histórico - Resultados Globales por Mes</h2>
+            <p style="text-align:center; color:#666;">Comparación de KPI vs KPI2 (según permisos) de todas las entidades evaluadas</p>
+        </div>
+        <div style="margin-top: 18px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <canvas id="graficoHistoricoComparacion" width="800" height="420" style="max-width:100%;"></canvas>
+        </div>
+    `;
+
+    const canvasC = document.getElementById('graficoHistoricoComparacion');
+    if (!canvasC) return;
+
+    if (!labelsC.length) {
+        container.innerHTML += `
+            <div style="margin-top:16px; padding:16px; background:#f8f9fa; border-radius:8px; color:#666; text-align:center;">
+                No hay meses con datos simultáneos (KPI y KPI2) para mostrar la comparación.
+            </div>`;
+        return;
+    }
+
+    if (!window.Chart) return;
+
+    const ctxC = canvasC.getContext('2d');
+    const minC = Math.min(...datosC1, ...datosC2);
+    const maxC = Math.max(...datosC1, ...datosC2);
+    const paddingC = 5;
+    const yMinC = Math.max(0, Math.floor((minC - paddingC) / 5) * 5);
+    const yMaxC = Math.min(100, Math.ceil((maxC + paddingC) / 5) * 5);
+
+    new Chart(ctxC, {
+        type: 'line',
+        data: {
+            labels: labelsC,
+            datasets: [
+                {
+                    label: 'KPI Global (%)',
+                    data: datosC1,
+                    borderColor: '#0a84ff',
+                    backgroundColor: 'rgba(10,132,255,0.08)',
+                    pointBackgroundColor: '#0a84ff',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    borderWidth: 3,
+                    cubicInterpolationMode: 'monotone',
+                    tension: 0.35,
+                    fill: false,
+                },
+                {
+                    label: 'KPI2 Global (%)',
+                    data: datosC2,
+                    borderColor: '#a855f7',
+                    backgroundColor: 'rgba(168,85,247,0.08)',
+                    pointBackgroundColor: '#a855f7',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    borderWidth: 3,
+                    cubicInterpolationMode: 'monotone',
+                    tension: 0.35,
+                    fill: false,
+                },
+                {
+                    label: 'Meta 95%',
+                    data: new Array(labelsC.length).fill(95),
+                    borderColor: '#22c55e',
+                    borderDash: [6, 6],
+                    pointRadius: 0,
+                    borderWidth: 2,
+                    fill: false,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: { color: '#2c3e50', usePointStyle: true, pointStyle: 'circle' }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        title: (items) => items[0]?.label || '',
+                        label: (c) => {
+                            const idx = c.dataIndex;
+                            const val = c.parsed.y;
+                            const cnt = c.datasetIndex === 0 ? countsC1[idx] : countsC2[idx];
+                            return ` ${val}%  ·  ${cnt} evals`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#6b7280' }
+                },
+                y: {
+                    min: yMinC,
+                    max: yMaxC,
+                    grid: { color: 'rgba(0,0,0,0.06)' },
+                    ticks: { color: '#6b7280', callback: (v) => v + '%' }
+                }
+            },
+            interaction: { mode: 'nearest', intersect: false },
+            animation: { duration: 800, easing: 'easeOutQuart' }
+        }
+    });
 }
 
 // Editar (forzar actualización) del enlace de video (solo admin)
@@ -144,6 +402,16 @@ async function manejarVideo(entidadId, tipo) {
 async function renderEvaluaciones() {
     const container = document.getElementById('evaluaciones');
     if (!container) return;
+
+    const kpi2Utils = window.kpi2Utils || null;
+    const debeMostrarKPI2 = (mes) => {
+        if (kpi2Utils && typeof kpi2Utils.debeMostrarKPI2 === 'function') return kpi2Utils.debeMostrarKPI2(mes);
+        return !!mes && mes >= '2026-02';
+    };
+    const calcularKPI2 = (entidadId, tipo, evaluacionLocal) => {
+        if (kpi2Utils && typeof kpi2Utils.calcularKPI2 === 'function') return kpi2Utils.calcularKPI2(entidadId, tipo, evaluacionLocal);
+        return null;
+    };
     
     // Cargar evaluaciones desde Firebase si está disponible
     if (window.firebaseDB) {
@@ -196,6 +464,7 @@ async function renderEvaluaciones() {
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Tipo</th>
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Entidad</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">KPI</th>
+                            ${debeMostrarKPI2(window.mesSeleccionado) ? '<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">KPI2</th>' : ''}
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Estado</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Publicación</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Fecha</th>
@@ -214,13 +483,21 @@ async function renderEvaluaciones() {
             let tipoMostrar = 'Sucursal';
             if (evaluacion.tipo === 'franquicia') tipoMostrar = 'Franquicia';
             else if (evaluacion.tipo === 'competencia') tipoMostrar = 'Competencia';
+
             // Estado de publicación
             const estadoPublicacion = evaluacion.estadoPublicacion || 'borrador';
             const esBorrador = estadoPublicacion === 'borrador';
-            const evalLocal = typeof obtenerEvaluacion === 'function' ? obtenerEvaluacion(evaluacion.entidadId, evaluacion.tipo, window.mesSeleccionado) : null;
+
+            // Para video y KPI2 usamos el registro local/actual (si existe)
+            const evalLocal = typeof obtenerEvaluacion === 'function'
+                ? obtenerEvaluacion(evaluacion.entidadId, evaluacion.tipo, window.mesSeleccionado)
+                : null;
             const linksMes = window.videoLinks?.[window.mesSeleccionado] || {};
             const hasVideo = (evalLocal && evalLocal.videoUrl) || linksMes[evaluacion.entidadId];
-            
+
+            const kpi2 = debeMostrarKPI2(window.mesSeleccionado) ? calcularKPI2(evaluacion.entidadId, evaluacion.tipo, evalLocal) : null;
+            const kpi2Porcentaje = (typeof kpi2 === 'number') ? (kpi2 * 100).toFixed(1) : null;
+
             html += `
                 <tr style="background: ${bgColor};">
                     <td style="padding: 12px; border-bottom: 1px solid #ddd;">
@@ -234,6 +511,11 @@ async function renderEvaluaciones() {
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; font-weight: bold; color: ${estadoColor}; font-size: 16px;">
                         ${kpiPorcentaje}%
                     </td>
+                    ${debeMostrarKPI2(window.mesSeleccionado) ? `
+                    <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; font-weight: bold; color: #2d3e50; font-size: 16px;" title="KPI2 usa ponderación competitividad (PONDERA IA).">
+                        ${kpi2Porcentaje !== null ? (kpi2Porcentaje + '%') : '—'}
+                    </td>
+                    ` : ''}
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">
                         <span style="color: ${estadoColor}; font-weight: bold;">
                             ${evaluacion.estado}
@@ -283,7 +565,8 @@ async function renderEvaluaciones() {
                                 <i class="fas fa-trash"></i>
                             </button>
                             ` : ''}
-                            ${tienePermiso('publicar') && esBorrador && existeEnFirebase(evaluacion.entidadId, evaluacion.tipo) ? `                            <button onclick="publicarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
+                            ${tienePermiso('publicar') && esBorrador && existeEnFirebase(evaluacion.entidadId, evaluacion.tipo) ? `
+                            <button onclick="publicarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
                                     class="btn-action btn-publish" 
                                     title="Publicar evaluación">
                                 <i class="fas fa-share"></i>
@@ -746,6 +1029,18 @@ function renderGraficas() {
                 Comparación del rendimiento individual de cada entidad evaluada
             </p>
         </div>
+
+        <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 30px;">
+            <h3 style="text-align: center; margin-bottom: 25px; color: #2c3e50; font-size: 1.4rem; font-weight: 600;">
+                📈 Comparación KPI vs KPI2
+            </h3>
+            <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                <canvas id="graficoKPIsComparacion" width="900" height="440" style="max-width: 100%; border-radius: 8px;"></canvas>
+            </div>
+            <p style="text-align: center; color: #7f8c8d; font-size: 0.9rem; margin-top: 15px;">
+                KPI (ponderación actual) vs KPI2 (PONDERA IA) por entidad
+            </p>
+        </div>
         
         <!-- Layout de 2 columnas para gráfico circular y resumen -->
         <div class="graficas-responsive" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 30px; margin-bottom: 30px;">
@@ -795,19 +1090,27 @@ function renderGraficas() {
     generarGraficosKPI();
     generarResumenEstadistico();
 }
-
-// Función para generar gráficos de KPI
 function generarGraficosKPI() {
     const canvas1 = document.getElementById('graficoKPIs');
     const canvas2 = document.getElementById('graficoDistribucion');
+    const canvasC = document.getElementById('graficoKPIsComparacion');
     
     if (!canvas1 || !canvas2) return;
+
+    const kpi2Utils = window.kpi2Utils || null;
+    const calcularKPI2ParaGrafica = (entidadId, tipo, evaluacionLocal) => {
+        if (kpi2Utils && typeof kpi2Utils.calcularKPI2 === 'function') {
+            return kpi2Utils.calcularKPI2(entidadId, tipo, evaluacionLocal);
+        }
+        return null;
+    };
     
     // Obtener datos filtrados por rol usando la función existente
     const evaluacionesFiltradas = filtrarDatosPorRol(obtenerEvaluacionesDelMes(window.mesSeleccionado));
     
     // Obtener datos de KPIs de las evaluaciones filtradas
     let datosKPI = [];
+    let datosKPI2 = [];
     let entidades = [];
     let metas = [];
     
@@ -815,6 +1118,8 @@ function generarGraficosKPI() {
         if (evaluacion.kpi !== undefined) {
             const kpiPorcentaje = Math.round(evaluacion.kpi * 100);
             datosKPI.push(kpiPorcentaje);
+            const kpi2 = calcularKPI2ParaGrafica(evaluacion.entidadId, evaluacion.tipo, evaluacion.evaluacion || null);
+            datosKPI2.push(typeof kpi2 === 'number' ? Math.round(kpi2 * 100) : null);
             entidades.push(evaluacion.entidad);
             metas.push({
                 entidad: evaluacion.entidad,
@@ -830,6 +1135,99 @@ function generarGraficosKPI() {
     
     // Dibujar gráfico de distribución
     dibujarGraficoDistribucion(canvas2, datosKPI);
+
+    // Dibujar gráfico comparativo KPI vs KPI2 (un solo chart)
+    if (canvasC) {
+        const idxs = [];
+        for (let i = 0; i < entidades.length; i++) {
+            if (datosKPI[i] !== null && datosKPI[i] !== undefined && datosKPI2[i] !== null && datosKPI2[i] !== undefined) {
+                idxs.push(i);
+            }
+        }
+
+        const labelsC = idxs.map(i => entidades[i]);
+        const dataC1 = idxs.map(i => datosKPI[i]);
+        const dataC2 = idxs.map(i => datosKPI2[i]);
+
+        const ctxC = canvasC.getContext('2d');
+        if (!labelsC.length) {
+            ctxC.clearRect(0, 0, canvasC.width, canvasC.height);
+            ctxC.fillStyle = '#666';
+            ctxC.font = '16px Arial';
+            ctxC.textAlign = 'center';
+            ctxC.fillText('No hay datos simultáneos (KPI y KPI2) para comparar', canvasC.width / 2, canvasC.height / 2);
+        } else if (window.Chart) {
+            try {
+                if (window._chartGraficasComparacion) {
+                    window._chartGraficasComparacion.destroy();
+                }
+            } catch (e) {
+                window._chartGraficasComparacion = null;
+            }
+
+            window._chartGraficasComparacion = new Chart(ctxC, {
+                type: 'bar',
+                data: {
+                    labels: labelsC,
+                    datasets: [
+                        {
+                            label: 'KPI (%)',
+                            data: dataC1,
+                            backgroundColor: 'rgba(10,132,255,0.25)',
+                            borderColor: '#0a84ff',
+                            borderWidth: 2,
+                            borderRadius: 6,
+                        },
+                        {
+                            label: 'KPI2 (%)',
+                            data: dataC2,
+                            backgroundColor: 'rgba(168,85,247,0.22)',
+                            borderColor: '#a855f7',
+                            borderWidth: 2,
+                            borderRadius: 6,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { color: '#2c3e50' }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: (c) => ` ${c.dataset.label}: ${c.parsed.y}%`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#6b7280', maxRotation: 45, minRotation: 45 },
+                            grid: { display: false }
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            ticks: { color: '#6b7280', callback: (v) => v + '%' },
+                            grid: { color: 'rgba(0,0,0,0.06)' }
+                        }
+                    },
+                    interaction: { mode: 'nearest', intersect: false },
+                    animation: { duration: 800, easing: 'easeOutQuart' }
+                }
+            });
+        } else {
+            ctxC.clearRect(0, 0, canvasC.width, canvasC.height);
+            ctxC.fillStyle = '#666';
+            ctxC.font = '16px Arial';
+            ctxC.textAlign = 'center';
+            ctxC.fillText('Chart.js no está disponible para la comparación', canvasC.width / 2, canvasC.height / 2);
+        }
+    }
 }
 
 // Función para dibujar gráfico de barras
