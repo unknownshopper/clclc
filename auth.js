@@ -47,6 +47,9 @@ async function iniciarSesion() {
                         if (typeof integrarDatosFirebase === 'function') {
                             integrarDatosFirebase(evaluacionesFirebase);
                         }
+                        if (typeof aplicarCompatibilidadExistencia === 'function') {
+                            aplicarCompatibilidadExistencia();
+                        }
                     }
                 } catch (e2) {
                     console.warn('No se pudieron recargar evaluaciones de Firebase tras login admin:', e2);

@@ -96,6 +96,93 @@ function moverSelectorMesASeccion(vista) {
     contenedorActual.setAttribute('data-mes-selector-host', vista);
 }
 
+function formatearFechaHoraCorta(valor) {
+    try {
+        if (!valor) return '—';
+
+        let d = null;
+        if (valor instanceof Date) {
+            d = valor;
+        } else if (typeof valor === 'string') {
+            const parsed = new Date(valor);
+            if (!isNaN(parsed.getTime())) d = parsed;
+        } else if (typeof valor === 'number') {
+            // Asumir milisegundos (Date.now())
+            const parsed = new Date(valor);
+            if (!isNaN(parsed.getTime())) d = parsed;
+        } else if (typeof valor === 'object') {
+            if (typeof valor.toDate === 'function') {
+                const parsed = valor.toDate();
+                if (parsed instanceof Date && !isNaN(parsed.getTime())) d = parsed;
+            } else if (typeof valor.seconds === 'number') {
+                const parsed = new Date(valor.seconds * 1000);
+                if (!isNaN(parsed.getTime())) d = parsed;
+            }
+        }
+
+        if (!d) return String(valor);
+
+        const pad2 = (n) => String(n).padStart(2, '0');
+        const dd = pad2(d.getDate());
+        const mm = pad2(d.getMonth() + 1);
+        const yy = pad2(d.getFullYear() % 100);
+        const HH = pad2(d.getHours());
+        const MM = pad2(d.getMinutes());
+        return `${dd}/${mm}/${yy} ${HH}:${MM}`;
+    } catch (e) {
+        return String(valor);
+    }
+}
+
+function aplicarCompatibilidadExistencia() {
+    try {
+        const MES_EXISTENCIA_DESDE = '2026-03';
+        const PARAM_ID = 'existencia';
+        const PESO = 5;
+        const penalizar = new Set(['altabrisa', 'pista']);
+        const tipos = ['sucursales', 'franquicias', 'competencia'];
+
+        if (!window.evaluaciones) return;
+
+        tipos.forEach(tipoEntidad => {
+            const mapa = window.evaluaciones[tipoEntidad];
+            if (!mapa) return;
+            Object.keys(mapa).forEach(entidadId => {
+                const porMes = mapa[entidadId];
+                if (!porMes) return;
+                Object.keys(porMes).forEach(mes => {
+                    if (!mes || mes < MES_EXISTENCIA_DESDE) return;
+                    const ev = porMes[mes];
+                    if (!ev) return;
+
+                    if (ev.__existenciaPatched) return;
+                    if (!ev.parametros) ev.parametros = {};
+
+                    if (ev.parametros[PARAM_ID] === undefined) {
+                        ev.parametros[PARAM_ID] = penalizar.has(entidadId) ? 0 : PESO;
+                    }
+
+                    const totalMax = typeof ev.totalMaximo === 'number' ? ev.totalMaximo : 0;
+                    const totalObt = typeof ev.totalObtenido === 'number' ? ev.totalObtenido : 0;
+
+                    const val = parseInt(ev.parametros[PARAM_ID] ?? 0, 10) || 0;
+
+                    if (totalMax > 0) {
+                        ev.totalMaximo = totalMax + PESO;
+                        ev.totalObtenido = totalObt + val;
+                        ev.kpi = ev.totalMaximo > 0 ? (ev.totalObtenido / ev.totalMaximo) : 0;
+                        ev.estado = (ev.kpi * 100) >= 95 ? 'Excelente' : (ev.kpi * 100) >= 90 ? 'Bueno' : 'Necesita mejora';
+                    }
+
+                    ev.__existenciaPatched = true;
+                });
+            });
+        });
+    } catch (e) {
+        console.warn('Compatibilidad Existencia falló:', e);
+    }
+}
+
 function asegurarHistoricoCargado() {
     if (typeof renderHistorico === 'function') return Promise.resolve();
     if (window.__cargandoHistoricoPromise) return window.__cargandoHistoricoPromise;
@@ -1621,6 +1708,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             // Integrar datos de Firebase en estructura local
             integrarDatosFirebase(evaluacionesFirebase);
+
+            try {
+                aplicarCompatibilidadExistencia();
+            } catch (e) {}
             
             // DEBUG: Mostrar qué meses tienen datos reales
             console.log('=== DEBUG: MESES CON DATOS REALES ===');
@@ -1894,6 +1985,10 @@ function verEvaluacion(entidadId, tipo) {
     // Use the stored KPI value for consistency with the table
     const kpi = evaluacion.kpi ? (evaluacion.kpi * 100) : (totalMaximo > 0 ? (totalObtenido / totalMaximo) * 100 : 0);
     const estado = kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita mejora';
+
+    const fechaCorta = formatearFechaHoraCorta(
+        evaluacion.fechaCreacion || evaluacion.created_at || evaluacion.timestamp || null
+    );
     
     console.log(`Ver evaluación: ${entidadId} (${tipo})`);
     console.log(`Total obtenido: ${totalObtenido}, Total máximo: ${totalMaximo}, KPI: ${kpi.toFixed(1)}%`);
@@ -1913,7 +2008,7 @@ function verEvaluacion(entidadId, tipo) {
                             <p><strong>Entidad:</strong> ${entidad.nombre}</p>
                             <p><strong>Tipo:</strong> ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}</p>
                             <p><strong>Mes:</strong> ${formatearMesLegible(window.mesSeleccionado)}</p>
-                            <p><strong>Fecha:</strong> ${evaluacion.fechaCreacion || evaluacion.created_at || new Date().toLocaleDateString('es-ES')}</p>
+                            <p><strong>Fecha:</strong> ${fechaCorta}</p>
                         </div>
                         <div>
                             <h3 style="color: #555; margin-bottom: 15px;">Resultados</h3>
@@ -2599,6 +2694,7 @@ function integrarDatosFirebase(evaluacionesFirebase) {
             kpi: evaluacion.kpi || 0,
             estado: evaluacion.estado || 'Sin evaluar',
             estadoPublicacion: evaluacion.estadoPublicacion || 'borrador',
+            mes: mes,
             fechaPublicacion: evaluacion.fechaPublicacion ? 
                 (evaluacion.fechaPublicacion.toDate ? evaluacion.fechaPublicacion.toDate() : evaluacion.fechaPublicacion) : null,
             fechaCreacion: evaluacion.fechaCreacion || evaluacion.created_at || new Date().toISOString(),

@@ -199,6 +199,7 @@ window.kpi2Utils = (function() {
             presentacion_vaso: 2,
             presentacion_cafe: 4,
             presentacion_alimento: 4,
+            existencia: 5,
             panera_estado: 1,
             fachada_limpieza: 1,
             letrero_anuncio: 1,
@@ -234,6 +235,7 @@ window.kpi2Utils = (function() {
             presentacion_vaso: 2,
             presentacion_cafe: 3,
             presentacion_alimento: 3,
+            existencia: 5,
             panera_estado: 1,
             fachada_limpieza: 1,
             letrero_anuncio: 1,
@@ -269,6 +271,7 @@ window.kpi2Utils = (function() {
             presentacion_vaso: 2,
             presentacion_cafe: 3,
             presentacion_alimento: 3,
+            existencia: 5,
             panera_estado: 1,
             fachada_limpieza: 1,
             letrero_anuncio: 1,
@@ -299,6 +302,8 @@ window.kpi2Utils = (function() {
         try {
             if (!evaluacionLocal || !evaluacionLocal.parametros || !Array.isArray(window.parametros)) return null;
 
+            const mesEval = evaluacionLocal.mes || window.mesSeleccionado || null;
+
             const modelo = getModeloEntidad(entidadId, tipo);
 
             let parametrosExcluidos = [];
@@ -325,6 +330,14 @@ window.kpi2Utils = (function() {
             let parametrosAplicables = window.parametros.filter(param =>
                 !parametrosExcluidos.includes(param.id.toLowerCase().replace(/[-_]/g, ''))
             );
+
+            // Respetar vigencia de parámetros (p.ej. existencia desde 2026-03)
+            if (mesEval) {
+                parametrosAplicables = parametrosAplicables.filter(p => {
+                    if (!p || !p.vigenteDesde) return true;
+                    return mesEval >= p.vigenteDesde;
+                });
+            }
 
             if (tipo === 'sucursal') {
                 parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaASucursales && p.aplicaASucursales.includes(entidadId)));

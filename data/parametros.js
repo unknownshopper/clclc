@@ -245,6 +245,16 @@ const definirParametros = [
     peso: 1,
     aplicaATodas: true
   },
+  {
+    id: 'existencia',
+    categoriaId: 'presentacion_producto',
+    nombre: 'Existencia',
+    descripcion: 'Existencia de producto para venta',
+    tipo: 'booleano',
+    peso: 5,
+    vigenteDesde: '2026-03',
+    aplicaATodas: true
+  },
 
   // Instalaciones - Exteriores
   {
