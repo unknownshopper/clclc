@@ -299,7 +299,7 @@ function renderHistorico() {
             borderWidth: 3,
             cubicInterpolationMode: 'monotone',
             tension: 0.35,
-            fill: false,
+            fill: '+1',
           },
           {
             label: 'KPI2 Global (%)',
@@ -345,6 +345,20 @@ function renderHistorico() {
                 const val = c.parsed.y;
                 const cnt = c.datasetIndex === 0 ? countsC1[idx] : countsC2[idx];
                 return ` ${val}%  ·  ${cnt} evals`;
+              },
+              afterBody: (items) => {
+                try {
+                  const idx = items?.[0]?.dataIndex;
+                  if (typeof idx !== 'number') return '';
+                  const kpi = Number(datosC1[idx]);
+                  const kpi2 = Number(datosC2[idx]);
+                  if (!Number.isFinite(kpi) || !Number.isFinite(kpi2)) return '';
+                  const delta = Math.round((kpi - kpi2) * 10) / 10;
+                  const sign = delta >= 0 ? '+' : '';
+                  return `Brecha KPI vs KPI2: ${sign}${delta} pts`;
+                } catch (e) {
+                  return '';
+                }
               }
             }
           }
@@ -398,7 +412,7 @@ function renderHistorico() {
               borderWidth: 3,
               cubicInterpolationMode: 'monotone',
               tension: 0.35,
-              fill: false,
+              fill: '+1',
             },
             {
               label: 'KPI2 Atención+Venta (%)',
@@ -444,6 +458,20 @@ function renderHistorico() {
                   const val = c.parsed.y;
                   const cnt = c.datasetIndex === 0 ? countsAV1[idx] : countsAV2[idx];
                   return ` ${val}%  ·  ${cnt} evals`;
+                },
+                afterBody: (items) => {
+                  try {
+                    const idx = items?.[0]?.dataIndex;
+                    if (typeof idx !== 'number') return '';
+                    const kpi = Number(datosAV1[idx]);
+                    const kpi2 = Number(datosAV2[idx]);
+                    if (!Number.isFinite(kpi) || !Number.isFinite(kpi2)) return '';
+                    const delta = Math.round((kpi - kpi2) * 10) / 10;
+                    const sign = delta >= 0 ? '+' : '';
+                    return `Brecha KPI vs KPI2: ${sign}${delta} pts`;
+                  } catch (e) {
+                    return '';
+                  }
                 }
               }
             }
