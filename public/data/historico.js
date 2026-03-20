@@ -142,9 +142,7 @@ function calcularKPI2AtencionVentaParaEvaluacion(entidadId, tipo, evaluacionLoca
       totalMax += peso2;
       const val = parseInt(ev.parametros[p.id] ?? 0, 10) || 0;
       if (pesoOriginal <= 0) return;
-      const ratio = (p && p.tipo === 'booleano')
-        ? (val > 0 ? 1 : 0)
-        : Math.max(0, Math.min(1, val / pesoOriginal));
+      const ratio = Math.max(0, Math.min(1, val / pesoOriginal));
       totalObt += (peso2 * ratio);
     });
 
