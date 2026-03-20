@@ -1220,17 +1220,35 @@ function generarGraficosKPI() {
     let metas = [];
     
     evaluacionesFiltradas.forEach(evaluacion => {
-        if (evaluacion.kpi !== undefined) {
-            const kpiPorcentaje = Math.round(evaluacion.kpi * 100);
+        const entidadId = evaluacion.entidadId;
+        const tipo = evaluacion.tipo;
+        const evLocal = evaluacion.evaluacion || null;
+
+        // KPI: recalcular desde parámetros para no depender de totales/kpi históricos (p.ej. cambios soloKPI2 como existencia)
+        let kpiPorcentaje = null;
+        if (typeof calcularPorcentajeEvaluacion === 'function' && entidadId && tipo && evLocal) {
+            try {
+                kpiPorcentaje = calcularPorcentajeEvaluacion(entidadId, tipo, evLocal);
+            } catch (e) {
+                kpiPorcentaje = null;
+            }
+        }
+        if (typeof kpiPorcentaje !== 'number' || !Number.isFinite(kpiPorcentaje)) {
+            if (evaluacion.kpi !== undefined && evaluacion.kpi !== null) {
+                kpiPorcentaje = Math.round(evaluacion.kpi * 100);
+            }
+        }
+
+        if (kpiPorcentaje !== null && kpiPorcentaje !== undefined) {
             datosKPI.push(kpiPorcentaje);
-            const kpi2 = calcularKPI2ParaGrafica(evaluacion.entidadId, evaluacion.tipo, evaluacion.evaluacion || null);
+            const kpi2 = calcularKPI2ParaGrafica(entidadId, tipo, evLocal);
             datosKPI2.push(typeof kpi2 === 'number' ? Math.round(kpi2 * 100) : null);
             entidades.push(evaluacion.entidad);
             metas.push({
                 entidad: evaluacion.entidad,
-                entidadId: evaluacion.entidadId,
-                tipo: evaluacion.tipo, // 'sucursal' | 'franquicia' | 'competencia'
-                evaluacion: evaluacion.evaluacion || null
+                entidadId,
+                tipo, // 'sucursal' | 'franquicia' | 'competencia'
+                evaluacion: evLocal
             });
         }
     });

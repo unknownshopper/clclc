@@ -108,11 +108,12 @@ function calcularKPIAtencionVentaParaEvaluacion(entidadId, tipo, evaluacionLocal
     const ev = evaluacionLocal && evaluacionLocal.parametros ? evaluacionLocal : null;
     if (!ev) return null;
     const params = getParametrosAplicablesAtencionVenta(entidadId, tipo, mes);
-    const totalMax = params.reduce((acc, p) => acc + (Number(p.peso) || 0), 0);
+    const paramsConValor = params.filter(p => ev.parametros && ev.parametros[p.id] !== undefined);
+    const totalMax = paramsConValor.reduce((acc, p) => acc + (Number(p.peso) || 0), 0);
     if (totalMax <= 0) return null;
-    const totalObt = params.reduce((acc, p) => {
-      const v = ev.parametros[p.id];
-      return acc + (parseInt(v ?? 0, 10) || 0);
+    const totalObt = paramsConValor.reduce((acc, p) => {
+      const v = parseInt(ev.parametros[p.id] ?? 0, 10) || 0;
+      return acc + v;
     }, 0);
     return totalMax > 0 ? (totalObt / totalMax) : null;
   } catch (e) {
@@ -135,10 +136,15 @@ function calcularKPI2AtencionVentaParaEvaluacion(entidadId, tipo, evaluacionLoca
       const pesoOriginal = Number(p.peso) || 0;
       const peso2 = Number(kpi2Utils.getPesoKPI2(p.id, p.peso, modelo)) || 0;
       if (peso2 <= 0) return;
+
+      if (p?.soloKPI2 && ev.parametros && ev.parametros[p.id] === undefined) return;
+
       totalMax += peso2;
       const val = parseInt(ev.parametros[p.id] ?? 0, 10) || 0;
       if (pesoOriginal <= 0) return;
-      const ratio = Math.max(0, Math.min(1, val / pesoOriginal));
+      const ratio = (p && p.tipo === 'booleano')
+        ? (val > 0 ? 1 : 0)
+        : Math.max(0, Math.min(1, val / pesoOriginal));
       totalObt += (peso2 * ratio);
     });
 

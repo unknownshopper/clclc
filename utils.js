@@ -77,9 +77,15 @@ function calcularPorcentajeEvaluacion(entidadId, tipo, evaluacion) {
         parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaAFranquicias && p.aplicaAFranquicias.includes(entidadId)));
     }
     
-    // Calcular puntaje máximo posible (excluye parámetros soloKPI2)
+    // Calcular puntaje máximo posible.
+    // - Excluye parámetros soloKPI2
+    // - Si la evaluación no trae el parámetro (undefined), se omite para no penalizar históricos
     const puntajeMaximo = parametrosAplicables
-        .filter(param => !param?.soloKPI2)
+        .filter(param => {
+            if (param?.soloKPI2) return false;
+            const tieneValor = evaluacion?.parametros && evaluacion.parametros[param.id] !== undefined;
+            return !!tieneValor;
+        })
         .reduce((total, param) => total + (param.peso || 1), 0);
     
     if (puntajeMaximo === 0) return 0;
@@ -88,9 +94,12 @@ function calcularPorcentajeEvaluacion(entidadId, tipo, evaluacion) {
     let puntajeObtenido = 0;
     parametrosAplicables.forEach(param => {
         if (param?.soloKPI2) return;
-        if (evaluacion.parametros && evaluacion.parametros[param.id] !== undefined) {
-            puntajeObtenido += parseInt(evaluacion.parametros[param.id]) || 0;
-        }
+        if (!evaluacion.parametros || evaluacion.parametros[param.id] === undefined) return;
+        const v = parseInt(evaluacion.parametros[param.id]) || 0;
+        // Los parámetros se capturan como checkbox (cumple/no cumple).
+        // Si el valor histórico es >0, se considera cumplido y debe contar con el peso ACTUAL,
+        // para no “bajar” KPI cuando cambian ponderancias en el tiempo.
+        puntajeObtenido += v > 0 ? (Number(param.peso) || 0) : 0;
     });
     
     return Math.round((puntajeObtenido / puntajeMaximo) * 100);
@@ -203,21 +212,21 @@ window.kpi2Utils = (function() {
             presentacion_cafe: 4,
             presentacion_alimento: 4,
             existencia: 5,
-            panera_estado: 1,
-            fachada_limpieza: 1,
-            letrero_anuncio: 1,
-            jardineras_macetas: 1,
-            iluminacion: 1,
-            puertas_vidrios: 1,
-            musica_volumen: 1,
-            area_mostrador: 1,
-            mesas_sillas_limpieza: 1,
-            piso_limpieza: 1,
-            banos_estado: 2,
-            basura_estado: 1,
-            barra_limpieza: 1,
-            clima_funcionando: 2,
-            mesas_sillas_estado: 1
+            panera_estado: 2,
+            fachada_limpieza: 2,
+            letrero_anuncio: 2,
+            jardineras_macetas: 2,
+            iluminacion: 2,
+            puertas_vidrios: 2,
+            musica_volumen: 2,
+            area_mostrador: 2,
+            mesas_sillas_limpieza: 2,
+            piso_limpieza: 2,
+            banos_estado: 4,
+            basura_estado: 2,
+            barra_limpieza: 2,
+            clima_funcionando: 4,
+            mesas_sillas_estado: 2
         },
         'Express': {
             bienvenida_contacto_visual: 4,
@@ -239,21 +248,21 @@ window.kpi2Utils = (function() {
             presentacion_cafe: 3,
             presentacion_alimento: 3,
             existencia: 5,
-            panera_estado: 1,
-            fachada_limpieza: 1,
-            letrero_anuncio: 1,
-            jardineras_macetas: 1,
-            iluminacion: 1,
-            puertas_vidrios: 1,
-            musica_volumen: 1,
-            area_mostrador: 1,
-            mesas_sillas_limpieza: 1,
-            piso_limpieza: 1,
-            banos_estado: 2,
-            basura_estado: 1,
-            barra_limpieza: 1,
-            clima_funcionando: 1,
-            mesas_sillas_estado: 1
+            panera_estado: 2,
+            fachada_limpieza: 2,
+            letrero_anuncio: 2,
+            jardineras_macetas: 2,
+            iluminacion: 2,
+            puertas_vidrios: 2,
+            musica_volumen: 2,
+            area_mostrador: 2,
+            mesas_sillas_limpieza: 2,
+            piso_limpieza: 2,
+            banos_estado: 4,
+            basura_estado: 2,
+            barra_limpieza: 2,
+            clima_funcionando: 4,
+            mesas_sillas_estado: 2
         },
         'Móvil': {
             bienvenida_contacto_visual: 4,
@@ -275,21 +284,21 @@ window.kpi2Utils = (function() {
             presentacion_cafe: 3,
             presentacion_alimento: 3,
             existencia: 5,
-            panera_estado: 1,
-            fachada_limpieza: 1,
-            letrero_anuncio: 1,
-            jardineras_macetas: 1,
-            iluminacion: 1,
-            puertas_vidrios: 1,
-            musica_volumen: 1,
-            area_mostrador: 1,
-            mesas_sillas_limpieza: 1,
-            piso_limpieza: 1,
-            banos_estado: 2,
-            basura_estado: 1,
-            barra_limpieza: 1,
-            clima_funcionando: 1,
-            mesas_sillas_estado: 1
+            panera_estado: 2,
+            fachada_limpieza: 2,
+            letrero_anuncio: 2,
+            jardineras_macetas: 2,
+            iluminacion: 2,
+            puertas_vidrios: 2,
+            musica_volumen: 2,
+            area_mostrador: 2,
+            mesas_sillas_limpieza: 2,
+            piso_limpieza: 2,
+            banos_estado: 4,
+            basura_estado: 2,
+            barra_limpieza: 2,
+            clima_funcionando: 4,
+            mesas_sillas_estado: 2
         }
     };
 
@@ -351,6 +360,12 @@ window.kpi2Utils = (function() {
             let totalMax = 0;
             let totalObt = 0;
             parametrosAplicables.forEach(param => {
+                // Si es un parámetro soloKPI2 (p.ej. existencia) pero aún no existe en la evaluación,
+                // no debe penalizar: se omite del cálculo.
+                if (param?.soloKPI2 && evaluacionLocal.parametros && evaluacionLocal.parametros[param.id] === undefined) {
+                    return;
+                }
+
                 const peso2 = getPesoKPI2(param.id, param.peso, modelo);
                 if (peso2 <= 0) return;
                 totalMax += peso2;
@@ -359,7 +374,9 @@ window.kpi2Utils = (function() {
                 const valor = Number(evaluacionLocal.parametros[param.id] ?? 0) || 0;
                 if (pesoOriginal <= 0) return;
 
-                const ratio = Math.max(0, Math.min(1, valor / pesoOriginal));
+                const ratio = (param && param.tipo === 'booleano')
+                    ? (valor > 0 ? 1 : 0)
+                    : Math.max(0, Math.min(1, valor / pesoOriginal));
                 totalObt += (peso2 * ratio);
             });
 
