@@ -445,8 +445,8 @@
                 justificacion: 'Branding/estado; bajo impacto directo en venta asistida.'
             },
             jardineras_macetas: {
-                peso: 0,
-                justificacion: 'Estético; se sugiere como “higiene” sin peso o peso mínimo.'
+                peso: 1,
+                justificacion: 'Estético pero visible: se asigna peso mínimo para que cuente sin inflar el KPI.'
             },
             iluminacion: {
                 peso: 1,
@@ -457,8 +457,8 @@
                 justificacion: 'Limpieza/imagen; bajo peso para evitar KPI inflado sin buen servicio.'
             },
             musica_volumen: {
-                peso: 0,
-                justificacion: 'Ambiente; medir como observación, no como driver del KPI.'
+                peso: 1,
+                justificacion: 'Ambiente audible y percepción: se asigna peso mínimo para contar sin distorsionar el KPI.'
             },
             area_mostrador: {
                 peso: 1,
@@ -517,6 +517,23 @@
             return categoriaId || '';
         }
 
+        function esParametroInfladorKPI(param) {
+            try {
+                const id = (param && param.id) ? String(param.id) : '';
+                if (!id) return false;
+
+                const infladores = new Set([
+                    'presentacion_alimento',
+                    'pin_personalizador',
+                    'clima_funcionando'
+                ]);
+
+                return infladores.has(id);
+            } catch (e) {
+                return false;
+            }
+        }
+
         function renderTablaPonderancia(filtro) {
             const tabla = document.getElementById('tablaPonderancia');
             const tbody = tabla ? tabla.querySelector('tbody') : null;
@@ -566,9 +583,13 @@
                 tr.style.background = idx % 2 === 0 ? '#ffffff' : '#f8f9fa';
 
                 const categoriaNombre = getNombreCategoria(p.categoriaId);
-                const peso = Number(p.peso) || 0;
+                const peso = p && p.soloKPI2 ? 0 : (Number(p.peso) || 0);
                 const propuesta = getPonderaIA(p);
                 const pesoIA = Number(propuesta.peso) || 0;
+                const esInflador = esParametroInfladorKPI(p);
+                const badgeInflador = esInflador
+                    ? '<span title="Inflador KPI: se prioriza Atención/Venta en KPI actual" style="display:inline-flex; align-items:center; padding:2px 8px; border-radius:999px; background:#fff3cd; color:#856404; border:1px solid #ffeeba; font-size:11px; font-weight:800;">INFLA KPI</span>'
+                    : '';
 
                 tr.innerHTML = (
                     '<td style="padding: 12px 14px; font-weight: 700; color:#2d3e50;">' + (idx + 1) + '</td>' +
@@ -579,7 +600,7 @@
                         '</span>' +
                     '</td>' +
                     '<td style="padding: 12px 14px; color:#1a2533;">' +
-                        '<div style="font-weight: 700;">' + (p.nombre || '') + '</div>' +
+                        '<div style="font-weight: 700; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' + (p.nombre || '') + badgeInflador + '</div>' +
                         '<div style="margin-top: 4px; color:#6c757d; font-size: 12px; line-height: 1.3;">' + (propuesta.justificacion || '') + '</div>' +
                     '</td>' +
                     '<td style="padding: 12px 14px; text-align: right; font-weight: 800; color:#0077cc;">' + peso + '</td>'

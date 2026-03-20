@@ -77,14 +77,17 @@ function calcularPorcentajeEvaluacion(entidadId, tipo, evaluacion) {
         parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaAFranquicias && p.aplicaAFranquicias.includes(entidadId)));
     }
     
-    // Calcular puntaje máximo posible
-    const puntajeMaximo = parametrosAplicables.reduce((total, param) => total + (param.peso || 1), 0);
+    // Calcular puntaje máximo posible (excluye parámetros soloKPI2)
+    const puntajeMaximo = parametrosAplicables
+        .filter(param => !param?.soloKPI2)
+        .reduce((total, param) => total + (param.peso || 1), 0);
     
     if (puntajeMaximo === 0) return 0;
     
     // Calcular puntaje obtenido
     let puntajeObtenido = 0;
     parametrosAplicables.forEach(param => {
+        if (param?.soloKPI2) return;
         if (evaluacion.parametros && evaluacion.parametros[param.id] !== undefined) {
             puntajeObtenido += parseInt(evaluacion.parametros[param.id]) || 0;
         }
@@ -181,16 +184,16 @@ window.kpi2Utils = (function() {
 
     const PONDERA_IA_PESOS_POR_MODELO = {
         'Cafetería': {
-            bienvenida_contacto_visual: 9,
-            bienvenida_agradecimiento: 5,
-            conocimiento_productos: 5,
-            producto_mes: 4,
-            venta_cruzada: 9,
-            app_cabana: 6,
+            bienvenida_contacto_visual: 4,
+            bienvenida_agradecimiento: 2,
+            conocimiento_productos: 2,
+            producto_mes: 3,
+            venta_cruzada: 5,
+            app_cabana: 9,
             pin_personalizador: 3,
-            atencion_mesa: 6,
+            atencion_mesa: 2,
             entrega_ticket: 3,
-            tiempo_espera_atencion: 4,
+            tiempo_espera_atencion: 3,
             tiempo_fila: 3,
             tiempo_espera_cafe: 4,
             cantidad_colaboradores: 1,
@@ -203,10 +206,10 @@ window.kpi2Utils = (function() {
             panera_estado: 1,
             fachada_limpieza: 1,
             letrero_anuncio: 1,
-            jardineras_macetas: 0,
+            jardineras_macetas: 1,
             iluminacion: 1,
             puertas_vidrios: 1,
-            musica_volumen: 0,
+            musica_volumen: 1,
             area_mostrador: 1,
             mesas_sillas_limpieza: 1,
             piso_limpieza: 1,
@@ -217,16 +220,16 @@ window.kpi2Utils = (function() {
             mesas_sillas_estado: 1
         },
         'Express': {
-            bienvenida_contacto_visual: 8,
-            bienvenida_agradecimiento: 4,
-            conocimiento_productos: 6,
-            producto_mes: 5,
-            venta_cruzada: 12,
-            app_cabana: 7,
+            bienvenida_contacto_visual: 4,
+            bienvenida_agradecimiento: 2,
+            conocimiento_productos: 2,
+            producto_mes: 3,
+            venta_cruzada: 5,
+            app_cabana: 9,
             pin_personalizador: 4,
-            atencion_mesa: 4,
-            entrega_ticket: 4,
-            tiempo_espera_atencion: 4,
+            atencion_mesa: 2,
+            entrega_ticket: 3,
+            tiempo_espera_atencion: 3,
             tiempo_fila: 3,
             tiempo_espera_cafe: 4,
             cantidad_colaboradores: 1,
@@ -239,10 +242,10 @@ window.kpi2Utils = (function() {
             panera_estado: 1,
             fachada_limpieza: 1,
             letrero_anuncio: 1,
-            jardineras_macetas: 0,
+            jardineras_macetas: 1,
             iluminacion: 1,
             puertas_vidrios: 1,
-            musica_volumen: 0,
+            musica_volumen: 1,
             area_mostrador: 1,
             mesas_sillas_limpieza: 1,
             piso_limpieza: 1,
@@ -253,16 +256,16 @@ window.kpi2Utils = (function() {
             mesas_sillas_estado: 1
         },
         'Móvil': {
-            bienvenida_contacto_visual: 8,
-            bienvenida_agradecimiento: 4,
-            conocimiento_productos: 5,
-            producto_mes: 4,
-            venta_cruzada: 9,
-            app_cabana: 7,
+            bienvenida_contacto_visual: 4,
+            bienvenida_agradecimiento: 2,
+            conocimiento_productos: 2,
+            producto_mes: 3,
+            venta_cruzada: 5,
+            app_cabana: 9,
             pin_personalizador: 4,
-            atencion_mesa: 4,
-            entrega_ticket: 4,
-            tiempo_espera_atencion: 4,
+            atencion_mesa: 2,
+            entrega_ticket: 3,
+            tiempo_espera_atencion: 3,
             tiempo_fila: 3,
             tiempo_espera_cafe: 4,
             cantidad_colaboradores: 1,
@@ -275,10 +278,10 @@ window.kpi2Utils = (function() {
             panera_estado: 1,
             fachada_limpieza: 1,
             letrero_anuncio: 1,
-            jardineras_macetas: 0,
+            jardineras_macetas: 1,
             iluminacion: 1,
             puertas_vidrios: 1,
-            musica_volumen: 0,
+            musica_volumen: 1,
             area_mostrador: 1,
             mesas_sillas_limpieza: 1,
             piso_limpieza: 1,
@@ -352,9 +355,12 @@ window.kpi2Utils = (function() {
                 if (peso2 <= 0) return;
                 totalMax += peso2;
 
+                const pesoOriginal = Number(param.peso) || 0;
                 const valor = Number(evaluacionLocal.parametros[param.id] ?? 0) || 0;
-                const cumplio = valor > 0;
-                if (cumplio) totalObt += peso2;
+                if (pesoOriginal <= 0) return;
+
+                const ratio = Math.max(0, Math.min(1, valor / pesoOriginal));
+                totalObt += (peso2 * ratio);
             });
 
             if (totalMax <= 0) return null;

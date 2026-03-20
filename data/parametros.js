@@ -114,16 +114,7 @@ const definirParametros = [
     nombre: 'APP Cabaña Cash',
     descripcion: 'Mencionó la APP Cabaña Cash para acumular puntos o registrarse',
     tipo: 'booleano',
-    peso: 4,
-    aplicaATodas: true
-  },
-  {
-    id: 'pin_personalizador',
-    categoriaId: 'producto_ventas',
-    nombre: 'Pin personalizador',
-    descripcion: 'Uso del pin personalizador',
-    tipo: 'booleano',
-    peso: 2,
+    peso: 7,
     aplicaATodas: true
   },
 
@@ -207,6 +198,15 @@ const definirParametros = [
     peso: 3,
     aplicaATodas: false
   },
+  {
+    id: 'pin_personalizador',
+    categoriaId: 'personal',
+    nombre: 'Pin personalizador',
+    descripcion: 'Uso del pin personalizador',
+    tipo: 'booleano',
+    peso: 4,
+    aplicaATodas: true
+  },
 
   // Presentación del Producto
   {
@@ -253,6 +253,7 @@ const definirParametros = [
     tipo: 'booleano',
     peso: 5,
     vigenteDesde: '2026-03',
+    soloKPI2: true,
     aplicaATodas: true
   },
 

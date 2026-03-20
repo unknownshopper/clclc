@@ -162,18 +162,6 @@ function aplicarCompatibilidadExistencia() {
                         ev.parametros[PARAM_ID] = penalizar.has(entidadId) ? 0 : PESO;
                     }
 
-                    const totalMax = typeof ev.totalMaximo === 'number' ? ev.totalMaximo : 0;
-                    const totalObt = typeof ev.totalObtenido === 'number' ? ev.totalObtenido : 0;
-
-                    const val = parseInt(ev.parametros[PARAM_ID] ?? 0, 10) || 0;
-
-                    if (totalMax > 0) {
-                        ev.totalMaximo = totalMax + PESO;
-                        ev.totalObtenido = totalObt + val;
-                        ev.kpi = ev.totalMaximo > 0 ? (ev.totalObtenido / ev.totalMaximo) : 0;
-                        ev.estado = (ev.kpi * 100) >= 95 ? 'Excelente' : (ev.kpi * 100) >= 90 ? 'Bueno' : 'Necesita mejora';
-                    }
-
                     ev.__existenciaPatched = true;
                 });
             });
@@ -574,6 +562,8 @@ async function renderEvaluaciones() {
             // Estado de publicación
             const estadoPublicacion = evaluacion.estadoPublicacion || 'borrador';
             const esBorrador = estadoPublicacion === 'borrador';
+            const esPublicado = estadoPublicacion === 'publicado';
+            const adminPuedeEscribir = !!window.firebaseAdminAuthenticated;
 
             // Para video y KPI2 usamos el registro local/actual (si existe)
             const evalLocal = typeof obtenerEvaluacion === 'function'
@@ -652,11 +642,13 @@ async function renderEvaluaciones() {
                                 <i class="fas fa-trash"></i>
                             </button>
                             ` : ''}
-                            ${tienePermiso('publicar') && esBorrador && existeEnFirebase(evaluacion.entidadId, evaluacion.tipo) ? `
-                            <button onclick="publicarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
-                                    class="btn-action btn-publish" 
-                                    title="Publicar evaluación">
-                                <i class="fas fa-share"></i>
+                            ${(usuarioActual?.rol === 'admin') ? `
+                            <button
+                                    onclick="${adminPuedeEscribir ? `publicarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')` : `alert('Para publicar/despublicar necesitas iniciar sesión como admin con Firebase Auth (email admin).')`}" 
+                                    class="btn-action ${esPublicado ? 'btn-unpublish' : 'btn-publish'}" 
+                                    title="${adminPuedeEscribir ? (esPublicado ? 'Despublicar evaluación' : 'Publicar evaluación') : 'Requiere autenticación Firebase admin'}"
+                                    style="${esPublicado ? 'background:#ffc107;color:#2d3e50;' : 'background:#28a745;color:#fff;'};${adminPuedeEscribir ? '' : 'opacity:0.45;cursor:not-allowed;'}">
+                                <i class="fas ${esPublicado ? 'fa-undo' : 'fa-share'}"></i>
                             </button>
                             ` : ''}
                         </div>
@@ -752,6 +744,15 @@ function cargarParametrosEvaluacion(entidadValue) {
     // Usar TODOS los parámetros para ambos tipos (sucursales y franquicias)
     // Las exclusiones se encargarán de filtrar los que no aplican
     parametrosAplicables = window.parametros.slice(); // Copia de todos los parámetros
+
+    // Filtrar por vigencia de parámetros (p.ej. parámetros nuevos desde cierto mes)
+    try {
+        const mes = window.mesSeleccionado;
+        parametrosAplicables = parametrosAplicables.filter(p => {
+            if (!p || !p.vigenteDesde) return true;
+            return !!mes && mes >= p.vigenteDesde;
+        });
+    } catch (e) {}
     console.log(`Usando todos los parámetros para ${tipo}: ${entidadId} (${parametrosAplicables.length} parámetros)`);
     
     console.log('Lista de parámetros antes de exclusiones:', parametrosAplicables.map(p => p.nombre));
@@ -813,9 +814,25 @@ function cargarParametrosEvaluacion(entidadValue) {
     
     let numeroParametro = 1;
     
-    Object.keys(categorias).forEach(categoriaId => {
-        const categoria = categorias[categoriaId];
+    // Ordenar categorías por suma de ponderancias (desc)
+    const categoriaIdsOrdenadas = Object.keys(categorias).sort((a, b) => {
+        const sumA = (categorias[a] || []).reduce((acc, p) => acc + (Number(p.peso) || 0), 0);
+        const sumB = (categorias[b] || []).reduce((acc, p) => acc + (Number(p.peso) || 0), 0);
+        if (sumB !== sumA) return sumB - sumA;
+        return getCategoriaName(a).localeCompare(getCategoriaName(b));
+    });
+
+    categoriaIdsOrdenadas.forEach(categoriaId => {
+        const categoria = (categorias[categoriaId] || []).slice();
         const nombreCategoria = getCategoriaName(categoriaId);
+
+        // Ordenar parámetros dentro de cada categoría por ponderancia desc
+        categoria.sort((p1, p2) => {
+            const w1 = Number(p1.peso) || 0;
+            const w2 = Number(p2.peso) || 0;
+            if (w2 !== w1) return w2 - w1;
+            return (p1.nombre || '').localeCompare(p2.nombre || '');
+        });
         
         html += `
             <div style="margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; padding: 10px;">
@@ -1177,6 +1194,7 @@ function renderGraficas() {
     generarGraficosKPI();
     generarResumenEstadistico();
 }
+
 function generarGraficosKPI() {
     const canvas1 = document.getElementById('graficoKPIs');
     const canvas2 = document.getElementById('graficoDistribucion');
@@ -1893,8 +1911,8 @@ function mostrarEvaluaciones() {
                             </button>
                             ` : ''}
                             ${tienePermiso('publicar') ? `
-                            <button class="btn btn-success btn-publicar" onclick="publicarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" title="Publicar evaluación">
-                                <i class="fas fa-share"></i>
+                            <button class="btn ${((evaluacion.estadoPublicacion || 'borrador') === 'publicado') ? 'btn-warning' : 'btn-success'} btn-publicar" onclick="publicarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" title="${((evaluacion.estadoPublicacion || 'borrador') === 'publicado') ? 'Despublicar evaluación' : 'Publicar evaluación'}">
+                                <i class="fas ${((evaluacion.estadoPublicacion || 'borrador') === 'publicado') ? 'fa-undo' : 'fa-share'}"></i>
                             </button>
                             ` : ''}
                             <button onclick="verVideo('${evaluacion.entidadId}', '${evaluacion.tipo}')"
@@ -2033,11 +2051,64 @@ function verEvaluacion(entidadId, tipo) {
                             <tbody>
     `;
     
-    Object.keys(evaluacion.parametros).forEach(parametroId => {
-        const valor = evaluacion.parametros[parametroId];
-        const parametro = window.parametros?.find(p => p.id === parametroId);
-        const nombre = parametro ? parametro.nombre : parametroId;
-        const maximo = parametro ? parametro.peso : 'N/A';
+    // Ordenar y agrupar parámetros por categoría y ponderancia
+    const evalParams = evaluacion.parametros || {};
+    const mesEval = evaluacion.mes || window.mesSeleccionado || null;
+    const parametrosEnEval = Object.keys(evalParams)
+        .map(id => {
+            const p = window.parametros?.find(pp => pp.id === id) || null;
+            return {
+                id,
+                parametro: p,
+                valor: evalParams[id]
+            };
+        })
+        .filter(x => {
+            if (!x.parametro) return true;
+            if (!x.parametro.vigenteDesde) return true;
+            return !!mesEval && mesEval >= x.parametro.vigenteDesde;
+        });
+
+    const porCategoria = {};
+    parametrosEnEval.forEach(x => {
+        const catId = x.parametro ? x.parametro.categoriaId : 'otros';
+        if (!porCategoria[catId]) porCategoria[catId] = [];
+        porCategoria[catId].push(x);
+    });
+
+    const categoriaIds = Object.keys(porCategoria).sort((a, b) => {
+        const sumA = (porCategoria[a] || []).reduce((acc, x) => acc + (Number(x.parametro?.peso) || 0), 0);
+        const sumB = (porCategoria[b] || []).reduce((acc, x) => acc + (Number(x.parametro?.peso) || 0), 0);
+        if (sumB !== sumA) return sumB - sumA;
+        const nA = a === 'otros' ? 'Otros' : getCategoriaName(a);
+        const nB = b === 'otros' ? 'Otros' : getCategoriaName(b);
+        return nA.localeCompare(nB);
+    });
+
+    categoriaIds.forEach(catId => {
+        const nombreCategoria = catId === 'otros' ? 'Otros' : getCategoriaName(catId);
+        detallesHtml += `
+            <tr style="background:#eef4ff; border-bottom: 1px solid #dde6f3;">
+                <td colspan="4" style="padding: 10px 12px; font-weight: 900; color:#2d3e50;">${nombreCategoria}</td>
+            </tr>
+        `;
+
+        const items = (porCategoria[catId] || []).slice();
+        items.sort((a1, a2) => {
+            const w1 = Number(a1.parametro?.peso) || 0;
+            const w2 = Number(a2.parametro?.peso) || 0;
+            if (w2 !== w1) return w2 - w1;
+            const n1 = a1.parametro ? (a1.parametro.nombre || '') : (a1.id || '');
+            const n2 = a2.parametro ? (a2.parametro.nombre || '') : (a2.id || '');
+            return n1.localeCompare(n2);
+        });
+
+        items.forEach(item => {
+            const parametroId = item.id;
+            const valor = item.valor;
+            const parametro = item.parametro;
+            const nombre = parametro ? parametro.nombre : parametroId;
+            const maximo = parametro ? parametro.peso : 'N/A';
         
         // Determinar estado y color
         let estadoIcon, estadoColor, estadoTexto;
@@ -2076,6 +2147,7 @@ function verEvaluacion(entidadId, tipo) {
                 </td>
             </tr>
         `;
+        });
     });
     
     detallesHtml += `
@@ -2496,23 +2568,9 @@ function obtenerEvaluacionesDelMes(mes) {
                         Math.round((totalObtenido / totalMaximo) * 100) : 0;
                     
                     // Obtener fecha de created_at o fechaCreacion
-                    let fechaFormateada = 'N/A';
-                    const fechaSource = evaluacion.created_at || evaluacion.fechaCreacion;
-                    if (fechaSource) {
-                        try {
-                            const fecha = new Date(fechaSource);
-                            if (!isNaN(fecha.getTime())) {
-                                fechaFormateada = fecha.toLocaleDateString('es-ES', {
-                                    day: '2-digit',
-                                    month: '2-digit', 
-                                    year: 'numeric'
-                                });
-                            }
-                        } catch (error) {
-                            console.error('Error formateando fecha:', error);
-                            fechaFormateada = String(fechaSource);
-                        }
-                    }
+                    const fechaFormateada = formatearFechaHoraCorta(
+                        evaluacion.created_at || evaluacion.fechaCreacion || evaluacion.fechaPublicacion || evaluacion.timestamp || null
+                    );
                     
                     evaluacionesDelMes.push({
                         tipo: 'sucursal',
@@ -2522,7 +2580,7 @@ function obtenerEvaluacionesDelMes(mes) {
                         estado: kpiPorcentaje >= 95 ? 'Excelente' : kpiPorcentaje >= 90 ? 'Bueno' : 'Necesita Mejora',
                         fecha: fechaFormateada,
                         estadoPublicacion: evaluacion.estadoPublicacion || 'borrador',
-fechaPublicacion: evaluacion.fechaPublicacion,
+                        fechaPublicacion: evaluacion.fechaPublicacion,
                         evaluacion: evaluacion
                     });
                 }
@@ -2546,23 +2604,9 @@ fechaPublicacion: evaluacion.fechaPublicacion,
                         Math.round((totalObtenido / totalMaximo) * 100) : 0;
                     
                     // Obtener fecha de created_at o fechaCreacion
-                    let fechaFormateada = 'N/A';
-                    const fechaSource = evaluacion.created_at || evaluacion.fechaCreacion;
-                    if (fechaSource) {
-                        try {
-                            const fecha = new Date(fechaSource);
-                            if (!isNaN(fecha.getTime())) {
-                                fechaFormateada = fecha.toLocaleDateString('es-ES', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric'
-                                });
-                            }
-                        } catch (error) {
-                            console.error('Error formateando fecha:', error);
-                            fechaFormateada = String(fechaSource);
-                        }
-                    }
+                    const fechaFormateada = formatearFechaHoraCorta(
+                        evaluacion.created_at || evaluacion.fechaCreacion || evaluacion.fechaPublicacion || evaluacion.timestamp || null
+                    );
                     
                     evaluacionesDelMes.push({
                         tipo: 'franquicia',
@@ -2594,23 +2638,9 @@ fechaPublicacion: evaluacion.fechaPublicacion,
                         Math.round((totalObtenido / totalMaximo) * 100) : 0;
                     
                     // Obtener fecha de created_at o fechaCreacion
-                    let fechaFormateada = 'N/A';
-                    const fechaSource = evaluacion.created_at || evaluacion.fechaCreacion;
-                    if (fechaSource) {
-                        try {
-                            const fecha = new Date(fechaSource);
-                            if (!isNaN(fecha.getTime())) {
-                                fechaFormateada = fecha.toLocaleDateString('es-ES', {
-                                    day: '2-digit',
-                                    month: '2-digit', 
-                                    year: 'numeric'
-                                });
-                            }
-                        } catch (error) {
-                            console.error('Error formateando fecha:', error);
-                            fechaFormateada = String(fechaSource);
-                        }
-                    }
+                    const fechaFormateada = formatearFechaHoraCorta(
+                        evaluacion.created_at || evaluacion.fechaCreacion || evaluacion.fechaPublicacion || evaluacion.timestamp || null
+                    );
                     
                     evaluacionesDelMes.push({
                         tipo: 'competencia',
@@ -2628,8 +2658,8 @@ fechaPublicacion: evaluacion.fechaPublicacion,
         });
     }
     
-    // Ordenar por KPI descendente
-    evaluacionesDelMes.sort((a, b) => b.kpi - a.kpi);
+    // Ordenar por KPI ascendente (peor primero)
+    evaluacionesDelMes.sort((a, b) => a.kpi - b.kpi);
     
     console.log(`Obtenidas ${evaluacionesDelMes.length} evaluaciones para ${mes}`);
     return evaluacionesDelMes;
@@ -2732,22 +2762,38 @@ async function publicarEvaluacion(entidadId, tipo) {
     
     const nombreEntidad = entidad ? entidad.nombre : entidadId;
     
-    const confirmacion = confirm(`¿Está seguro de que desea publicar la evaluación de ${nombreEntidad} para ${formatearMesLegible(window.mesSeleccionado)}?\n\nUna vez publicada, será visible para GOP, DG y franquicias.`);
-    
+    const evalLocal = typeof obtenerEvaluacion === 'function' ? obtenerEvaluacion(entidadId, tipo, window.mesSeleccionado) : null;
+    const estadoActual = (evalLocal && evalLocal.estadoPublicacion) ? evalLocal.estadoPublicacion : 'borrador';
+    const esPublicado = estadoActual === 'publicado';
+
+    const confirmacion = esPublicado
+        ? confirm(`¿Desea despublicar la evaluación de ${nombreEntidad} para ${formatearMesLegible(window.mesSeleccionado)}?\n\nAl despublicar, dejará de ser visible para GOP, DG y franquicias.`)
+        : confirm(`¿Está seguro de que desea publicar la evaluación de ${nombreEntidad} para ${formatearMesLegible(window.mesSeleccionado)}?\n\nUna vez publicada, será visible para GOP, DG y franquicias.`);
+
     if (!confirmacion) return;
     
     try {
         // Actualizar en Firebase
         if (window.firebaseDB) {
-            let videoUrl = '';
-            try {
-                videoUrl = prompt('Ingrese el enlace de video (YouTube) para esta evaluación (opcional):', '') || '';
-            } catch (e) { videoUrl = ''; }
+            let nuevoEstado = esPublicado ? 'borrador' : 'publicado';
+            let videoUrl = null;
+
+            if (!esPublicado) {
+                try {
+                    videoUrl = prompt('Ingrese el enlace de video (YouTube) para esta evaluación (opcional):', '') || '';
+                    videoUrl = videoUrl && typeof videoUrl === 'string' ? videoUrl.trim() : '';
+                } catch (e) { videoUrl = ''; }
+                videoUrl = videoUrl ? videoUrl : null;
+            } else {
+                // Al despublicar, conservar el video actual si existe
+                videoUrl = (evalLocal && evalLocal.videoUrl) ? evalLocal.videoUrl : null;
+            }
+
             // Buscar y actualizar la evaluación en Firebase usando query
-            const success = await window.firebaseDB.actualizarEstadoPublicacion(entidadId, tipo, window.mesSeleccionado, 'publicado', videoUrl && videoUrl.trim() ? videoUrl.trim() : null);
+            const success = await window.firebaseDB.actualizarEstadoPublicacion(entidadId, tipo, window.mesSeleccionado, nuevoEstado, videoUrl);
             
             if (success) {
-                console.log('Evaluación publicada en Firebase exitosamente');
+                console.log(`Evaluación ${nuevoEstado === 'publicado' ? 'publicada' : 'despublicada'} en Firebase exitosamente`);
                 
                 // También actualizar en estructura local si existe
                 let tipoEntidad = 'franquicias';
@@ -2756,14 +2802,14 @@ async function publicarEvaluacion(entidadId, tipo) {
                 else if (tipo === 'competencia') tipoEntidad = 'competencia';
                 
                 if (window.evaluaciones?.[tipoEntidad]?.[entidadId]?.[window.mesSeleccionado]) {
-                    window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado].estadoPublicacion = 'publicado';
-                    window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado].fechaPublicacion = new Date();
-                    if (videoUrl && videoUrl.trim()) {
-                        window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado].videoUrl = videoUrl.trim();
+                    window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado].estadoPublicacion = nuevoEstado;
+                    window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado].fechaPublicacion = (nuevoEstado === 'publicado') ? new Date() : null;
+                    if (videoUrl) {
+                        window.evaluaciones[tipoEntidad][entidadId][window.mesSeleccionado].videoUrl = videoUrl;
                     }
                 }
-                
-                alert(`Evaluación de ${nombreEntidad} publicada exitosamente.\nAhora es visible para todos los roles autorizados.`);
+
+                alert(`Evaluación de ${nombreEntidad} ${nuevoEstado === 'publicado' ? 'publicada' : 'despublicada'} exitosamente.`);
                 
                 // Actualizar vista actual
                 if (window.vistaActual === 'evaluaciones') {
