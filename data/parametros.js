@@ -118,6 +118,36 @@ const definirParametros = [
     aplicaATodas: true
   },
 
+  {
+    id: 'mencion_promociones',
+    categoriaId: 'producto_ventas',
+    nombre: 'Menciona promociones',
+    descripcion: 'Mencionó promociones vigentes (producto/temporada/dinámica comercial)',
+    tipo: 'booleano',
+    peso: 3,
+    vigenteDesde: '2026-04',
+    soloKPI2: true,
+    aplicaATodas: false,
+    aplicaASucursales: [
+      'altabrisa',
+      'americas',
+      'angeles',
+      'galerias',
+      'centro',
+      'olmeca',
+      'usuma',
+      'pista',
+      'guayabal',
+      'crystal',
+      'deportiva',
+      'walmart-deportiva',
+      'walmart-carrizal',
+      'walmart-universidad',
+      'movil-deportiva',
+      'movil-la-venta'
+    ]
+  },
+
   // Atención en Mesa
   {
     id: 'atencion_mesa',

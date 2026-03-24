@@ -499,7 +499,7 @@ async function renderEvaluaciones() {
     
     // Obtener evaluaciones del mes y aplicar filtro por rol
     const todasLasEvaluaciones = obtenerEvaluacionesDelMes(window.mesSeleccionado);
-    const evaluacionesFiltradas = filtrarDatosPorRol(todasLasEvaluaciones);
+    let evaluacionesFiltradas = filtrarDatosPorRol(todasLasEvaluaciones);
     
     console.log(`Evaluaciones - Total: ${todasLasEvaluaciones.length}, Filtradas: ${evaluacionesFiltradas.length}`);
     
@@ -531,6 +531,56 @@ async function renderEvaluaciones() {
             </div>
         `;
     } else {
+        if (!window.evaluacionesOrden || typeof window.evaluacionesOrden !== 'object') {
+            window.evaluacionesOrden = { campo: null, dir: 'asc' };
+        }
+
+        const ordenar = (campo) => {
+            const c = String(campo || '').toLowerCase().trim();
+            const actual = window.evaluacionesOrden || { campo: null, dir: 'asc' };
+            const mismoCampo = actual.campo === c;
+            window.evaluacionesOrden = {
+                campo: c,
+                dir: mismoCampo ? (actual.dir === 'asc' ? 'desc' : 'asc') : 'asc'
+            };
+            renderEvaluaciones();
+        };
+        window.ordenarEvaluacionesPor = ordenar;
+
+        const orden = window.evaluacionesOrden || { campo: null, dir: 'asc' };
+        const arrow = (campo) => {
+            if (!orden || orden.campo !== campo) return '';
+            return orden.dir === 'asc' ? ' ▲' : ' ▼';
+        };
+
+        const debeKPI2 = debeMostrarKPI2(window.mesSeleccionado);
+        if (orden.campo === 'kpi' || (orden.campo === 'kpi2' && debeKPI2)) {
+            evaluacionesFiltradas = evaluacionesFiltradas
+                .map((e) => {
+                    let kpi2v = null;
+                    if (debeKPI2) {
+                        const evalLocal = typeof obtenerEvaluacion === 'function'
+                            ? obtenerEvaluacion(e.entidadId, e.tipo, window.mesSeleccionado)
+                            : null;
+                        const k2 = calcularKPI2(e.entidadId, e.tipo, evalLocal);
+                        kpi2v = (typeof k2 === 'number' && !Number.isNaN(k2)) ? (k2 * 100) : null;
+                    }
+                    return { ...e, __kpi2v: kpi2v };
+                })
+                .sort((a, b) => {
+                    const dir = (orden.dir === 'desc') ? -1 : 1;
+                    const av = (orden.campo === 'kpi')
+                        ? (((a.kpi || 0) * 100))
+                        : (typeof a.__kpi2v === 'number' ? a.__kpi2v : Number.POSITIVE_INFINITY);
+                    const bv = (orden.campo === 'kpi')
+                        ? (((b.kpi || 0) * 100))
+                        : (typeof b.__kpi2v === 'number' ? b.__kpi2v : Number.POSITIVE_INFINITY);
+                    if (av < bv) return -1 * dir;
+                    if (av > bv) return 1 * dir;
+                    return 0;
+                });
+        }
+
         html += `
             <div style="background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                 <table class="evaluaciones-table" style="width: 100%; border-collapse: collapse;">
@@ -538,8 +588,8 @@ async function renderEvaluaciones() {
                         <tr style="background: #0077cc; color: white;">
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Tipo</th>
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Entidad</th>
-                            <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">KPI</th>
-                            ${debeMostrarKPI2(window.mesSeleccionado) ? '<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">KPI2</th>' : ''}
+                            <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none;" onclick="ordenarEvaluacionesPor('kpi')" title="Ordenar por KPI">KPI${arrow('kpi')}</th>
+                            ${debeMostrarKPI2(window.mesSeleccionado) ? `<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none;" onclick="ordenarEvaluacionesPor('kpi2')" title="Ordenar por KPI2">KPI2${arrow('kpi2')}</th>` : ''}
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Estado</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Publicación</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Fecha</th>
@@ -572,6 +622,9 @@ async function renderEvaluaciones() {
             const linksMes = window.videoLinks?.[window.mesSeleccionado] || {};
             const hasVideo = (evalLocal && evalLocal.videoUrl) || linksMes[evaluacion.entidadId];
 
+            const hasKPI2Modalidad = !!(evalLocal && evalLocal.modalidades && evalLocal.modalidades.kpi2);
+            const mostrarOjoKPI2 = true;
+
             const kpi2 = debeMostrarKPI2(window.mesSeleccionado) ? calcularKPI2(evaluacion.entidadId, evaluacion.tipo, evalLocal) : null;
             const kpi2Porcentaje = (typeof kpi2 === 'number') ? (kpi2 * 100).toFixed(1) : null;
 
@@ -589,7 +642,7 @@ async function renderEvaluaciones() {
                         ${kpiPorcentaje}%
                     </td>
                     ${debeMostrarKPI2(window.mesSeleccionado) ? `
-                    <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; font-weight: bold; color: #2d3e50; font-size: 16px;" title="KPI2 usa ponderación competitividad (PONDERA IA).">
+                    <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; font-weight: bold; color: ${kpi2Porcentaje !== null ? (parseFloat(kpi2Porcentaje) >= 95 ? '#28a745' : parseFloat(kpi2Porcentaje) >= 90 ? '#ffc107' : '#dc3545') : '#2d3e50'}; font-size: 16px;" title="KPI2 usa ponderación competitividad (PONDERA IA).">
                         ${kpi2Porcentaje !== null ? (kpi2Porcentaje + '%') : '—'}
                     </td>
                     ` : ''}
@@ -609,11 +662,20 @@ async function renderEvaluaciones() {
                     ${tienePermiso('ver') || tienePermiso('editar') || tienePermiso('eliminar') || tienePermiso('publicar') ? `
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">
                         <div class="action-buttons" style="display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;">
-                            <button onclick="verEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
+                            <button onclick="verEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi')" 
                                     class="btn-action btn-view" 
-                                    title="Ver evaluación">
+                                    title="KPI"
+                                    style="background:#0a84ff;color:#fff;">
                                 <i class="fas fa-eye"></i>
                             </button>
+                            ${mostrarOjoKPI2 ? `
+                            <button onclick="verEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi2')" 
+                                    class="btn-action btn-view" 
+                                    title="KPI2"
+                                    style="background:#a855f7;color:#fff;">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ` : ''}
                             <button onclick="manejarVideo('${evaluacion.entidadId}', '${evaluacion.tipo}')"
                                     class="btn-action btn-video" 
                                     title="${hasVideo ? 'Ver video de evaluación' : 'Agregar enlace de video'}"
@@ -629,11 +691,20 @@ async function renderEvaluaciones() {
                             </button>
                             ` : ''}
                             ${tienePermiso('editar') ? `
-                            <button onclick="editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
+                            <button onclick="editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi')" 
                                     class="btn-action btn-edit" 
-                                    title="Editar evaluación">
+                                    title="Editar KPI"
+                                    style="background:#0a84ff;color:#fff;">
                                 <i class="fas fa-edit"></i>
                             </button>
+                            ${mostrarOjoKPI2 ? `
+                            <button onclick="editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi2')" 
+                                    class="btn-action btn-edit" 
+                                    title="Editar KPI2"
+                                    style="background:#a855f7;color:#fff;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ` : ''}
                             ` : ''}
                             ${tienePermiso('eliminar') ? `
                             <button onclick="eliminarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
@@ -875,6 +946,15 @@ function cargarParametrosEvaluacion(entidadValue) {
     
     // Calcular total inicial
     actualizarTotalPuntos();
+
+    // Si estamos editando (KPI/KPI2), aplicar precarga después de que el DOM ya tiene los checkboxes.
+    // Evita problemas de timing con setTimeout y asegura que KPI2 abra con sus parámetros actuales.
+    try {
+        if (window.modoEdicion && window.modoEdicion.activo && window.modoEdicion.parametrosPrecarga) {
+            precargarValoresEvaluacion(window.modoEdicion.parametrosPrecarga);
+            window.modoEdicion.parametrosPrecarga = null;
+        }
+    } catch (e) {}
     
     // Mostrar botón guardar
     btnGuardar.style.display = 'block';
@@ -945,6 +1025,10 @@ async function guardarEvaluacion(entidadValue) {
     
     // Calcular KPI
     const kpi = totalMaximo > 0 ? (totalObtenido / totalMaximo) : 0;
+
+    const modalidadEdicion = (window.modoEdicion && window.modoEdicion.activo && window.modoEdicion.modalidad)
+        ? String(window.modoEdicion.modalidad).toLowerCase().trim()
+        : 'kpi';
     
     // Obtener información de la entidad
     const entidadInfo = tipo === 'sucursal' ? 
@@ -953,6 +1037,7 @@ async function guardarEvaluacion(entidadValue) {
     
     // Estructura de datos para Firebase
     const evaluacionData = {
+        modalidad: modalidadEdicion,
         tipo: tipo,
         entidadId: entidadId,
         entidadNombre: entidadInfo?.nombre || 'Desconocido',
@@ -976,7 +1061,17 @@ async function guardarEvaluacion(entidadValue) {
             // Para edición, eliminar la evaluación existente y crear una nueva
             if (window.firebaseDB) {
                 // Eliminar la evaluación existente
-                await window.firebaseDB.eliminarEvaluacion(entidadId, tipo, window.mesSeleccionado);
+                if (typeof window.firebaseDB.eliminarEvaluacion === 'function') {
+                    try {
+                        if (window.firebaseDB.eliminarEvaluacion.length >= 4) {
+                            await window.firebaseDB.eliminarEvaluacion(entidadId, tipo, window.mesSeleccionado, modalidadEdicion);
+                        } else {
+                            await window.firebaseDB.eliminarEvaluacion(entidadId, tipo, window.mesSeleccionado);
+                        }
+                    } catch (e) {
+                        console.warn('Error eliminando evaluación previa (continuando):', e);
+                    }
+                }
                 
                 // Crear la nueva evaluación
                 const firebaseId = await window.firebaseDB.guardarEvaluacion(evaluacionData);
@@ -996,6 +1091,7 @@ async function guardarEvaluacion(entidadValue) {
         
         // Actualizar también en almacenamiento local
         const evaluacionLocal = {
+            modalidad: modalidadEdicion,
             parametros: evaluacion,
             totalObtenido: totalObtenido,
             totalMaximo: totalMaximo,
@@ -1005,22 +1101,51 @@ async function guardarEvaluacion(entidadValue) {
             fechaCreacion: new Date().toISOString(),
             timestamp: Date.now()
         };
-        
-        if (tipo === 'sucursal') {
-            if (!window.evaluaciones.sucursales[entidadId]) {
-                window.evaluaciones.sucursales[entidadId] = {};
+
+        // Integrar en cache local manteniendo coexistencia KPI/KPI2
+        const tipoEntidadCache = (tipo === 'sucursal') ? 'sucursales' : (tipo === 'franquicia') ? 'franquicias' : 'competencia';
+        if (!window.evaluaciones[tipoEntidadCache]) window.evaluaciones[tipoEntidadCache] = {};
+        if (!window.evaluaciones[tipoEntidadCache][entidadId]) window.evaluaciones[tipoEntidadCache][entidadId] = {};
+
+        const mes = window.mesSeleccionado;
+        const actual = window.evaluaciones[tipoEntidadCache][entidadId][mes] || null;
+
+        if (modalidadEdicion === 'kpi') {
+            const base = { ...evaluacionLocal };
+            base.modalidades = { kpi: base };
+            if (actual && actual.modalidades && typeof actual.modalidades === 'object') {
+                base.modalidades = { ...actual.modalidades, kpi: base };
+                if (actual.modalidades.kpi2) base.modalidades.kpi2 = actual.modalidades.kpi2;
+                if (actual.modalidades.kpi3) base.modalidades.kpi3 = actual.modalidades.kpi3;
             }
-            window.evaluaciones.sucursales[entidadId][window.mesSeleccionado] = evaluacionLocal;
-        } else if (tipo === 'franquicia') {
-            if (!window.evaluaciones.franquicias[entidadId]) {
-                window.evaluaciones.franquicias[entidadId] = {};
+            window.evaluaciones[tipoEntidadCache][entidadId][mes] = base;
+        } else {
+            if (actual) {
+                if (!actual.modalidades || typeof actual.modalidades !== 'object') {
+                    actual.modalidades = { kpi: actual };
+                }
+                actual.modalidades[modalidadEdicion] = evaluacionLocal;
+                actual[`_${modalidadEdicion}`] = evaluacionLocal;
+                window.evaluaciones[tipoEntidadCache][entidadId][mes] = actual;
+            } else {
+                const contenedor = {
+                    modalidad: 'kpi',
+                    parametros: {},
+                    totalObtenido: 0,
+                    totalMaximo: 0,
+                    kpi: 0,
+                    estado: 'Sin evaluar',
+                    estadoPublicacion: 'borrador',
+                    fechaPublicacion: null,
+                    fechaCreacion: new Date().toISOString(),
+                    timestamp: Date.now(),
+                    videoUrl: null,
+                    modalidades: {}
+                };
+                contenedor.modalidades[modalidadEdicion] = evaluacionLocal;
+                contenedor[`_${modalidadEdicion}`] = evaluacionLocal;
+                window.evaluaciones[tipoEntidadCache][entidadId][mes] = contenedor;
             }
-            window.evaluaciones.franquicias[entidadId][window.mesSeleccionado] = evaluacionLocal;
-        } else if (tipo === 'competencia') {
-            if (!window.evaluaciones.competencia[entidadId]) {
-                window.evaluaciones.competencia[entidadId] = {};
-            }
-            window.evaluaciones.competencia[entidadId][window.mesSeleccionado] = evaluacionLocal;
         }
         
         // Cerrar modal
@@ -2002,12 +2127,35 @@ function cargarEntidadesEvaluacion() {
 // ===== FUNCIONES DE ACCIONES PARA EVALUACIONES =====
 
 // Función para ver una evaluación
-function verEvaluacion(entidadId, tipo) {
-    const evaluacion = obtenerEvaluacion(entidadId, tipo, window.mesSeleccionado);
-    if (!evaluacion) {
+function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
+    const base = obtenerEvaluacion(entidadId, tipo, window.mesSeleccionado);
+    if (!base) {
         alert('Evaluación no encontrada');
         return;
     }
+
+    const mod = modalidad ? String(modalidad).toLowerCase().trim() : 'kpi';
+    const evaluacion = (mod === 'kpi')
+        ? (base.modalidades && base.modalidades.kpi ? base.modalidades.kpi : base)
+        : (base.modalidades && base.modalidades[mod] ? base.modalidades[mod] : (base[`_${mod}`] || null));
+
+    // Si aún no existe un payload guardado para la modalidad solicitada (p.ej. KPI2 en transición),
+    // permitir visualizar una versión derivada desde el KPI legacy para no ocultar el botón.
+    // Esto no altera datos guardados; solo afecta visualización.
+    const evaluacionFinal = evaluacion || {
+        modalidad: mod,
+        parametros: (base && base.parametros) ? base.parametros : {},
+        totalObtenido: base?.totalObtenido || 0,
+        totalMaximo: base?.totalMaximo || 0,
+        kpi: base?.kpi || 0,
+        estado: base?.estado || 'Sin evaluar',
+        estadoPublicacion: base?.estadoPublicacion || 'borrador',
+        mes: base?.mes || window.mesSeleccionado,
+        fechaPublicacion: base?.fechaPublicacion || null,
+        fechaCreacion: base?.fechaCreacion || null,
+        timestamp: base?.timestamp || null,
+        videoUrl: base?.videoUrl || null
+    };
     
     const entidad = tipo === 'sucursal' ? 
         window.sucursales.find(s => s.id === entidadId)
@@ -2016,22 +2164,22 @@ function verEvaluacion(entidadId, tipo) {
     const nombreEntidad = entidad ? entidad.nombre : entidadId;
     
     // Crear modal para mostrar detalles de la evaluación
-    const totalObtenido = evaluacion.totalObtenido || 0;
-    const totalMaximo = evaluacion.totalMaximo || 0;
+    const totalObtenido = evaluacionFinal.totalObtenido || 0;
+    const totalMaximo = evaluacionFinal.totalMaximo || 0;
     // Use the stored KPI value for consistency with the table
-    const kpi = evaluacion.kpi ? (evaluacion.kpi * 100) : (totalMaximo > 0 ? (totalObtenido / totalMaximo) * 100 : 0);
-    const estado = kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita mejora';
+    const kpiPorcentaje = evaluacionFinal.kpi ? (evaluacionFinal.kpi * 100) : (totalMaximo > 0 ? (totalObtenido / totalMaximo) * 100 : 0);
+    const estado = kpiPorcentaje >= 95 ? 'Excelente' : kpiPorcentaje >= 90 ? 'Bueno' : 'Necesita mejora';
 
     const fechaCorta = formatearFechaHoraCorta(
-        evaluacion.fechaCreacion || evaluacion.created_at || evaluacion.timestamp || null
+        evaluacionFinal.fechaCreacion || evaluacionFinal.created_at || evaluacionFinal.timestamp || null
     );
     
     console.log(`Ver evaluación: ${entidadId} (${tipo})`);
-    console.log(`Total obtenido: ${totalObtenido}, Total máximo: ${totalMaximo}, KPI: ${kpi.toFixed(1)}%`);
-    console.log(`KPI almacenado: ${evaluacion.kpi}, KPI calculado: ${kpi}`);
+    console.log(`Total obtenido: ${totalObtenido}, Total máximo: ${totalMaximo}, KPI: ${kpiPorcentaje.toFixed(1)}%`);
+    console.log(`KPI almacenado: ${evaluacionFinal.kpi}, KPI calculado: ${kpiPorcentaje}`);
     
     let detallesHtml = `
-        <div class="modal" id="modalVerEvaluacion" style="display: block; z-index: 10001; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); overflow-y: auto;">
+        <div class="modal" id="modalVerEvaluacion" style="display: block; z-index: 10000;">
             <div class="modal-content" style="max-width: 800px; margin: 50px auto; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
                 <div class="modal-header" style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
                     <h2 style="margin: 0; color: #333;"><i class="fas fa-eye"></i> Detalles de Evaluación</h2>
@@ -2048,127 +2196,42 @@ function verEvaluacion(entidadId, tipo) {
                         </div>
                         <div>
                             <h3 style="color: #555; margin-bottom: 15px;">Resultados</h3>
-                            <p><strong>KPI:</strong> <span style="color: ${kpi >= 95 ? '#28a745' : kpi >= 90 ? '#ffc107' : '#dc3545'}; font-weight: bold; font-size: 18px;">${kpi.toFixed(1)}%</span></p>
-                            <p><strong>Estado:</strong> <span style="color: ${kpi >= 95 ? '#28a745' : kpi >= 90 ? '#ffc107' : '#dc3545'}; font-weight: bold;">${estado}</span></p>
-                            <p><strong>Total Obtenido:</strong> ${evaluacion.totalObtenido || 0}</p>
-                            <p><strong>Total Máximo:</strong> ${evaluacion.totalMaximo || 0}</p>
+                            <p><strong>KPI:</strong> <span style="color: ${kpiPorcentaje >= 95 ? '#28a745' : kpiPorcentaje >= 90 ? '#ffc107' : '#dc3545'}; font-weight: bold; font-size: 18px;">${kpiPorcentaje.toFixed(1)}%</span></p>
+                            <p><strong>Estado:</strong> <span style="color: ${kpiPorcentaje >= 95 ? '#28a745' : kpiPorcentaje >= 90 ? '#ffc107' : '#dc3545'}; font-weight: bold;">${estado}</span></p>
+                            <p><strong>Total Obtenido:</strong> ${evaluacionFinal.totalObtenido || 0}</p>
+                            <p><strong>Total Máximo:</strong> ${evaluacionFinal.totalMaximo || 0}</p>
                         </div>
                     </div>
                     
                     <h3 style="color: #555; margin-bottom: 15px;">Parámetros Evaluados</h3>
-                    <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+                    <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px;">
                         <table style="width: 100%; border-collapse: collapse;">
                             <thead>
-                                <tr style="background-color: #f5f5f5;">
-                                    <th style="padding: 15px 12px; border-bottom: 2px solid #ddd; text-align: left; font-weight: 600;">Parámetro</th>
-                                    <th style="padding: 15px 12px; border-bottom: 2px solid #ddd; text-align: center; font-weight: 600;">Valor</th>
-                                    <th style="padding: 15px 12px; border-bottom: 2px solid #ddd; text-align: center; font-weight: 600;">Máximo</th>
-                                    <th style="padding: 15px 12px; border-bottom: 2px solid #ddd; text-align: center; font-weight: 600;">Estado</th>
+                                <tr style="background: #f8f9fa;">
+                                    <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Parámetro</th>
+                                    <th style="padding: 12px; text-align: center; border-bottom: 1px solid #eee;">Estado</th>
+                                    <th style="padding: 12px; text-align: center; border-bottom: 1px solid #eee;">Peso</th>
                                 </tr>
                             </thead>
                             <tbody>
-    `;
-    
-    // Ordenar y agrupar parámetros por categoría y ponderancia
-    const evalParams = evaluacion.parametros || {};
-    const mesEval = evaluacion.mes || window.mesSeleccionado || null;
-    const parametrosEnEval = Object.keys(evalParams)
-        .map(id => {
-            const p = window.parametros?.find(pp => pp.id === id) || null;
-            return {
-                id,
-                parametro: p,
-                valor: evalParams[id]
-            };
-        })
-        .filter(x => {
-            if (!x.parametro) return true;
-            if (!x.parametro.vigenteDesde) return true;
-            return !!mesEval && mesEval >= x.parametro.vigenteDesde;
-        });
-
-    const porCategoria = {};
-    parametrosEnEval.forEach(x => {
-        const catId = x.parametro ? x.parametro.categoriaId : 'otros';
-        if (!porCategoria[catId]) porCategoria[catId] = [];
-        porCategoria[catId].push(x);
-    });
-
-    const categoriaIds = Object.keys(porCategoria).sort((a, b) => {
-        const sumA = (porCategoria[a] || []).reduce((acc, x) => acc + (Number(x.parametro?.peso) || 0), 0);
-        const sumB = (porCategoria[b] || []).reduce((acc, x) => acc + (Number(x.parametro?.peso) || 0), 0);
-        if (sumB !== sumA) return sumB - sumA;
-        const nA = a === 'otros' ? 'Otros' : getCategoriaName(a);
-        const nB = b === 'otros' ? 'Otros' : getCategoriaName(b);
-        return nA.localeCompare(nB);
-    });
-
-    categoriaIds.forEach(catId => {
-        const nombreCategoria = catId === 'otros' ? 'Otros' : getCategoriaName(catId);
-        detallesHtml += `
-            <tr style="background:#eef4ff; border-bottom: 1px solid #dde6f3;">
-                <td colspan="4" style="padding: 10px 12px; font-weight: 900; color:#2d3e50;">${nombreCategoria}</td>
-            </tr>
-        `;
-
-        const items = (porCategoria[catId] || []).slice();
-        items.sort((a1, a2) => {
-            const w1 = Number(a1.parametro?.peso) || 0;
-            const w2 = Number(a2.parametro?.peso) || 0;
-            if (w2 !== w1) return w2 - w1;
-            const n1 = a1.parametro ? (a1.parametro.nombre || '') : (a1.id || '');
-            const n2 = a2.parametro ? (a2.parametro.nombre || '') : (a2.id || '');
-            return n1.localeCompare(n2);
-        });
-
-        items.forEach(item => {
-            const parametroId = item.id;
-            const valor = item.valor;
-            const parametro = item.parametro;
-            const nombre = parametro ? parametro.nombre : parametroId;
-            const maximo = parametro ? parametro.peso : 'N/A';
-        
-        // Determinar estado y color
-        let estadoIcon, estadoColor, estadoTexto;
-        if (valor === maximo) {
-            estadoIcon = '✅';
-            estadoColor = '#28a745';
-            estadoTexto = 'Completo';
-        } else if (valor > 0) {
-            estadoIcon = '🟡';
-            estadoColor = '#ffc107';
-            estadoTexto = 'Parcial';
-        } else {
-            estadoIcon = '❌';
-            estadoColor = '#dc3545';
-            estadoTexto = 'No cumple';
-        }
-        
-        detallesHtml += `
-            <tr style="transition: background-color 0.2s ease; border-left: 3px solid ${estadoColor};" 
-                onmouseover="this.style.backgroundColor='#f8f9fa'" 
-                onmouseout="this.style.backgroundColor='white'">
-                <td style="padding: 15px 12px; border-bottom: 1px solid #eee; font-weight: 500;">
-                    ${nombre}
-                </td>
-                <td style="padding: 15px 12px; border-bottom: 1px solid #eee; text-align: center; font-weight: 600; color: ${estadoColor}; font-size: 16px;">
-                    ${valor}
-                </td>
-                <td style="padding: 15px 12px; border-bottom: 1px solid #eee; text-align: center; color: #666;">
-                    ${maximo}
-                </td>
-                <td style="padding: 15px 12px; border-bottom: 1px solid #eee; text-align: center;">
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        <span style="font-size: 16px;">${estadoIcon}</span>
-                        <span style="color: ${estadoColor}; font-weight: 600; font-size: 12px;">${estadoTexto}</span>
-                    </div>
-                </td>
-            </tr>
-        `;
-        });
-    });
-    
-    detallesHtml += `
+                                ${Object.entries(evaluacionFinal.parametros || {}).map(([paramId, valor]) => {
+                                    const param = window.parametros?.find(p => p.id === paramId);
+                                    const nombreParam = param ? param.nombre : paramId;
+                                    const peso = param ? param.peso : valor;
+                                    const cumple = valor > 0;
+                                    
+                                    return `
+                                        <tr style="border-bottom: 1px solid #f0f0f0;">
+                                            <td style="padding: 10px;">${nombreParam}</td>
+                                            <td style="padding: 10px; text-align: center;">
+                                                <span style="background: ${cumple ? '#d4edda' : '#f8d7da'}; color: ${cumple ? '#155724' : '#721c24'}; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+                                                    ${cumple ? '✓ Cumple' : '✗ No cumple'}
+                                                </span>
+                                            </td>
+                                            <td style="padding: 10px; text-align: center; font-weight: bold;">${peso}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -2181,17 +2244,12 @@ function verEvaluacion(entidadId, tipo) {
                         </h4>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; font-size: 12px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 14px;">✅</span>
-                                <span style="color: #28a745; font-weight: 600;">Completo</span>
+                                <span style="font-size: 14px;">✓</span>
+                                <span style="color: #28a745; font-weight: 600;">Cumple</span>
                                 <span style="color: #6c757d;">- Puntaje máximo obtenido</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 14px;">🟡</span>
-                                <span style="color: #ffc107; font-weight: 600;">Parcial</span>
-                                <span style="color: #6c757d;">- Puntaje parcial obtenido</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 14px;">❌</span>
+                                <span style="font-size: 14px;">✗</span>
                                 <span style="color: #dc3545; font-weight: 600;">No cumple</span>
                                 <span style="color: #6c757d;">- Sin puntaje obtenido</span>
                             </div>
@@ -2255,13 +2313,14 @@ function cerrarModalVerEvaluacion() {
 }
 
 // Función para editar una evaluación
-function editarEvaluacion(entidadId, tipo) {
+function editarEvaluacion(entidadId, tipo, modalidad = 'kpi') {
     if (!tienePermiso('editar')) {
         alert('No tiene permisos para editar evaluaciones');
         return;
     }
     
-    console.log(`Editar evaluación: ${entidadId} (${tipo})`);
+    const mod = modalidad ? String(modalidad).toLowerCase().trim() : 'kpi';
+    console.log(`Editar evaluación: ${entidadId} (${tipo}) [${mod}]`);
     
     // Buscar la evaluación existente
     const tipoEntidad = tipo === 'sucursal' ? 
@@ -2272,6 +2331,10 @@ function editarEvaluacion(entidadId, tipo) {
         alert('No se encontró la evaluación para editar');
         return;
     }
+
+    const evalModalidad = (mod === 'kpi')
+        ? (tipoEntidad.modalidades && tipoEntidad.modalidades.kpi ? tipoEntidad.modalidades.kpi : tipoEntidad)
+        : (tipoEntidad.modalidades && tipoEntidad.modalidades[mod] ? tipoEntidad.modalidades[mod] : (tipoEntidad[`_${mod}`] || null));
     
     // Obtener información de la entidad
     const entidadInfo = tipo === 'sucursal' ? 
@@ -2284,6 +2347,8 @@ function editarEvaluacion(entidadId, tipo) {
         entidadId: entidadId,
         tipo: tipo,
         mes: window.mesSeleccionado,
+        modalidad: mod,
+        parametrosPrecarga: (evalModalidad && evalModalidad.parametros) ? evalModalidad.parametros : {},
         datosOriginales: { ...tipoEntidad },
         entidadInfo: entidadInfo
     };
@@ -2306,20 +2371,17 @@ function editarEvaluacion(entidadId, tipo) {
     
     // Cambiar el título del modal para mostrar la entidad específica
     const modalTitle = document.querySelector('#modal-nueva-evaluacion h2');
-    modalTitle.textContent = `Editar Evaluación - ${entidadInfo?.nombre}`;
+    modalTitle.textContent = `Editar Evaluación ${mod.toUpperCase()} - ${entidadInfo?.nombre}`;
     
     // Cargar los parámetros para esta entidad específica
     const entidadValue = `${tipo}-${entidadId}`;
     cargarParametrosEvaluacion(entidadValue);
     
-    // Esperar un poco para que se carguen los parámetros y luego pre-llenar los valores
+    // Cambiar el texto del botón (la precarga se hace dentro de cargarParametrosEvaluacion)
     setTimeout(() => {
-        precargarValoresEvaluacion(tipoEntidad.parametros);
-        
-        // Cambiar el texto del botón
         document.getElementById('btn-guardar-evaluacion').textContent = 'Actualizar Evaluación';
         document.getElementById('btn-guardar-evaluacion').style.display = 'block';
-    }, 100);
+    }, 50);
 }
 
 // Función para precargar valores de evaluación
@@ -2717,6 +2779,7 @@ function integrarDatosFirebase(evaluacionesFirebase) {
     
     evaluacionesFirebase.forEach(evaluacion => {
         const { tipo, entidadId, mes } = evaluacion;
+        const modalidad = (evaluacion && evaluacion.modalidad) ? String(evaluacion.modalidad).toLowerCase().trim() : 'kpi';
         
         if (!tipo || !entidadId || !mes) {
             console.warn('Evaluación con datos incompletos:', evaluacion);
@@ -2733,9 +2796,9 @@ function integrarDatosFirebase(evaluacionesFirebase) {
         if (!window.evaluaciones[tipoEntidad][entidadId]) {
             window.evaluaciones[tipoEntidad][entidadId] = {};
         }
-        
-        // Convertir datos de Firebase a formato local
-        window.evaluaciones[tipoEntidad][entidadId][mes] = {
+
+        const convertido = {
+            modalidad,
             parametros: evaluacion.parametros || {},
             totalObtenido: evaluacion.totalObtenido || 0,
             totalMaximo: evaluacion.totalMaximo || 0,
@@ -2743,12 +2806,60 @@ function integrarDatosFirebase(evaluacionesFirebase) {
             estado: evaluacion.estado || 'Sin evaluar',
             estadoPublicacion: evaluacion.estadoPublicacion || 'borrador',
             mes: mes,
-            fechaPublicacion: evaluacion.fechaPublicacion ? 
+            fechaPublicacion: evaluacion.fechaPublicacion ?
                 (evaluacion.fechaPublicacion.toDate ? evaluacion.fechaPublicacion.toDate() : evaluacion.fechaPublicacion) : null,
             fechaCreacion: evaluacion.fechaCreacion || evaluacion.created_at || new Date().toISOString(),
             timestamp: evaluacion.timestamp || Date.now(),
-            videoUrl: evaluacion.videoUrl || null
+            videoUrl: evaluacion.videoUrl || null,
+            firebaseId: evaluacion.id || evaluacion.firebaseId || null
         };
+
+        const actual = window.evaluaciones[tipoEntidad][entidadId][mes] || null;
+
+        // Mantener compatibilidad: el registro principal por mes sigue siendo el KPI legacy.
+        // Para modalidades nuevas, anexamos bajo .modalidades sin pisar lo existente.
+        if (modalidad === 'kpi') {
+            const base = convertido;
+            base.modalidades = { kpi: base };
+            // Si ya existía algo (p.ej. llegó KPI2 primero), conservarlo.
+            if (actual && actual.modalidades && typeof actual.modalidades === 'object') {
+                base.modalidades = { ...actual.modalidades, kpi: base };
+                if (actual.modalidades.kpi2) base.modalidades.kpi2 = actual.modalidades.kpi2;
+                if (actual.modalidades.kpi3) base.modalidades.kpi3 = actual.modalidades.kpi3;
+            }
+            window.evaluaciones[tipoEntidad][entidadId][mes] = base;
+        } else {
+            // Modalidad no-legacy: adjuntar dentro del objeto del mes.
+            if (actual) {
+                if (!actual.modalidades || typeof actual.modalidades !== 'object') {
+                    actual.modalidades = { kpi: actual };
+                }
+                actual.modalidades[modalidad] = convertido;
+                // cache rápido opcional para UI
+                actual[`_${modalidad}`] = convertido;
+                window.evaluaciones[tipoEntidad][entidadId][mes] = actual;
+            } else {
+                // Si no hay KPI legacy, crear un contenedor mínimo.
+                const contenedor = {
+                    modalidad: 'kpi',
+                    parametros: {},
+                    totalObtenido: 0,
+                    totalMaximo: 0,
+                    kpi: 0,
+                    estado: 'Sin evaluar',
+                    estadoPublicacion: 'borrador',
+                    mes,
+                    fechaPublicacion: null,
+                    fechaCreacion: new Date().toISOString(),
+                    timestamp: Date.now(),
+                    videoUrl: null,
+                    modalidades: {}
+                };
+                contenedor.modalidades[modalidad] = convertido;
+                contenedor[`_${modalidad}`] = convertido;
+                window.evaluaciones[tipoEntidad][entidadId][mes] = contenedor;
+            }
+        }
     });
     
     console.log('Datos de Firebase integrados exitosamente');

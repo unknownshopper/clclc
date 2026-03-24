@@ -152,7 +152,7 @@
         },
 
         // Eliminar evaluación de Firestore
-        async eliminarEvaluacion(entidadId, tipo, mes) {
+        async eliminarEvaluacion(entidadId, tipo, mes, modalidad = null) {
           try {
             // Buscar la evaluación por entidadId, tipo y mes
             const q = query(
@@ -169,12 +169,23 @@
               return false;
             }
             
-            // Eliminar todos los documentos que coincidan (debería ser solo uno)
+            // Eliminar documentos que coincidan con la modalidad indicada.
+            // Nota: modalidad legacy puede no existir en documentos antiguos, por eso filtramos del lado del cliente.
             const deletePromises = [];
             querySnapshot.forEach((doc) => {
-              console.log(`Eliminando documento Firebase: ${doc.id}`);
-              deletePromises.push(deleteDoc(doc.ref));
+              const data = doc.data() || {};
+              const modDoc = (data.modalidad ? String(data.modalidad).toLowerCase().trim() : 'kpi');
+              const modWant = (modalidad ? String(modalidad).toLowerCase().trim() : null);
+              if (!modWant || modDoc === modWant) {
+                console.log(`Eliminando documento Firebase: ${doc.id}`);
+                deletePromises.push(deleteDoc(doc.ref));
+              }
             });
+
+            if (deletePromises.length === 0) {
+              console.log(`No se encontró evaluación para eliminar (por modalidad): ${entidadId} (${tipo}) - ${mes} - ${modalidad}`);
+              return false;
+            }
             
             await Promise.all(deletePromises);
             console.log(`Evaluación eliminada de Firebase: ${entidadId} (${tipo}) - ${mes}`);
@@ -202,7 +213,7 @@
         },
 
         // Actualizar estado de publicación de una evaluación (opcionalmente con videoUrl)
-        async actualizarEstadoPublicacion(entidadId, tipo, mes, nuevoEstado, videoUrl = null) {
+        async actualizarEstadoPublicacion(entidadId, tipo, mes, nuevoEstado, videoUrl = null, modalidad = null) {
           try {
             // Buscar la evaluación por entidadId, tipo y mes
             const q = query(
@@ -219,9 +230,15 @@
               return false;
             }
     
-            // Actualizar todos los documentos encontrados
+            // Actualizar documentos que coincidan con la modalidad indicada.
+            // Nota: modalidad legacy puede no existir en documentos antiguos, por eso filtramos del lado del cliente.
             const updatePromises = [];
             querySnapshot.forEach((doc) => {
+              const data = doc.data() || {};
+              const modDoc = (data.modalidad ? String(data.modalidad).toLowerCase().trim() : 'kpi');
+              const modWant = (modalidad ? String(modalidad).toLowerCase().trim() : null);
+              if (modWant && modDoc !== modWant) return;
+
               console.log(`Actualizando estado de publicación del documento: ${doc.id}`);
               const payload = {
                 estadoPublicacion: nuevoEstado,
@@ -234,6 +251,11 @@
               }
               updatePromises.push(updateDoc(doc.ref, payload));
             });
+
+            if (updatePromises.length === 0) {
+              console.log(`No se encontró evaluación para actualizar (por modalidad): ${entidadId} (${tipo}) - ${mes} - ${modalidad}`);
+              return false;
+            }
     
             await Promise.all(updatePromises);
             console.log(`Estado de publicación actualizado: ${entidadId} (${tipo}) - ${mes} -> ${nuevoEstado}${videoUrl ? ' con videoUrl' : ''}`);
