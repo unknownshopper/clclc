@@ -1286,19 +1286,6 @@ function renderGraficas() {
             </p>
         </div>
         
-        <!-- Gráfico de Barras - Espacio Principal -->
-        <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 30px;">
-            <h3 style="text-align: center; margin-bottom: 25px; color: #2c3e50; font-size: 1.4rem; font-weight: 600;">
-                📊 KPIs por Entidad
-            </h3>
-            <div style="display: flex; justify-content: center; margin-bottom: 15px;">
-                <canvas id="graficoKPIs" width="800" height="400" style="max-width: 100%; border-radius: 8px;"></canvas>
-            </div>
-            <p style="text-align: center; color: #7f8c8d; font-size: 0.9rem; margin-top: 15px;">
-                Comparación del rendimiento individual de cada entidad evaluada
-            </p>
-        </div>
-
         <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 30px;">
             <h3 style="text-align: center; margin-bottom: 25px; color: #2c3e50; font-size: 1.4rem; font-weight: 600;">
                 📈 Comparación KPI vs KPI2
@@ -1310,44 +1297,23 @@ function renderGraficas() {
                 KPI (ponderación actual) vs KPI2 (PONDERA IA) por entidad
             </p>
         </div>
-        
-        <!-- Layout de 2 columnas para gráfico circular y resumen -->
-        <div class="graficas-responsive" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 30px; margin-bottom: 30px;">
-            <!-- Gráfico Circular -->
-            <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                <h3 style="text-align: center; margin-bottom: 20px; color: #2c3e50; font-size: 1.3rem; font-weight: 600;">
-                    🎯 Distribución de Rendimiento
-                </h3>
-                <div style="display: flex; justify-content: center;">
-                    <canvas id="graficoDistribucion" width="350" height="350" style="border-radius: 8px;"></canvas>
-                </div>
-                <p style="text-align: center; color: #7f8c8d; font-size: 0.9rem; margin-top: 15px;">
-                    Proporción de entidades por nivel de rendimiento
-                </p>
-            </div>
-            
-            <!-- Resumen Estadístico -->
-            <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                <h3 style="text-align: center; margin-bottom: 20px; color: #2c3e50; font-size: 1.3rem; font-weight: 600;">
-                    📈 Resumen Estadístico
-                </h3>
-                <div id="resumenEstadistico"></div>
-            </div>
+
+        <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 30px;">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #2c3e50; font-size: 1.3rem; font-weight: 600;">
+                📌 Top drivers KPI2 (puntos perdidos)
+            </h3>
+            <p style="text-align: center; color: #7f8c8d; font-size: 0.9rem; margin-top: -5px; margin-bottom: 18px;">
+                Parámetros que más están bajando el KPI2 en el mes seleccionado
+            </p>
+            <div id="topDriversKPI2"></div>
         </div>
         
         <!-- Responsive design para móviles -->
         <style>
             @media (max-width: 768px) {
-                .graficas-responsive {
-                    grid-template-columns: 1fr !important;
-                }
-                #graficoKPIs {
+                #graficoKPIsComparacion {
                     width: 100% !important;
-                    height: 300px !important;
-                }
-                #graficoDistribucion {
-                    width: 280px !important;
-                    height: 280px !important;
+                    height: 360px !important;
                 }
             }
         </style>
@@ -1357,15 +1323,188 @@ function renderGraficas() {
     
     // Generar datos para gráficas
     generarGraficosKPI();
-    generarResumenEstadistico();
+    generarTopDriversKPI2();
+}
+
+function generarTopDriversKPI2() {
+    const host = document.getElementById('topDriversKPI2');
+    if (!host) return;
+
+    const kpi2Utils = window.kpi2Utils || null;
+    if (!kpi2Utils || typeof kpi2Utils.getPesoKPI2 !== 'function') {
+        host.innerHTML = '<div style="text-align:center; color:#666;">KPI2 no está disponible para calcular drivers</div>';
+        return;
+    }
+
+    const evaluacionesFiltradas = filtrarDatosPorRol(obtenerEvaluacionesDelMes(window.mesSeleccionado));
+    const drivers = new Map();
+    let evaluacionesContadas = 0;
+
+    const normKey = (s) => {
+        try {
+            return String(s || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/\s+/g, '')
+                .replace(/[-_]/g, '');
+        } catch (e) {
+            return String(s || '').toLowerCase().replace(/\s+/g, '').replace(/[-_]/g, '');
+        }
+    };
+
+    evaluacionesFiltradas.forEach(e => {
+        const entidadId = e.entidadId;
+        const tipo = e.tipo;
+        const evBase = e.evaluacion || null;
+        const evLocal = (evBase && evBase.modalidades && evBase.modalidades.kpi2)
+            ? evBase.modalidades.kpi2
+            : evBase;
+        if (!entidadId || !tipo || !evLocal) return;
+        if (!window.parametros || !Array.isArray(window.parametros)) return;
+
+        const modelo = (typeof kpi2Utils.getModeloEntidad === 'function')
+            ? kpi2Utils.getModeloEntidad(entidadId, tipo)
+            : null;
+
+        const parametrosExcluidos = (tipo === 'sucursal' && typeof window.obtenerParametrosExcluidos === 'function')
+            ? window.obtenerParametrosExcluidos(entidadId)
+            : (tipo === 'franquicia' && typeof window.obtenerParametrosExcluidosFranquicia === 'function')
+                ? window.obtenerParametrosExcluidosFranquicia(entidadId)
+                : [];
+
+        const excluidosNorm = Array.isArray(parametrosExcluidos)
+            ? parametrosExcluidos.map(normKey)
+            : [];
+
+        const tipoLower = String(tipo).toLowerCase();
+
+        const aplicaEntidad = (p) => {
+            if (!p) return false;
+            if (p.aplicaATodas) return true;
+            const hasSuc = Array.isArray(p.aplicaASucursales);
+            const hasFra = Array.isArray(p.aplicaAFranquicias);
+            if (!hasSuc && !hasFra) return true;
+            if (tipoLower === 'sucursal') {
+                if (!hasSuc) return true;
+                return p.aplicaASucursales.includes(entidadId);
+            }
+            if (tipoLower === 'franquicia') {
+                if (!hasFra) return true;
+                return p.aplicaAFranquicias.includes(entidadId);
+            }
+            return false;
+        };
+
+        const esExcluido = (p) => {
+            if (!aplicaEntidad(p)) return true;
+            const idNorm = normKey(p.id);
+            const nombreNorm = normKey(p.nombre);
+            // Listas de exclusión vienen por nombre; comparamos por ambos para compatibilidad.
+            return excluidosNorm.includes(idNorm) || (nombreNorm && excluidosNorm.includes(nombreNorm));
+        };
+
+        evaluacionesContadas++;
+
+        window.parametros.forEach(p => {
+            if (!p || esExcluido(p)) return;
+
+            if (p.id === 'mencion_promociones' && tipo !== 'sucursal') return;
+
+            const peso2 = kpi2Utils.getPesoKPI2(p.id, p.peso, modelo);
+            if (!peso2 || peso2 <= 0) return;
+
+            const pesoOriginal = Number(p.peso) || 0;
+            if (pesoOriginal <= 0) return;
+
+            const existe = !!(evLocal.parametros && evLocal.parametros[p.id] !== undefined);
+            // En KPI2, un undefined suele significar "no capturado" (no es falla). No debe generar puntos perdidos.
+            // Excepción: mencion_promociones tiene default por negocio.
+            if (!existe) {
+                if (p.id === 'mencion_promociones' && tipoLower === 'sucursal') {
+                    // default: cumple para todas salvo Carrizal
+                    const valorPromo = (entidadId !== 'walmart-carrizal') ? pesoOriginal : 0;
+                    const ratioPromo = (p.tipo === 'booleano')
+                        ? (valorPromo > 0 ? 1 : 0)
+                        : Math.max(0, Math.min(1, valorPromo / pesoOriginal));
+                    const perdidoPromo = peso2 * (1 - ratioPromo);
+                    if (Number.isFinite(perdidoPromo) && perdidoPromo > 0) {
+                        const prev = drivers.get(p.id) || { id: p.id, nombre: p.nombre || p.id, perdido: 0, casos: 0 };
+                        prev.perdido += perdidoPromo;
+                        prev.casos += 1;
+                        drivers.set(p.id, prev);
+                    }
+                }
+                return;
+            }
+
+            const valor = Number(evLocal.parametros[p.id] ?? 0) || 0;
+
+            const ratio = (p.tipo === 'booleano')
+                ? (valor > 0 ? 1 : 0)
+                : Math.max(0, Math.min(1, valor / pesoOriginal));
+
+            const perdido = peso2 * (1 - ratio);
+            if (!Number.isFinite(perdido) || perdido <= 0) return;
+
+            const prev = drivers.get(p.id) || { id: p.id, nombre: p.nombre || p.id, perdido: 0, casos: 0 };
+            prev.perdido += perdido;
+            prev.casos += 1;
+            drivers.set(p.id, prev);
+        });
+    });
+
+    const rows = Array.from(drivers.values())
+        .sort((a, b) => b.perdido - a.perdido)
+        .slice(0, 12);
+
+    if (!rows.length) {
+        host.innerHTML = '<div style="text-align:center; color:#666;">No hay suficiente información para calcular drivers</div>';
+        return;
+    }
+
+    const maxPerdido = Math.max(...rows.map(r => r.perdido));
+
+    host.innerHTML = `
+        <div style="display:flex; justify-content: space-between; gap: 12px; align-items:center; margin-bottom: 12px; color:#6b7280; font-size: 12px;">
+            <div><strong>Evaluaciones consideradas:</strong> ${evaluacionesContadas}</div>
+            <div><strong>Top:</strong> ${rows.length} parámetros</div>
+        </div>
+        <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Parámetro</th>
+                        <th style="text-align:right; padding:10px; border-bottom:1px solid #eee;">Puntos perdidos</th>
+                        <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Impacto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows.map(r => {
+                        const pct = maxPerdido > 0 ? Math.round((r.perdido / maxPerdido) * 100) : 0;
+                        return `
+                            <tr>
+                                <td style="padding:10px; border-bottom:1px solid #f3f4f6;">${r.nombre}</td>
+                                <td style="padding:10px; border-bottom:1px solid #f3f4f6; text-align:right; font-weight:700; color:#111827;">${r.perdido.toFixed(1)}</td>
+                                <td style="padding:10px; border-bottom:1px solid #f3f4f6;">
+                                    <div style="height:10px; background:#eef2ff; border-radius:999px; overflow:hidden;">
+                                        <div style="width:${pct}%; height:10px; background:#a855f7;"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
 }
 
 function generarGraficosKPI() {
-    const canvas1 = document.getElementById('graficoKPIs');
     const canvas2 = document.getElementById('graficoDistribucion');
     const canvasC = document.getElementById('graficoKPIsComparacion');
     
-    if (!canvas1 || !canvas2) return;
+    if (!canvas2 && !canvasC) return;
 
     const kpi2Utils = window.kpi2Utils || null;
     const calcularKPI2ParaGrafica = (entidadId, tipo, evaluacionLocal) => {
@@ -1418,11 +1557,10 @@ function generarGraficosKPI() {
         }
     });
     
-    // Dibujar gráfico de barras simple
-    dibujarGraficoBarras(canvas1, entidades, datosKPI, metas);
-    
     // Dibujar gráfico de distribución
-    dibujarGraficoDistribucion(canvas2, datosKPI);
+    if (canvas2) {
+        dibujarGraficoDistribucion(canvas2, datosKPI);
+    }
 
     // Dibujar gráfico comparativo KPI vs KPI2 (un solo chart)
     if (canvasC) {
