@@ -115,158 +115,192 @@ function renderMatrizCompleta() {
     }
     
     console.log(`Mostrando ${window.parametros.length} parámetros para ${entidades.length} entidades`);
-    
-    // Crear tabla de matriz con scroll horizontal y arrastre con mouse
-    html += `
-        <div class="matriz-drag-container" id="matrizDragContainer">
-            <div class="matriz-wrapper" id="matrizWrapper">
-                <table class="matriz-table">
-                    <thead>
-                        <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); position: sticky; top: 0; z-index: 10;">
-                            <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; color: #495057; min-width: 150px; position: sticky; left: 0; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">Entidad</th>
-                            <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; color: #495057; min-width: 80px; position: sticky; left: 150px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">Tipo</th>
-                            <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: 600; color: #495057; min-width: 100px; position: sticky; left: 230px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">KPI General</th>
-                            ${debeMostrarKPI2(window.mesSeleccionado) ? '<th style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: 600; color: #495057; min-width: 100px; position: sticky; left: 330px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">KPI2</th>' : ''}
-    `;
-    
-    // Agregar columnas para TODOS los parámetros (32)
-    window.parametros.forEach((param, index) => {
-        html += `
-            <th class="param-th" style="border: 1px solid #ddd; padding: 8px 4px; text-align: center; font-weight: 600; color: #495057; min-width: 48px; writing-mode: vertical-rl; text-orientation: mixed; font-size: 10px; height: 100px;">
-                <div class="matriz-tooltip" style="display: block;">
-                    <div style="transform: rotate(180deg);">${param.nombre}</div>
-                    <div class="matriz-tooltip-bubble">
-                        <div class="matriz-tooltip-row">
-                            <div class="matriz-tooltip-icon">📊</div>
-                            <div class="matriz-tooltip-label">Parámetro</div>
-                            <div class="matriz-tooltip-value">${param.nombre}</div>
-                        </div>
-                        <div class="matriz-tooltip-row">
-                            <div class="matriz-tooltip-icon">⚖️</div>
-                            <div class="matriz-tooltip-label">Peso</div>
-                            <div class="matriz-tooltip-value">${param.peso}</div>
-                        </div>
-                    </div>
-                </div>
-            </th>
-        `;
-    });
-    
-    html += `
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-    
-    // Generar filas para cada entidad
-    entidades.forEach((entidad, entidadIndex) => {
-        const tipoLower = entidad.tipo.toLowerCase();
-        const mes = window.mesSeleccionado;
-        
-        // Obtener evaluación
-        const evaluacion = tipoLower === 'sucursal' ? 
-            window.evaluaciones?.sucursales?.[entidad.id]?.[mes]
-            : window.evaluaciones?.franquicias?.[entidad.id]?.[mes];
-        
-        // Calcular KPI General usando valores almacenados
-        let kpiGeneral = 'N/A';
-        let kpiColor = '#999';
-        if (evaluacion && evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
-            const porcentaje = evaluacion.totalMaximo > 0 ? 
-                Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100) : 0;
-            kpiGeneral = `${porcentaje}%`;
-            kpiColor = porcentaje >= 95 ? '#28a745' : porcentaje >= 90 ? '#ffc107' : '#dc3545';
-        }
 
-        let kpi2General = '—';
-        let kpi2Color = '#999';
-        if (debeMostrarKPI2(window.mesSeleccionado)) {
-            const kpi2 = calcularKPI2Matriz(entidad.id, tipoLower, evaluacion || null);
-            if (typeof kpi2 === 'number') {
-                const porcentaje2 = Math.round(kpi2 * 100);
-                kpi2General = `${porcentaje2}%`;
-                kpi2Color = porcentaje2 >= 95 ? '#28a745' : porcentaje2 >= 90 ? '#ffc107' : '#dc3545';
-            }
-        }
-        
-        // Obtener parámetros excluidos para esta entidad
-        const parametrosExcluidos = obtenerParametrosExcluidos(entidad.id, tipoLower);
-        
-        const rowBg = entidadIndex % 2 === 0 ? '#ffffff' : '#f8f9fa';
-        
+    const paramsKPI = (window.parametros || []).filter(p => p && !p.soloKPI2);
+    const paramsKPI2 = (window.parametros || []).slice();
+
+    const renderTabla = (modo, paramsTabla) => {
+        const esKPI2 = modo === 'kpi2';
+        const suf = esKPI2 ? 'KPI2' : 'KPI';
+
         html += `
-            <tr style="background-color: ${rowBg};" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor='${rowBg}'">
-                <td style="border: 1px solid #ddd; padding: 12px 8px; font-weight: 500; position: sticky; left: 0; background-color: ${rowBg}; z-index: 5;">
-                    <div class="matriz-tooltip" style="display: inline-block;">
-                        ${entidad.nombre}
+            <div style="margin: 24px 0 10px 0; text-align: center;">
+                <h3 style="margin: 0; color: #0077cc;">${esKPI2 ? 'Matriz KPI2' : 'Matriz KPI'}</h3>
+                <div style="margin-top: 6px; font-size: 12px; color: #6c757d;">
+                    ${esKPI2 ? 'Incluye parámetros KPI2 (soloKPI2) como Existencia y Menciona promociones.' : 'Solo parámetros KPI (no incluye parámetros soloKPI2).'}
+                </div>
+            </div>
+
+            <div class="matriz-drag-container" id="matrizDragContainer${suf}">
+                <div class="matriz-wrapper" id="matrizWrapper${suf}">
+                    <table class="matriz-table">
+                        <thead>
+                            <tr style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); position: sticky; top: 0; z-index: 10;">
+                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; color: #495057; min-width: 150px; position: sticky; left: 0; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">Entidad</th>
+                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: left; font-weight: 600; color: #495057; min-width: 80px; position: sticky; left: 150px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">Tipo</th>
+                                <th style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: 600; color: #495057; min-width: 100px; position: sticky; left: 230px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">KPI General</th>
+                                ${esKPI2 ? '<th style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: 600; color: #495057; min-width: 100px; position: sticky; left: 330px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); z-index: 11; box-shadow: 2px 0 4px rgba(0,0,0,0.1);">KPI2</th>' : ''}
+        `;
+
+        paramsTabla.forEach((param) => {
+            html += `
+                <th class="param-th" style="border: 1px solid #ddd; padding: 8px 4px; text-align: center; font-weight: 600; color: #495057; min-width: 48px; writing-mode: vertical-rl; text-orientation: mixed; font-size: 10px; height: 100px;">
+                    <div class="matriz-tooltip" style="display: block;">
+                        <div style="transform: rotate(180deg);">${param.nombre}</div>
                         <div class="matriz-tooltip-bubble">
                             <div class="matriz-tooltip-row">
-                                <div class="matriz-tooltip-icon">🏢</div>
-                                <div class="matriz-tooltip-label">Entidad</div>
-                                <div class="matriz-tooltip-value">${entidad.nombre}</div>
+                                <div class="matriz-tooltip-icon">📊</div>
+                                <div class="matriz-tooltip-label">Parámetro</div>
+                                <div class="matriz-tooltip-value">${param.nombre}</div>
                             </div>
                             <div class="matriz-tooltip-row">
-                                <div class="matriz-tooltip-icon">🔖</div>
-                                <div class="matriz-tooltip-label">Tipo</div>
-                                <div class="matriz-tooltip-value">${entidad.tipo}</div>
+                                <div class="matriz-tooltip-icon">⚖️</div>
+                                <div class="matriz-tooltip-label">Peso</div>
+                                <div class="matriz-tooltip-value">${param.peso}</div>
                             </div>
-                            <div class="matriz-tooltip-row">
-                                <div class="matriz-tooltip-icon">📈</div>
-                                <div class="matriz-tooltip-label">KPI General</div>
-                                <div class="matriz-tooltip-value">${kpiGeneral}</div>
-                            </div>
-                            ${debeMostrarKPI2(window.mesSeleccionado) ? `
-                            <div class="matriz-tooltip-row">
-                                <div class="matriz-tooltip-icon">🧠</div>
-                                <div class="matriz-tooltip-label">KPI2</div>
-                                <div class="matriz-tooltip-value">${kpi2General}</div>
-                            </div>
-                            ` : ''}
                         </div>
                     </div>
-                </td>
-                <td style="border: 1px solid #ddd; padding: 12px 8px; position: sticky; left: 150px; background-color: ${rowBg}; z-index: 5;">${entidad.tipo}</td>
-                <td style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: bold; color: ${kpiColor}; position: sticky; left: 230px; background-color: ${rowBg}; z-index: 5;">${kpiGeneral}</td>
-                ${debeMostrarKPI2(window.mesSeleccionado) ? `<td style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: bold; color: ${kpi2Color}; position: sticky; left: 330px; background-color: ${rowBg}; z-index: 5;">${kpi2General}</td>` : ''}
+                </th>
+            `;
+        });
+
+        html += `
+                            </tr>
+                        </thead>
+                        <tbody>
         `;
-        
-        // Mostrar estado de TODOS los parámetros
-        window.parametros.forEach(param => {
-            // Verificar si el ID del parámetro actual está en la lista de excluidos
-            const esExcluido = parametrosExcluidos.some(idExcluido => {
-                // Comparar IDs normalizados (sin guiones, en minúsculas)
-                const idParam = param.id.toLowerCase().replace(/[-_]/g, '');
-                return idParam === idExcluido;
-            });
-            
-            if (esExcluido) {
-                // Parámetro excluido - celda en negro con tooltip estilizado
-                html += `
-                    <td style="border: 1px solid #ddd; padding: 8px 4px; text-align: center; background-color: #000000; color: #ffffff;">
-                        <div class="matriz-tooltip">
-                            <span style="font-size: 10px;">N/A</span>
+
+        entidades.forEach((entidad, entidadIndex) => {
+            const tipoLower = entidad.tipo.toLowerCase();
+            const mes = window.mesSeleccionado;
+
+            const evaluacion = tipoLower === 'sucursal'
+                ? window.evaluaciones?.sucursales?.[entidad.id]?.[mes]
+                : window.evaluaciones?.franquicias?.[entidad.id]?.[mes];
+
+            const evalParaTabla = (esKPI2 && evaluacion && evaluacion.modalidades && evaluacion.modalidades.kpi2)
+                ? evaluacion.modalidades.kpi2
+                : evaluacion;
+
+            let kpiGeneral = 'N/A';
+            let kpiColor = '#999';
+            if (evaluacion && evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
+                const porcentaje = evaluacion.totalMaximo > 0
+                    ? Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100)
+                    : 0;
+                kpiGeneral = `${porcentaje}%`;
+                kpiColor = porcentaje >= 95 ? '#28a745' : porcentaje >= 90 ? '#ffc107' : '#dc3545';
+            }
+
+            let kpi2General = '—';
+            let kpi2Color = '#999';
+            if (esKPI2) {
+                const kpi2 = calcularKPI2Matriz(entidad.id, tipoLower, evalParaTabla || null);
+                if (typeof kpi2 === 'number') {
+                    const porcentaje2 = Math.round(kpi2 * 100);
+                    kpi2General = `${porcentaje2}%`;
+                    kpi2Color = porcentaje2 >= 95 ? '#28a745' : porcentaje2 >= 90 ? '#ffc107' : '#dc3545';
+                }
+            }
+
+            const parametrosExcluidos = obtenerParametrosExcluidos(entidad.id, tipoLower);
+            const rowBg = entidadIndex % 2 === 0 ? '#ffffff' : '#f8f9fa';
+
+            html += `
+                <tr style="background-color: ${rowBg};" onmouseover="this.style.backgroundColor='#e3f2fd'" onmouseout="this.style.backgroundColor='${rowBg}'">
+                    <td style="border: 1px solid #ddd; padding: 12px 8px; font-weight: 500; position: sticky; left: 0; background-color: ${rowBg}; z-index: 5;">
+                        <div class="matriz-tooltip" style="display: inline-block;">
+                            ${entidad.nombre}
                             <div class="matriz-tooltip-bubble">
                                 <div class="matriz-tooltip-row">
                                     <div class="matriz-tooltip-icon">🏢</div>
                                     <div class="matriz-tooltip-label">Entidad</div>
-                                    <div class="matriz-tooltip-value">${entidad.tipo}: ${entidad.nombre}</div>
+                                    <div class="matriz-tooltip-value">${entidad.nombre}</div>
                                 </div>
                                 <div class="matriz-tooltip-row">
-                                    <div class="matriz-tooltip-icon">📊</div>
-                                    <div class="matriz-tooltip-label">Parámetro</div>
-                                    <div class="matriz-tooltip-value">${param.nombre}</div>
+                                    <div class="matriz-tooltip-icon">🔖</div>
+                                    <div class="matriz-tooltip-label">Tipo</div>
+                                    <div class="matriz-tooltip-value">${entidad.tipo}</div>
                                 </div>
                                 <div class="matriz-tooltip-row">
-                                    <div class="matriz-tooltip-icon">🚫</div>
-                                    <div class="matriz-tooltip-label">Estado</div>
-                                    <div class="matriz-tooltip-value">Excluido</div>
+                                    <div class="matriz-tooltip-icon">📈</div>
+                                    <div class="matriz-tooltip-label">KPI General</div>
+                                    <div class="matriz-tooltip-value">${kpiGeneral}</div>
                                 </div>
+                                ${esKPI2 ? `
+                                <div class="matriz-tooltip-row">
+                                    <div class="matriz-tooltip-icon">🧠</div>
+                                    <div class="matriz-tooltip-label">KPI2</div>
+                                    <div class="matriz-tooltip-value">${kpi2General}</div>
+                                </div>
+                                ` : ''}
                             </div>
                         </div>
                     </td>
-                `;
-            } else {
-                // Parámetro aplicable - mostrar estado
+                    <td style="border: 1px solid #ddd; padding: 12px 8px; position: sticky; left: 150px; background-color: ${rowBg}; z-index: 5;">${entidad.tipo}</td>
+                    <td style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: bold; color: ${kpiColor}; position: sticky; left: 230px; background-color: ${rowBg}; z-index: 5;">${kpiGeneral}</td>
+                    ${esKPI2 ? `<td style="border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-weight: bold; color: ${kpi2Color}; position: sticky; left: 330px; background-color: ${rowBg}; z-index: 5;">${kpi2General}</td>` : ''}
+            `;
+
+            paramsTabla.forEach(param => {
+                const aplicaEntidad = (() => {
+                    try {
+                        if (!param) return false;
+                        if (param.aplicaATodas) return true;
+
+                        const hasSuc = Array.isArray(param.aplicaASucursales);
+                        const hasFra = Array.isArray(param.aplicaAFranquicias);
+                        // Back-compat: muchos parámetros antiguos tienen aplicaATodas:false pero sin listas.
+                        // En ese caso, asumir que aplican a todas las entidades.
+                        if (!hasSuc && !hasFra) return true;
+                        if (tipoLower === 'sucursal') {
+                            // Si no hay lista explícita, asumir aplica.
+                            if (!hasSuc) return true;
+                            return param.aplicaASucursales.includes(entidad.id);
+                        }
+                        if (tipoLower === 'franquicia') {
+                            if (!hasFra) return true;
+                            return param.aplicaAFranquicias.includes(entidad.id);
+                        }
+                        return false;
+                    } catch (e) {
+                        return false;
+                    }
+                })();
+
+                const esExcluido = !aplicaEntidad || parametrosExcluidos.some(idExcluido => {
+                    const idParam = param.id.toLowerCase().replace(/[-_]/g, '');
+                    return idParam === idExcluido;
+                });
+
+                if (esExcluido) {
+                    html += `
+                        <td style="border: 1px solid #ddd; padding: 8px 4px; text-align: center; background-color: #000000; color: #ffffff;">
+                            <div class="matriz-tooltip">
+                                <span style="font-size: 10px;">N/A</span>
+                                <div class="matriz-tooltip-bubble">
+                                    <div class="matriz-tooltip-row">
+                                        <div class="matriz-tooltip-icon">🏢</div>
+                                        <div class="matriz-tooltip-label">Entidad</div>
+                                        <div class="matriz-tooltip-value">${entidad.tipo}: ${entidad.nombre}</div>
+                                    </div>
+                                    <div class="matriz-tooltip-row">
+                                        <div class="matriz-tooltip-icon">📊</div>
+                                        <div class="matriz-tooltip-label">Parámetro</div>
+                                        <div class="matriz-tooltip-value">${param.nombre}</div>
+                                    </div>
+                                    <div class="matriz-tooltip-row">
+                                        <div class="matriz-tooltip-icon">🚫</div>
+                                        <div class="matriz-tooltip-label">Estado</div>
+                                        <div class="matriz-tooltip-value">Excluido</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                    return;
+                }
+
                 let estado = 'N/A';
                 let color = '#999';
                 let bgColor = 'transparent';
@@ -274,32 +308,77 @@ function renderMatrizCompleta() {
                 let valor = 0;
                 let peso = param.peso;
                 let estadoIcono = '⏳';
-                
-                if (evaluacion && evaluacion.parametros && evaluacion.parametros[param.id] !== undefined) {
-                    valor = parseInt(evaluacion.parametros[param.id]);
-                    peso = param.peso;
-                    
-                    if (valor === peso) {
+
+                const tieneValor = !!(evalParaTabla && evalParaTabla.parametros && evalParaTabla.parametros[param.id] !== undefined);
+                const defaultCumplePromo = (!tieneValor && esKPI2 && tipoLower === 'sucursal' && entidad.id !== 'walmart-carrizal' && param && param.id === 'mencion_promociones');
+                const defaultFallaPromo = (!tieneValor && esKPI2 && tipoLower === 'sucursal' && entidad.id === 'walmart-carrizal' && param && param.id === 'mencion_promociones');
+                if (!tieneValor && esKPI2 && param && param.soloKPI2) {
+                    if (defaultCumplePromo) {
                         estado = '✓';
                         color = '#ffffff';
                         bgColor = '#28a745';
                         estadoTexto = 'Completo';
                         estadoIcono = '✅';
-                    } else if (valor > 0) {
-                        estado = '◐';
-                        color = '#ffffff';
-                        bgColor = '#ffc107';
-                        estadoTexto = 'Parcial';
-                        estadoIcono = '⚠️';
-                    } else {
+                        valor = Number(param.peso) || 0;
+                        peso = param.peso;
+                    } else if (defaultFallaPromo) {
                         estado = '✗';
                         color = '#ffffff';
                         bgColor = '#dc3545';
                         estadoTexto = 'No cumple';
                         estadoIcono = '❌';
+                        valor = 0;
+                        peso = param.peso;
+                    } else {
+                        estado = '—';
+                        color = '#6c757d';
+                        bgColor = '#f8f9fa';
+                        estadoTexto = 'No capturado';
+                        estadoIcono = '⏳';
                     }
                 }
-                
+
+                if (tieneValor) {
+                    valor = parseInt(evalParaTabla.parametros[param.id]);
+                    peso = param.peso;
+
+                    if (param && param.tipo === 'booleano') {
+                        if (valor > 0) {
+                            estado = '✓';
+                            color = '#ffffff';
+                            bgColor = '#28a745';
+                            estadoTexto = 'Completo';
+                            estadoIcono = '✅';
+                        } else {
+                            estado = '✗';
+                            color = '#ffffff';
+                            bgColor = '#dc3545';
+                            estadoTexto = 'No cumple';
+                            estadoIcono = '❌';
+                        }
+                    } else {
+                        if (valor === peso) {
+                            estado = '✓';
+                            color = '#ffffff';
+                            bgColor = '#28a745';
+                            estadoTexto = 'Completo';
+                            estadoIcono = '✅';
+                        } else if (valor > 0) {
+                            estado = '◐';
+                            color = '#ffffff';
+                            bgColor = '#ffc107';
+                            estadoTexto = 'Parcial';
+                            estadoIcono = '⚠️';
+                        } else {
+                            estado = '✗';
+                            color = '#ffffff';
+                            bgColor = '#dc3545';
+                            estadoTexto = 'No cumple';
+                            estadoIcono = '❌';
+                        }
+                    }
+                }
+
                 html += `
                     <td style="border: 1px solid #ddd; padding: 8px 4px; text-align: center; color: ${color}; background-color: ${bgColor}; font-weight: bold;">
                         <div class="matriz-tooltip">
@@ -334,18 +413,25 @@ function renderMatrizCompleta() {
                         </div>
                     </td>
                 `;
-            }
+            });
+
+            html += '</tr>';
         });
-        
-        html += '</tr>';
-    });
-    
+
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    };
+
+    renderTabla('kpi', paramsKPI);
+    if (debeMostrarKPI2(window.mesSeleccionado)) {
+        renderTabla('kpi2', paramsKPI2);
+    }
+
     html += `
-                </tbody>
-            </table>
-        </div>
-        </div>
-        
         <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; border: 1px solid #dee2e6;">
             <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px; font-weight: 600;">
                 <i class="fas fa-hand-pointer" style="margin-right: 8px; color: #6c757d;"></i>
@@ -403,18 +489,24 @@ function renderMatrizCompleta() {
     console.log('Matriz completa renderizada exitosamente');
     
     // Inicializar soporte de tooltips para dispositivos táctiles y clics
-    inicializarTooltipsMatrizTouch();
+    inicializarTooltipsMatrizTouch('#matrizWrapperKPI');
+    if (debeMostrarKPI2(window.mesSeleccionado)) {
+        inicializarTooltipsMatrizTouch('#matrizWrapperKPI2');
+    }
     
     // Inicializar funcionalidad de arrastre con mouse e inercia
-    inicializarArrastreMatriz();
+    inicializarArrastreMatriz('KPI');
+    if (debeMostrarKPI2(window.mesSeleccionado)) {
+        inicializarArrastreMatriz('KPI2');
+    }
 }
 
 /**
  * Inicializa la funcionalidad de arrastre con mouse e inercia para la matriz
  */
-function inicializarArrastreMatriz() {
-    const container = document.getElementById('matrizDragContainer');
-    const wrapper = document.getElementById('matrizWrapper');
+function inicializarArrastreMatriz(sufijo = '') {
+    const container = document.getElementById(`matrizDragContainer${sufijo}`);
+    const wrapper = document.getElementById(`matrizWrapper${sufijo}`);
     
     if (!container || !wrapper) return;
     
@@ -624,9 +716,9 @@ window.obtenerParametrosExcluidos = obtenerParametrosExcluidos;
  * - Tap/click en una celda: alterna su tooltip
  * - Click fuera, scroll o Escape: cierra todos
  */
-function inicializarTooltipsMatrizTouch() {
-    const contenedor = document.querySelector('#matriz .matriz-wrapper');
-    const tabla = document.querySelector('#matriz .matriz-table');
+function inicializarTooltipsMatrizTouch(wrapperSelector) {
+    const contenedor = wrapperSelector ? document.querySelector(wrapperSelector) : document.querySelector('#matriz .matriz-wrapper');
+    const tabla = contenedor ? contenedor.querySelector('.matriz-table') : document.querySelector('#matriz .matriz-table');
     if (!contenedor || !tabla) return;
 
     // Evitar múltiples bindings por render

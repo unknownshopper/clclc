@@ -204,6 +204,17 @@ main {
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
+
+/* Permite que la Matriz use ancho completo (rompe el max-width del main) */
+.matriz-fullwidth {
+    max-width: none;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 24px;
+    padding-right: 24px;
+    box-sizing: border-box;
+}
 .tab-section {
     display: block;
 }

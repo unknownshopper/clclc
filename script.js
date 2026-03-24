@@ -5,6 +5,17 @@ function cambiarVista(vista) {
         button.classList.remove('active');
     });
     document.querySelector(`[data-section="${vista}"]`)?.classList.add('active');
+
+    try {
+        const mainEl = document.querySelector('main');
+        if (mainEl) {
+            if (vista === 'matriz') {
+                mainEl.classList.add('matriz-fullwidth');
+            } else {
+                mainEl.classList.remove('matriz-fullwidth');
+            }
+        }
+    } catch (e) {}
     
     // Ocultar todas las secciones
     document.querySelectorAll('.tab-section').forEach(seccion => {
@@ -2195,8 +2206,19 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
     // Crear modal para mostrar detalles de la evaluación
     const totalObtenido = evaluacionFinal.totalObtenido || 0;
     const totalMaximo = evaluacionFinal.totalMaximo || 0;
+
+    const kpi2Utils = window.kpi2Utils || null;
+    const evalParaKPI2 = (base && base.modalidades && base.modalidades.kpi2)
+        ? base.modalidades.kpi2
+        : evaluacionFinal;
+    const kpi2Calculado = (mod === 'kpi2' && kpi2Utils && typeof kpi2Utils.calcularKPI2 === 'function')
+        ? kpi2Utils.calcularKPI2(entidadId, tipo, evalParaKPI2)
+        : null;
+
     // Use the stored KPI value for consistency with the table
-    const kpiPorcentaje = evaluacionFinal.kpi ? (evaluacionFinal.kpi * 100) : (totalMaximo > 0 ? (totalObtenido / totalMaximo) * 100 : 0);
+    const kpiPorcentaje = (mod === 'kpi2' && typeof kpi2Calculado === 'number')
+        ? (kpi2Calculado * 100)
+        : (evaluacionFinal.kpi ? (evaluacionFinal.kpi * 100) : (totalMaximo > 0 ? (totalObtenido / totalMaximo) * 100 : 0));
     const estado = kpiPorcentaje >= 95 ? 'Excelente' : kpiPorcentaje >= 90 ? 'Bueno' : 'Necesita mejora';
 
     const fechaCorta = formatearFechaHoraCorta(
@@ -2240,9 +2262,17 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
             });
 
             return parametrosAplicables.map(p => {
-                const v = (evaluacionFinal.parametros && evaluacionFinal.parametros[p.id] !== undefined)
-                    ? evaluacionFinal.parametros[p.id]
-                    : 0;
+                const existe = !!(evaluacionFinal.parametros && evaluacionFinal.parametros[p.id] !== undefined);
+                if (!existe) {
+                    if (p.id === 'mencion_promociones' && tipo === 'sucursal') {
+                        const vPromo = (entidadId !== 'walmart-carrizal') ? (Number(p.peso) || 0) : 0;
+                        return [p.id, vPromo];
+                    }
+                    if (p.soloKPI2) {
+                        return [p.id, null];
+                    }
+                }
+                const v = existe ? evaluacionFinal.parametros[p.id] : 0;
                 return [p.id, v];
             });
         } catch (e) {
@@ -2292,15 +2322,16 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                                     const param = window.parametros?.find(p => p.id === paramId);
                                     const nombreParam = param ? param.nombre : paramId;
                                     const peso = param ? param.peso : valor;
-                                    const cumple = valor > 0;
+                                    const noCapturado = (valor === null || valor === undefined);
+                                    const cumple = !noCapturado && (Number(valor) > 0);
                                     
                                     return `
                                         <tr style="border-bottom: 1px solid #f0f0f0;">
                                             <td style="padding: 10px;">${nombreParam}</td>
                                             <td style="padding: 10px; text-align: center;">
-                                                <span style="background: ${cumple ? '#d4edda' : '#f8d7da'}; color: ${cumple ? '#155724' : '#721c24'}; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
-                                                    ${cumple ? '✓ Cumple' : '✗ No cumple'}
-                                                </span>
+                                                ${noCapturado
+                                                    ? `<span style="background: #e9ecef; color: #495057; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">— No capturado</span>`
+                                                    : `<span style="background: ${cumple ? '#d4edda' : '#f8d7da'}; color: ${cumple ? '#155724' : '#721c24'}; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">${cumple ? '✓ Cumple' : '✗ No cumple'}</span>`}
                                             </td>
                                             <td style="padding: 10px; text-align: center; font-weight: bold;">${peso}</td>
                                         </tr>

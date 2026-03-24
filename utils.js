@@ -365,8 +365,15 @@ window.kpi2Utils = (function() {
             parametrosAplicables.forEach(param => {
                 // Si es un parámetro soloKPI2 (p.ej. existencia) pero aún no existe en la evaluación,
                 // no debe penalizar: se omite del cálculo.
-                if (param?.soloKPI2 && evaluacionLocal.parametros && evaluacionLocal.parametros[param.id] === undefined) {
-                    return;
+                const valorExiste = !!(evaluacionLocal && evaluacionLocal.parametros && evaluacionLocal.parametros[param.id] !== undefined);
+                if (param?.soloKPI2 && !valorExiste) {
+                    // Regla de negocio: se asume que "Menciona promociones" cumple por default en sucursales,
+                    // excepto Walmart Carrizal (única que falló).
+                    if (param.id === 'mencion_promociones' && tipo === 'sucursal') {
+                        // continuar: se contará abajo como ratio=1 (default) o ratio=0 (Carrizal)
+                    } else {
+                        return;
+                    }
                 }
 
                 const peso2 = getPesoKPI2(param.id, param.peso, modelo);
@@ -374,7 +381,9 @@ window.kpi2Utils = (function() {
                 totalMax += peso2;
 
                 const pesoOriginal = Number(param.peso) || 0;
-                const valor = Number(evaluacionLocal.parametros[param.id] ?? 0) || 0;
+                const valor = (!valorExiste && param.id === 'mencion_promociones' && tipo === 'sucursal')
+                    ? (entidadId !== 'walmart-carrizal' ? pesoOriginal : 0)
+                    : (Number(evaluacionLocal.parametros[param.id] ?? 0) || 0);
                 if (pesoOriginal <= 0) return;
 
                 const ratio = (param && param.tipo === 'booleano')
