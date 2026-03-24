@@ -136,7 +136,7 @@ function verificarAutenticacion() {
         usuarioActual = JSON.parse(usuarioGuardado);
         // Reestablecer estado conservador: si se recarga la página no asumimos que Firebase Auth sigue válido.
         if (usuarioActual?.rol === 'admin') {
-            window.firebaseAdminAuthenticated = false;
+            window.firebaseAdminAuthenticated = !!window.firebaseAdminAuthenticated;
         }
         document.getElementById('loginModal').style.display = 'none';
         document.body.classList.remove('logged-out');

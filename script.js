@@ -835,7 +835,22 @@ function cargarParametrosEvaluacion(entidadValue) {
         const mes = window.mesSeleccionado;
         parametrosAplicables = parametrosAplicables.filter(p => {
             if (!p || !p.vigenteDesde) return true;
+            // En edición KPI2 permitimos mostrar parámetros soloKPI2 aunque el mes sea anterior,
+            // para poder capturarlos sin dejar el modal incompleto.
+            const modEdicion = (window.modoEdicion && window.modoEdicion.activo && window.modoEdicion.modalidad)
+                ? String(window.modoEdicion.modalidad).toLowerCase().trim()
+                : 'kpi';
+            if (modEdicion === 'kpi2' && p.soloKPI2) return true;
             return !!mes && mes >= p.vigenteDesde;
+        });
+    } catch (e) {}
+
+    // Parámetros específicos solo para sucursales en KPI2
+    try {
+        parametrosAplicables = parametrosAplicables.filter(p => {
+            if (!p) return false;
+            if (p.id === 'mencion_promociones' && tipo !== 'sucursal') return false;
+            return true;
         });
     } catch (e) {}
     console.log(`Usando todos los parámetros para ${tipo}: ${entidadId} (${parametrosAplicables.length} parámetros)`);
@@ -2191,6 +2206,51 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
     console.log(`Ver evaluación: ${entidadId} (${tipo})`);
     console.log(`Total obtenido: ${totalObtenido}, Total máximo: ${totalMaximo}, KPI: ${kpiPorcentaje.toFixed(1)}%`);
     console.log(`KPI almacenado: ${evaluacionFinal.kpi}, KPI calculado: ${kpiPorcentaje}`);
+
+    const obtenerParametrosParaMostrar = () => {
+        try {
+            if (mod !== 'kpi2') {
+                return Object.entries(evaluacionFinal.parametros || {});
+            }
+
+            const mes = window.mesSeleccionado;
+            let parametrosAplicables = Array.isArray(window.parametros) ? window.parametros.slice() : [];
+
+            // Filtrar por vigencia (excepto soloKPI2) para que el modal KPI2 muestre
+            // parámetros nuevos aunque el mes sea anterior (p.ej. menciona_promociones).
+            parametrosAplicables = parametrosAplicables.filter(p => {
+                if (!p) return false;
+                if (!p.vigenteDesde) return true;
+                if (p.soloKPI2) return true;
+                return !!mes && mes >= p.vigenteDesde;
+            });
+
+            // Filtrar por aplicación a entidad
+            if (tipo === 'sucursal') {
+                parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaASucursales && p.aplicaASucursales.includes(entidadId)));
+            } else if (tipo === 'franquicia') {
+                parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaAFranquicias && p.aplicaAFranquicias.includes(entidadId)));
+            }
+
+            // Solo sucursales para menciona_promociones
+            parametrosAplicables = parametrosAplicables.filter(p => {
+                if (!p) return false;
+                if (p.id === 'mencion_promociones' && tipo !== 'sucursal') return false;
+                return true;
+            });
+
+            return parametrosAplicables.map(p => {
+                const v = (evaluacionFinal.parametros && evaluacionFinal.parametros[p.id] !== undefined)
+                    ? evaluacionFinal.parametros[p.id]
+                    : 0;
+                return [p.id, v];
+            });
+        } catch (e) {
+            return Object.entries(evaluacionFinal.parametros || {});
+        }
+    };
+
+    const parametrosParaMostrar = obtenerParametrosParaMostrar();
     
     let detallesHtml = `
         <div class="modal" id="modalVerEvaluacion" style="display: block; z-index: 10000;">
@@ -2228,7 +2288,7 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${Object.entries(evaluacionFinal.parametros || {}).map(([paramId, valor]) => {
+                                ${parametrosParaMostrar.map(([paramId, valor]) => {
                                     const param = window.parametros?.find(p => p.id === paramId);
                                     const nombreParam = param ? param.nombre : paramId;
                                     const peso = param ? param.peso : valor;
@@ -2353,6 +2413,17 @@ function editarEvaluacion(entidadId, tipo, modalidad = 'kpi') {
     const evalModalidad = (mod === 'kpi')
         ? (base.modalidades && base.modalidades.kpi ? base.modalidades.kpi : base)
         : (base.modalidades && base.modalidades[mod] ? base.modalidades[mod] : (base[`_${mod}`] || null));
+
+    const modalidadesBase = (base && base.modalidades && typeof base.modalidades === 'object') ? base.modalidades : null;
+    const primeraModalidad = (modalidadesBase && Object.keys(modalidadesBase).length)
+        ? modalidadesBase[Object.keys(modalidadesBase)[0]]
+        : null;
+
+    const evalPrecarga = evalModalidad
+        || (modalidadesBase && modalidadesBase.kpi2 ? modalidadesBase.kpi2 : null)
+        || (modalidadesBase && modalidadesBase.kpi ? modalidadesBase.kpi : null)
+        || primeraModalidad
+        || base;
     
     // Obtener información de la entidad
     const entidadInfo = tipo === 'sucursal' ? 
@@ -2366,7 +2437,7 @@ function editarEvaluacion(entidadId, tipo, modalidad = 'kpi') {
         tipo: tipo,
         mes: mes,
         modalidad: mod,
-        parametrosPrecarga: (evalModalidad && evalModalidad.parametros) ? evalModalidad.parametros : {},
+        parametrosPrecarga: (evalPrecarga && evalPrecarga.parametros) ? evalPrecarga.parametros : {},
         datosOriginales: { ...base },
         entidadInfo: entidadInfo
     };

@@ -66,7 +66,7 @@
       // Import the functions you need from the SDKs you need
       import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
       import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-      import { getAuth, signInWithEmailAndPassword, signOut as fbSignOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+      import { getAuth, signInWithEmailAndPassword, signOut as fbSignOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
       
       // Import Firebase configuration from separate file
       import { firebaseConfig } from './firebase-config.js';
@@ -75,6 +75,12 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
       const auth = getAuth(app);
+
+      try {
+        await setPersistence(auth, browserLocalPersistence);
+      } catch (e) {
+        console.warn('Firebase Auth persistence:', e?.message || e);
+      }
 
       // Import video links
       import { videoLinks } from './data/video_links.js';
@@ -92,15 +98,28 @@
       };
 
       // Mantener estado de Firebase Auth en refresh
-      onAuthStateChanged(auth, (user) => {
+      onAuthStateChanged(auth, async (user) => {
         // Si hay sesión activa en Firebase, habilitar escritura para admin sin pedir re-login.
         window.firebaseAdminAuthenticated = !!user;
         try {
+          if (user && window.firebaseDB && typeof window.firebaseDB.cargarEvaluaciones === 'function') {
+            const evaluacionesFirebase = await window.firebaseDB.cargarEvaluaciones();
+            if (typeof integrarDatosFirebase === 'function') {
+              integrarDatosFirebase(evaluacionesFirebase);
+            }
+            if (typeof aplicarCompatibilidadExistencia === 'function') {
+              aplicarCompatibilidadExistencia();
+            }
+          }
+
           if (typeof aplicarRestriccionesPorRol === 'function') {
             aplicarRestriccionesPorRol();
           }
+
           if (window.vistaActual === 'evaluaciones' && typeof renderEvaluaciones === 'function') {
             renderEvaluaciones();
+          } else if (window.vistaActual === 'dashboard' && typeof renderDashboard === 'function') {
+            renderDashboard();
           }
         } catch (e) {
           console.warn('onAuthStateChanged UI sync:', e);
