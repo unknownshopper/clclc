@@ -91,6 +91,22 @@
         }
       };
 
+      // Mantener estado de Firebase Auth en refresh
+      onAuthStateChanged(auth, (user) => {
+        // Si hay sesión activa en Firebase, habilitar escritura para admin sin pedir re-login.
+        window.firebaseAdminAuthenticated = !!user;
+        try {
+          if (typeof aplicarRestriccionesPorRol === 'function') {
+            aplicarRestriccionesPorRol();
+          }
+          if (window.vistaActual === 'evaluaciones' && typeof renderEvaluaciones === 'function') {
+            renderEvaluaciones();
+          }
+        } catch (e) {
+          console.warn('onAuthStateChanged UI sync:', e);
+        }
+      });
+
       // Firebase functions for evaluations
       window.firebaseDB = {
         // Guardar evaluación en Firestore

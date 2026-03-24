@@ -548,6 +548,7 @@ async function renderEvaluaciones() {
         window.ordenarEvaluacionesPor = ordenar;
 
         const orden = window.evaluacionesOrden || { campo: null, dir: 'asc' };
+        const campoActivo = (orden.campo === 'kpi2') ? 'kpi2' : 'kpi';
         const arrow = (campo) => {
             if (!orden || orden.campo !== campo) return '';
             return orden.dir === 'asc' ? ' ▲' : ' ▼';
@@ -581,6 +582,9 @@ async function renderEvaluaciones() {
                 });
         }
 
+        const opKPI = (campoActivo === 'kpi') ? '1' : '0.35';
+        const opKPI2 = (campoActivo === 'kpi2') ? '1' : '0.35';
+
         html += `
             <div style="background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                 <table class="evaluaciones-table" style="width: 100%; border-collapse: collapse;">
@@ -588,8 +592,8 @@ async function renderEvaluaciones() {
                         <tr style="background: #0077cc; color: white;">
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Tipo</th>
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Entidad</th>
-                            <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none;" onclick="ordenarEvaluacionesPor('kpi')" title="Ordenar por KPI">KPI${arrow('kpi')}</th>
-                            ${debeMostrarKPI2(window.mesSeleccionado) ? `<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none;" onclick="ordenarEvaluacionesPor('kpi2')" title="Ordenar por KPI2">KPI2${arrow('kpi2')}</th>` : ''}
+                            <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none; opacity:${opKPI};" onclick="ordenarEvaluacionesPor('kpi')" title="Ordenar por KPI">KPI${arrow('kpi')}</th>
+                            ${debeMostrarKPI2(window.mesSeleccionado) ? `<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none; opacity:${opKPI2};" onclick="ordenarEvaluacionesPor('kpi2')" title="Ordenar por KPI2">KPI2${arrow('kpi2')}</th>` : ''}
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Estado</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Publicación</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Fecha</th>
@@ -601,7 +605,6 @@ async function renderEvaluaciones() {
         
         evaluacionesFiltradas.forEach((evaluacion, index) => {
             const kpiPorcentaje = ((evaluacion.kpi || 0) * 100).toFixed(1);
-            const estadoColor = evaluacion.estado === 'Excelente' ? '#28a745' : evaluacion.estado === 'Bueno' ? '#ffc107' : '#dc3545';
             const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
             
             // Formatear tipo para mostrar
@@ -628,6 +631,15 @@ async function renderEvaluaciones() {
             const kpi2 = debeMostrarKPI2(window.mesSeleccionado) ? calcularKPI2(evaluacion.entidadId, evaluacion.tipo, evalLocal) : null;
             const kpi2Porcentaje = (typeof kpi2 === 'number') ? (kpi2 * 100).toFixed(1) : null;
 
+            const kpiNum = parseFloat(kpiPorcentaje);
+            const kpi2Num = (kpi2Porcentaje !== null) ? parseFloat(kpi2Porcentaje) : null;
+
+            const valorActivo = (campoActivo === 'kpi2') ? kpi2Num : kpiNum;
+            const estadoActivo = (typeof valorActivo === 'number' && !Number.isNaN(valorActivo))
+                ? (valorActivo >= 95 ? 'Excelente' : valorActivo >= 90 ? 'Bueno' : 'Necesita mejora')
+                : '—';
+            const estadoColor = (estadoActivo === 'Excelente') ? '#28a745' : (estadoActivo === 'Bueno') ? '#ffc107' : (estadoActivo === 'Necesita mejora') ? '#dc3545' : '#666';
+
             html += `
                 <tr style="background: ${bgColor};">
                     <td style="padding: 12px; border-bottom: 1px solid #ddd;">
@@ -638,17 +650,17 @@ async function renderEvaluaciones() {
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; font-weight: 500;">
                         ${evaluacion.entidad}
                     </td>
-                    <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; font-weight: bold; color: ${estadoColor}; font-size: 16px;">
+                    <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; font-weight: bold; color: ${estadoColor}; font-size: 16px; opacity:${opKPI};">
                         ${kpiPorcentaje}%
                     </td>
                     ${debeMostrarKPI2(window.mesSeleccionado) ? `
-                    <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; font-weight: bold; color: ${kpi2Porcentaje !== null ? (parseFloat(kpi2Porcentaje) >= 95 ? '#28a745' : parseFloat(kpi2Porcentaje) >= 90 ? '#ffc107' : '#dc3545') : '#2d3e50'}; font-size: 16px;" title="KPI2 usa ponderación competitividad (PONDERA IA).">
+                    <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; font-weight: bold; color: ${kpi2Porcentaje !== null ? (parseFloat(kpi2Porcentaje) >= 95 ? '#28a745' : parseFloat(kpi2Porcentaje) >= 90 ? '#ffc107' : '#dc3545') : '#2d3e50'}; font-size: 16px; opacity:${opKPI2};" title="KPI2 usa ponderación competitividad (PONDERA IA).">
                         ${kpi2Porcentaje !== null ? (kpi2Porcentaje + '%') : '—'}
                     </td>
                     ` : ''}
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">
                         <span style="color: ${estadoColor}; font-weight: bold;">
-                            ${evaluacion.estado}
+                            ${estadoActivo}
                         </span>
                     </td>
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">
@@ -690,26 +702,28 @@ async function renderEvaluaciones() {
                                 <i class="fas fa-pen"></i>
                             </button>
                             ` : ''}
-                            ${tienePermiso('editar') ? `
-                            <button onclick="editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi')" 
+                            ${(usuarioActual?.rol === 'admin') ? `
+                            <button 
+                                    onclick="${adminPuedeEscribir ? `editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi')` : `alert('Para editar necesitas iniciar sesión como admin con Firebase Auth (email admin).')`}" 
                                     class="btn-action btn-edit" 
-                                    title="Editar KPI"
-                                    style="background:#0a84ff;color:#fff;">
+                                    title="${adminPuedeEscribir ? 'Editar KPI' : 'Requiere autenticación Firebase admin'}"
+                                    style="background:#0a84ff;color:#fff;${adminPuedeEscribir ? '' : 'opacity:0.45;cursor:not-allowed;'}">
                                 <i class="fas fa-edit"></i>
                             </button>
                             ${mostrarOjoKPI2 ? `
-                            <button onclick="editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi2')" 
+                            <button 
+                                    onclick="${adminPuedeEscribir ? `editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi2')` : `alert('Para editar necesitas iniciar sesión como admin con Firebase Auth (email admin).')`}" 
                                     class="btn-action btn-edit" 
-                                    title="Editar KPI2"
-                                    style="background:#a855f7;color:#fff;">
+                                    title="${adminPuedeEscribir ? 'Editar KPI2' : 'Requiere autenticación Firebase admin'}"
+                                    style="background:#a855f7;color:#fff;${adminPuedeEscribir ? '' : 'opacity:0.45;cursor:not-allowed;'}">
                                 <i class="fas fa-edit"></i>
                             </button>
                             ` : ''}
-                            ` : ''}
-                            ${tienePermiso('eliminar') ? `
-                            <button onclick="eliminarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" 
+                            <button 
+                                    onclick="${adminPuedeEscribir ? `eliminarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')` : `alert('Para eliminar necesitas iniciar sesión como admin con Firebase Auth (email admin).')`}" 
                                     class="btn-action btn-delete" 
-                                    title="Eliminar evaluación">
+                                    title="${adminPuedeEscribir ? 'Eliminar evaluación' : 'Requiere autenticación Firebase admin'}"
+                                    style="${adminPuedeEscribir ? '' : 'opacity:0.45;cursor:not-allowed;'}">
                                 <i class="fas fa-trash"></i>
                             </button>
                             ` : ''}
@@ -2322,19 +2336,23 @@ function editarEvaluacion(entidadId, tipo, modalidad = 'kpi') {
     const mod = modalidad ? String(modalidad).toLowerCase().trim() : 'kpi';
     console.log(`Editar evaluación: ${entidadId} (${tipo}) [${mod}]`);
     
-    // Buscar la evaluación existente
-    const tipoEntidad = tipo === 'sucursal' ? 
-        window.evaluaciones?.sucursales?.[entidadId]?.[window.mesSeleccionado]
-        : window.evaluaciones?.franquicias?.[entidadId]?.[window.mesSeleccionado];
-    
-    if (!tipoEntidad) {
+    const mes = window.mesSeleccionado;
+
+    // Buscar la evaluación existente (preferir helper central si existe)
+    const base = (typeof obtenerEvaluacion === 'function')
+        ? obtenerEvaluacion(entidadId, tipo, mes)
+        : (tipo === 'sucursal'
+            ? window.evaluaciones?.sucursales?.[entidadId]?.[mes]
+            : window.evaluaciones?.franquicias?.[entidadId]?.[mes]);
+
+    if (!base) {
         alert('No se encontró la evaluación para editar');
         return;
     }
 
     const evalModalidad = (mod === 'kpi')
-        ? (tipoEntidad.modalidades && tipoEntidad.modalidades.kpi ? tipoEntidad.modalidades.kpi : tipoEntidad)
-        : (tipoEntidad.modalidades && tipoEntidad.modalidades[mod] ? tipoEntidad.modalidades[mod] : (tipoEntidad[`_${mod}`] || null));
+        ? (base.modalidades && base.modalidades.kpi ? base.modalidades.kpi : base)
+        : (base.modalidades && base.modalidades[mod] ? base.modalidades[mod] : (base[`_${mod}`] || null));
     
     // Obtener información de la entidad
     const entidadInfo = tipo === 'sucursal' ? 
@@ -2346,10 +2364,10 @@ function editarEvaluacion(entidadId, tipo, modalidad = 'kpi') {
         activo: true,
         entidadId: entidadId,
         tipo: tipo,
-        mes: window.mesSeleccionado,
+        mes: mes,
         modalidad: mod,
         parametrosPrecarga: (evalModalidad && evalModalidad.parametros) ? evalModalidad.parametros : {},
-        datosOriginales: { ...tipoEntidad },
+        datosOriginales: { ...base },
         entidadInfo: entidadInfo
     };
     
