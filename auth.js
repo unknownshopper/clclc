@@ -1,6 +1,7 @@
 // ===== SISTEMA DE AUTENTICACIÓN Y CONTROL DE ACCESO =====
 let usuarioActual = null;
  window.firebaseAdminAuthenticated = window.firebaseAdminAuthenticated || false;
+ window.usuarioActual = window.usuarioActual || null;
 
 // Función para iniciar sesión
 async function iniciarSesion() {
@@ -71,6 +72,7 @@ async function iniciarSesion() {
             window.firebaseAdminAuthenticated = false;
         }
         usuarioActual = usuario;
+        window.usuarioActual = usuario;
         localStorage.setItem('usuarioActual', JSON.stringify(usuario));
         
         // Ocultar modal de login
@@ -111,6 +113,7 @@ function mostrarInfoUsuario() {
 // Función para cerrar sesión
 async function cerrarSesion() {
     usuarioActual = null;
+    window.usuarioActual = null;
     localStorage.removeItem('usuarioActual');
     try { await window.firebaseAuth?.signOut(); } catch (e) { console.warn('Error en signOut Firebase:', e); }
     window.firebaseAdminAuthenticated = false;
@@ -134,6 +137,7 @@ function verificarAutenticacion() {
     
     if (usuarioGuardado) {
         usuarioActual = JSON.parse(usuarioGuardado);
+        window.usuarioActual = usuarioActual;
         // Reestablecer estado conservador: si se recarga la página no asumimos que Firebase Auth sigue válido.
         if (usuarioActual?.rol === 'admin') {
             window.firebaseAdminAuthenticated = !!window.firebaseAdminAuthenticated;
@@ -145,6 +149,7 @@ function verificarAutenticacion() {
         cambiarVista('dashboard');
         return true;
     } else {
+        window.usuarioActual = null;
         document.getElementById('loginModal').style.display = 'block';
         document.body.classList.add('logged-out');
         return false;

@@ -38,11 +38,12 @@ window.firebaseDB = {
   async cargarEvaluaciones(mes = null) {
     try {
       // En no-admin, solo leer 'publicado' para evitar fallos por permisos cuando hay borradores
-      const esAdminFirebase = !!window.firebaseAdminAuthenticated;
+      const rolApp = (window.usuarioActual && window.usuarioActual.rol) ? String(window.usuarioActual.rol).toLowerCase() : '';
+      const puedeVerBorradores = !!window.firebaseAdminAuthenticated || rolApp === 'admin' || rolApp === 'capacitacion';
       const base = collection(db, 'evaluaciones');
 
       let q;
-      if (esAdminFirebase) {
+      if (puedeVerBorradores) {
         if (mes) {
           q = query(base, where('mes', '==', mes), orderBy('fechaCreacion', 'desc'));
         } else {
