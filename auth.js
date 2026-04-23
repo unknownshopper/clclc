@@ -17,79 +17,42 @@ async function iniciarSesion() {
         return;
     }
     
-    // Buscar usuario en la base de datos
-    let usuario = window.usuarios.find(u => u.email === email && u.password === password);
+    // Roles se resuelven en frontend por email. Las credenciales se validan con Firebase Auth.
     const usuarioPorEmail = window.usuarios.find(u => u.email === email);
-    
-    // Caso especial: admin puede validar contraseña contra Firebase aunque el password local no coincida
-    if (!usuario && usuarioPorEmail?.rol === 'admin') {
-        try {
-            await window.firebaseAuth?.signInAdmin(email, password);
-            window.firebaseAdminAuthenticated = true;
-            usuario = usuarioPorEmail;
-        } catch (e) {
-            console.error('Error autenticando admin con Firebase:', e);
-            window.firebaseAdminAuthenticated = false;
-            mostrarErrorLogin('Email o contraseña incorrectos');
-            return;
-        }
-    }
-    
-    if (usuario) {
-        // Para cumplir con las reglas de Firestore, solo el admin inicia sesión en Firebase
-        try {
-            if (usuario.rol === 'admin') {
-                await window.firebaseAuth?.signInAdmin(email, password);
-                window.firebaseAdminAuthenticated = true;
-
-                try {
-                    if (window.firebaseDB && typeof window.firebaseDB.cargarEvaluaciones === 'function') {
-                        const evaluacionesFirebase = await window.firebaseDB.cargarEvaluaciones();
-                        if (typeof integrarDatosFirebase === 'function') {
-                            integrarDatosFirebase(evaluacionesFirebase);
-                        }
-                        if (typeof aplicarCompatibilidadExistencia === 'function') {
-                            aplicarCompatibilidadExistencia();
-                        }
-                    }
-                } catch (e2) {
-                    console.warn('No se pudieron recargar evaluaciones de Firebase tras login admin:', e2);
-                }
-            } else {
-                await window.firebaseAuth?.signOut();
-                window.firebaseAdminAuthenticated = false;
-            }
-        } catch (e) {
-            console.error('Error autenticando con Firebase:', e);
-            // Para admin, sin Firebase Auth no se pueden consultar borradores ni ejecutar acciones.
-            // Bloquear el login para evitar confusión (p.ej. "no veo borradores").
-            if (usuario.rol === 'admin') {
-                window.firebaseAdminAuthenticated = false;
-                mostrarErrorLogin('Credenciales de admin inválidas para Firebase. Usa el email admin y su contraseña de Firebase para ver borradores y administrar evaluaciones.');
-                return;
-            }
-            // Para roles no-admin, permitir acceso (solo lectura de publicado)
-            window.firebaseAdminAuthenticated = false;
-        }
-        usuarioActual = usuario;
-        window.usuarioActual = usuario;
-        localStorage.setItem('usuarioActual', JSON.stringify(usuario));
-        
-        // Ocultar modal de login
-        document.getElementById('loginModal').style.display = 'none';
-        document.body.classList.remove('logged-out');
-        
-        // Mostrar información del usuario
-        mostrarInfoUsuario();
-        
-        // Aplicar restricciones basadas en rol
-        aplicarRestriccionesPorRol();
-        
-        // Recargar dashboard con datos filtrados
-        cambiarVista('dashboard');
-    } else {
+    if (!usuarioPorEmail) {
         mostrarErrorLogin('Email o contraseña incorrectos');
+        return;
     }
+
+    try {
+        await window.firebaseAuth?.signIn(email, password);
+    } catch (e) {
+        console.error('Error autenticando con Firebase:', e);
+        window.firebaseAdminAuthenticated = false;
+        mostrarErrorLogin('Email o contraseña incorrectos');
+        return;
+    }
+
+    // Solo el rol admin habilita acciones de escritura, y requiere sesión Firebase con email.
+    const usuario = usuarioPorEmail;
+    window.firebaseAdminAuthenticated = (usuario.rol === 'admin');
+
+    usuarioActual = usuario;
+    window.usuarioActual = usuario;
+    localStorage.setItem('usuarioActual', JSON.stringify(usuario));
+    
+    // Ocultar modal de login
+    document.getElementById('loginModal').style.display = 'none';
+    document.body.classList.remove('logged-out');
+    
+    // Mostrar información del usuario
+    mostrarInfoUsuario();
+    
+    // Aplicar restricciones basadas en rol
+    aplicarRestriccionesPorRol();
+    
+    // Recargar dashboard con datos filtrados
+    cambiarVista('dashboard');
 }
 
 // Función para mostrar error de login
@@ -136,6 +99,19 @@ function verificarAutenticacion() {
     const usuarioGuardado = localStorage.getItem('usuarioActual');
     
     if (usuarioGuardado) {
+        // Con Firestore protegido, además del rol local, debe existir sesión Firebase Auth.
+        const fbUser = window.__firebaseCurrentUser || null;
+        if (!fbUser || !fbUser.email) {
+            // Sesión local sin Firebase Auth: forzar re-login.
+            try { localStorage.removeItem('usuarioActual'); } catch (e) {}
+            usuarioActual = null;
+            window.usuarioActual = null;
+            window.firebaseAdminAuthenticated = false;
+            document.getElementById('loginModal').style.display = 'block';
+            document.body.classList.add('logged-out');
+            return false;
+        }
+
         usuarioActual = JSON.parse(usuarioGuardado);
         window.usuarioActual = usuarioActual;
         // Reestablecer estado conservador: si se recarga la página no asumimos que Firebase Auth sigue válido.

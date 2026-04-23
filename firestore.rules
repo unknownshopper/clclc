@@ -4,11 +4,12 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /evaluaciones/{document} {
       // Lecturas:
-      // - Público/otros roles: solo 'publicado'
+      // - Requiere Firebase Auth
+      // - Usuarios autenticados: solo 'publicado'
       // - Admin: puede leer TODO (incluye borradores)
-      allow read: if resource.data.estadoPublicacion == 'publicado'
-                  || (request.auth != null
-                      && request.auth.token.email == 'unknownshoppersmx@gmail.com');
+      allow read: if request.auth != null
+                  && (resource.data.estadoPublicacion == 'publicado'
+                      || request.auth.token.email == 'unknownshoppersmx@gmail.com');
 
       // Escrituras: solo la cuenta admin
       allow create, update, delete: if request.auth != null

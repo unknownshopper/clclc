@@ -767,7 +767,6 @@ async function renderEvaluaciones() {
     // aplicarRestriccionesPorRol();
 }
 
-// Función para abrir modal de nueva evaluación
 function abrirModalNuevaEvaluacion() {
     const modal = document.getElementById('modal-nueva-evaluacion');
     const selectEntidad = document.getElementById('select-entidad-evaluacion');
@@ -812,6 +811,9 @@ function abrirModalNuevaEvaluacion() {
     
     // Mostrar modal
     modal.style.display = 'flex';
+    
+    // Por default, capturamos en KPI2 (KPI legacy se mantiene para lectura/auditoría)
+    window.modoEdicion = { activo: false, modalidad: 'kpi2' };
 }
 
 // Función para cargar parámetros según la entidad seleccionada
@@ -897,6 +899,10 @@ function cargarParametrosEvaluacion(entidadValue) {
         console.log('Claves disponibles en parametrosExcluidosPorFranquicia:', Object.keys(window.parametrosExcluidosPorFranquicia || {}));
     }
     
+    const modalidadForm = (window.modoEdicion && window.modoEdicion.modalidad)
+        ? String(window.modoEdicion.modalidad).toLowerCase().trim()
+        : 'kpi';
+
     // Generar formulario de parámetros
     let html = '<div style="max-height: 400px; overflow-y: auto; margin: 10px 0;">';
     
@@ -906,10 +912,10 @@ function cargarParametrosEvaluacion(entidadValue) {
                title="Marcar/desmarcar todos los parámetros">
             <button id="btn-seleccionar-todo" onclick="toggleSeleccionarTodo()" 
                     style="background: #0077cc; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                ✓ Seleccionar Todo
+                ↺ Reset (Todo cumple)
             </button>
             <span style="margin-left: 10px; font-size: 12px; color: #666;">
-                Marca/desmarca todos los parámetros
+                Restablece todos los parámetros como "Cumple"
             </span>
         </div>
     `;
@@ -969,10 +975,15 @@ function cargarParametrosEvaluacion(entidadValue) {
                                id="param-${param.id}" 
                                data-peso="${param.peso}"
                                style="width: 18px; height: 18px; margin-right: 8px; cursor: pointer;"
-                               onchange="actualizarTotalPuntos()">
+                               onchange="actualizarTotalPuntos(); actualizarObservacionParametro('${param.id}')">
                         <span style="font-size: 14px; color: #0077cc; font-weight: bold;">${param.peso} pts</span>
                     </div>
                 </div>
+                ${(modalidadForm === 'kpi2') ? `
+                <div id="obs-wrap-${param.id}" style="margin: -6px 0 10px 34px; display:none;">
+                    <textarea id="obs-${param.id}" rows="2" placeholder="Observación" style="width: calc(100% - 10px); padding: 8px; border: 1px solid #ddd; border-radius: 6px; resize: vertical;" disabled></textarea>
+                </div>
+                ` : ''}
             `;
             numeroParametro++;
         });
@@ -983,6 +994,13 @@ function cargarParametrosEvaluacion(entidadValue) {
     html += '</div>';
     
     parametrosContainer.innerHTML = html;
+
+    if (!window.modoEdicion || !window.modoEdicion.activo) {
+        const checkboxes = document.querySelectorAll('#parametros-evaluacion-container input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    }
     
     // Calcular total inicial
     actualizarTotalPuntos();
@@ -993,6 +1011,35 @@ function cargarParametrosEvaluacion(entidadValue) {
         if (window.modoEdicion && window.modoEdicion.activo && window.modoEdicion.parametrosPrecarga) {
             precargarValoresEvaluacion(window.modoEdicion.parametrosPrecarga);
             window.modoEdicion.parametrosPrecarga = null;
+        }
+    } catch (e) {}
+
+    // Sincronizar visibilidad de observaciones DESPUÉS de precargar, para que solo aparezcan
+    // en parámetros desmarcados (No cumple).
+    try {
+        if (modalidadForm === 'kpi2') {
+            const checkboxes = document.querySelectorAll('#parametros-evaluacion-container input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                const paramId = checkbox.id.replace('param-', '');
+                actualizarObservacionParametro(paramId);
+            });
+
+            // Precargar texto de observaciones ya guardadas (solo para no cumple)
+            const obsPrecarga = (window.modoEdicion && window.modoEdicion.activo && window.modoEdicion.observacionesPrecarga && typeof window.modoEdicion.observacionesPrecarga === 'object')
+                ? window.modoEdicion.observacionesPrecarga
+                : null;
+            if (obsPrecarga) {
+                checkboxes.forEach(checkbox => {
+                    const paramId = checkbox.id.replace('param-', '');
+                    if (checkbox.checked) return;
+                    const input = document.getElementById(`obs-${paramId}`);
+                    if (!input) return;
+                    const t = obsPrecarga[paramId];
+                    if (typeof t === 'string' && t.trim()) {
+                        input.value = t;
+                    }
+                });
+            }
         }
     } catch (e) {}
     
@@ -1039,6 +1086,24 @@ function actualizarTotalPuntos() {
     `;
 }
 
+function actualizarObservacionParametro(paramId) {
+    try {
+        const checkbox = document.getElementById(`param-${paramId}`);
+        const wrap = document.getElementById(`obs-wrap-${paramId}`);
+        const input = document.getElementById(`obs-${paramId}`);
+        if (!checkbox || !wrap || !input) return;
+
+        if (!checkbox.checked) {
+            wrap.style.display = 'block';
+            input.disabled = false;
+        } else {
+            input.value = '';
+            input.disabled = true;
+            wrap.style.display = 'none';
+        }
+    } catch (e) {}
+}
+
 // Función para guardar evaluación
 async function guardarEvaluacion(entidadValue) {
     // Extraer tipo y ID de la entidad (corregir para IDs con guiones)
@@ -1051,11 +1116,21 @@ async function guardarEvaluacion(entidadValue) {
     const evaluacion = {};
     let totalObtenido = 0;
     let totalMaximo = 0;
+
+    const observaciones = {};
     
     checkboxes.forEach(checkbox => {
         const paramId = checkbox.id.replace('param-', '');
         const peso = parseInt(checkbox.getAttribute('data-peso'));
         evaluacion[paramId] = checkbox.checked ? peso : 0;
+
+        if (!checkbox.checked) {
+            const obs = document.getElementById(`obs-${paramId}`);
+            const texto = (obs && typeof obs.value === 'string') ? obs.value.trim() : '';
+            if (texto) {
+                observaciones[paramId] = texto;
+            }
+        }
         
         if (checkbox.checked) {
             totalObtenido += peso;
@@ -1066,7 +1141,7 @@ async function guardarEvaluacion(entidadValue) {
     // Calcular KPI
     const kpi = totalMaximo > 0 ? (totalObtenido / totalMaximo) : 0;
 
-    const modalidadEdicion = (window.modoEdicion && window.modoEdicion.activo && window.modoEdicion.modalidad)
+    const modalidadEdicion = (window.modoEdicion && window.modoEdicion.modalidad)
         ? String(window.modoEdicion.modalidad).toLowerCase().trim()
         : 'kpi';
     
@@ -1083,6 +1158,7 @@ async function guardarEvaluacion(entidadValue) {
         entidadNombre: entidadInfo?.nombre || 'Desconocido',
         mes: window.mesSeleccionado,
         parametros: evaluacion,
+        ...(modalidadEdicion === 'kpi2' ? { observaciones } : {}),
         totalObtenido: totalObtenido,
         totalMaximo: totalMaximo,
         kpi: kpi,
@@ -1133,6 +1209,7 @@ async function guardarEvaluacion(entidadValue) {
         const evaluacionLocal = {
             modalidad: modalidadEdicion,
             parametros: evaluacion,
+            ...(modalidadEdicion === 'kpi2' ? { observaciones } : {}),
             totalObtenido: totalObtenido,
             totalMaximo: totalMaximo,
             kpi: kpi,
@@ -1260,15 +1337,17 @@ function cerrarModalEvaluacion() {
 function toggleSeleccionarTodo() {
     const checkboxes = document.querySelectorAll('#parametros-evaluacion-container input[type="checkbox"]');
     const btnSeleccionarTodo = document.getElementById('btn-seleccionar-todo');
-    
-    if (btnSeleccionarTodo.textContent === '✓ Seleccionar Todo') {
-        checkboxes.forEach(checkbox => checkbox.checked = true);
-        btnSeleccionarTodo.textContent = '✗ Deseleccionar Todo';
-    } else {
-        checkboxes.forEach(checkbox => checkbox.checked = false);
-        btnSeleccionarTodo.textContent = '✓ Seleccionar Todo';
+
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+        const paramId = checkbox.id.replace('param-', '');
+        actualizarObservacionParametro(paramId);
+    });
+
+    if (btnSeleccionarTodo) {
+        btnSeleccionarTodo.textContent = '↺ Reset (Todo cumple)';
     }
-    
+
     actualizarTotalPuntos();
 }
 
@@ -2450,9 +2529,10 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                         <table style="width: 100%; border-collapse: collapse;">
                             <thead>
                                 <tr style="background: #f8f9fa;">
-                                    <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee;">Parámetro</th>
-                                    <th style="padding: 12px; text-align: center; border-bottom: 1px solid #eee;">Estado</th>
-                                    <th style="padding: 12px; text-align: center; border-bottom: 1px solid #eee;">Peso</th>
+                                    <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee; position: sticky; top: 0; background: #f8f9fa; z-index: 2; box-shadow: 0 1px 0 rgba(0,0,0,0.08);">Parámetro</th>
+                                    <th style="padding: 12px; text-align: center; border-bottom: 1px solid #eee; position: sticky; top: 0; background: #f8f9fa; z-index: 2; box-shadow: 0 1px 0 rgba(0,0,0,0.08);">Estado</th>
+                                    <th style="padding: 12px; text-align: center; border-bottom: 1px solid #eee; position: sticky; top: 0; background: #f8f9fa; z-index: 2; box-shadow: 0 1px 0 rgba(0,0,0,0.08);">Peso</th>
+                                    ${mod === 'kpi2' ? '<th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee; position: sticky; top: 0; background: #f8f9fa; z-index: 2; box-shadow: 0 1px 0 rgba(0,0,0,0.08);">Observación</th>' : ''}
                                 </tr>
                             </thead>
                             <tbody>
@@ -2462,6 +2542,9 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                                     const peso = param ? param.peso : valor;
                                     const noCapturado = (valor === null || valor === undefined);
                                     const cumple = !noCapturado && (Number(valor) > 0);
+                                    const obs = (mod === 'kpi2' && evaluacionFinal && evaluacionFinal.observaciones && typeof evaluacionFinal.observaciones === 'object')
+                                        ? (evaluacionFinal.observaciones[paramId] || '')
+                                        : '';
                                     
                                     return `
                                         <tr style="border-bottom: 1px solid #f0f0f0;">
@@ -2472,6 +2555,7 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                                                     : `<span style="background: ${cumple ? '#d4edda' : '#f8d7da'}; color: ${cumple ? '#155724' : '#721c24'}; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">${cumple ? '✓ Cumple' : '✗ No cumple'}</span>`}
                                             </td>
                                             <td style="padding: 10px; text-align: center; font-weight: bold;">${peso}</td>
+                                            ${mod === 'kpi2' ? `<td style="padding: 10px; color: #2d3e50;">${(!noCapturado && !cumple && obs) ? obs : ''}</td>` : ''}
                                         </tr>
                                     `;
                                 }).join('')}
@@ -2607,6 +2691,7 @@ function editarEvaluacion(entidadId, tipo, modalidad = 'kpi') {
         mes: mes,
         modalidad: mod,
         parametrosPrecarga: (evalPrecarga && evalPrecarga.parametros) ? evalPrecarga.parametros : {},
+        observacionesPrecarga: (mod === 'kpi2' && evalPrecarga && evalPrecarga.observaciones && typeof evalPrecarga.observaciones === 'object') ? evalPrecarga.observaciones : {},
         datosOriginales: { ...base },
         entidadInfo: entidadInfo
     };

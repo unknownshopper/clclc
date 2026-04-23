@@ -163,8 +163,10 @@ function poblarSelectorMes() {
 
 window.kpi2Utils = (function() {
     const MES_KPI2_DESDE = '2026-02';
+    const MODO_DUAL_SIEMPRE = true;
 
     function debeMostrarKPI2(mes) {
+        if (MODO_DUAL_SIEMPRE) return true;
         return !!mes && mes >= MES_KPI2_DESDE;
     }
 
@@ -398,14 +400,15 @@ window.kpi2Utils = (function() {
             console.warn('No se pudo calcular KPI2', e);
             return null;
         }
-    }
+}
 
-    return {
-        MES_KPI2_DESDE,
-        debeMostrarKPI2,
-        getModeloEntidad,
-        getPesoKPI2,
-        PONDERA_IA_PESOS_POR_MODELO,
-        calcularKPI2
-    };
+return {
+    MES_KPI2_DESDE,
+    MODO_DUAL_SIEMPRE,
+    debeMostrarKPI2,
+    getModeloEntidad,
+    getPesoKPI2,
+    PONDERA_IA_PESOS_POR_MODELO,
+    calcularKPI2
+};
 })();
