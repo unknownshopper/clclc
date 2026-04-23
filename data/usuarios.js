@@ -34,5 +34,13 @@ window.usuarios = [
     password: "acceso123", // Placeholder
     rol: "capacitacion"
   },
+
+  {
+    id: 6,
+    nombre: "DirGral",
+    email: "dirgral@cafelacabana.com",
+    password: "acceso123", // Placeholder
+    rol: "dg"
+  },
  
 ];
