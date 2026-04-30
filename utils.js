@@ -96,10 +96,19 @@ function calcularPorcentajeEvaluacion(entidadId, tipo, evaluacion) {
         if (param?.soloKPI2) return;
         if (!evaluacion.parametros || evaluacion.parametros[param.id] === undefined) return;
         const v = parseInt(evaluacion.parametros[param.id]) || 0;
-        // Los parámetros se capturan como checkbox (cumple/no cumple).
-        // Si el valor histórico es >0, se considera cumplido y debe contar con el peso ACTUAL,
-        // para no “bajar” KPI cuando cambian ponderancias en el tiempo.
-        puntajeObtenido += v > 0 ? (Number(param.peso) || 0) : 0;
+        const peso = Number(param.peso) || 0;
+        if (peso <= 0) return;
+
+        // En KPI legacy muchos parámetros eran checkbox (cumple/no cumple), pero en KPI2 pueden
+        // venir valores parciales (0..peso). Para evitar discrepancias visuales en Matriz,
+        // calculamos proporcional cuando el parámetro NO es booleano.
+        if (param && param.tipo === 'booleano') {
+            puntajeObtenido += v > 0 ? peso : 0;
+            return;
+        }
+
+        const ratio = Math.max(0, Math.min(1, v / peso));
+        puntajeObtenido += (peso * ratio);
     });
     
     return Math.round((puntajeObtenido / puntajeMaximo) * 100);

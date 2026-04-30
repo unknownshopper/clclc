@@ -178,18 +178,46 @@ function renderMatrizCompleta() {
                 ? window.evaluaciones?.sucursales?.[entidad.id]?.[mes]
                 : window.evaluaciones?.franquicias?.[entidad.id]?.[mes];
 
-            const evalParaTabla = (esKPI2 && evaluacion && evaluacion.modalidades && evaluacion.modalidades.kpi2)
-                ? evaluacion.modalidades.kpi2
-                : evaluacion;
+            const evalParaTabla = (() => {
+                if (!evaluacion) return evaluacion;
+                if (esKPI2) {
+                    if (evaluacion.modalidades && evaluacion.modalidades.kpi2) return evaluacion.modalidades.kpi2;
+                    if (evaluacion._kpi2) return evaluacion._kpi2;
+                    return evaluacion;
+                }
+                if (evaluacion.modalidades && evaluacion.modalidades.kpi) return evaluacion.modalidades.kpi;
+                // Si KPI legacy no existe y el contenedor base no tiene parámetros, tomar KPI2 como fuente de datos
+                // (la mayoría de parámetros son compartidos; solo se excluyen los soloKPI2 en la tabla KPI).
+                const baseTieneParametros = !!(evaluacion && evaluacion.parametros && typeof evaluacion.parametros === 'object' && Object.keys(evaluacion.parametros).length > 0);
+                if (!baseTieneParametros) {
+                    if (evaluacion.modalidades && evaluacion.modalidades.kpi2) return evaluacion.modalidades.kpi2;
+                    if (evaluacion._kpi2) return evaluacion._kpi2;
+                }
+                return evaluacion;
+            })();
 
             let kpiGeneral = 'N/A';
             let kpiColor = '#999';
-            if (evaluacion && evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
-                const porcentaje = evaluacion.totalMaximo > 0
-                    ? Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100)
-                    : 0;
-                kpiGeneral = `${porcentaje}%`;
-                kpiColor = porcentaje >= 95 ? '#28a745' : porcentaje >= 90 ? '#ffc107' : '#dc3545';
+            if (evaluacion) {
+                let porcentaje = null;
+                try {
+                    if (typeof calcularPorcentajeEvaluacion === 'function' && evalParaTabla) {
+                        porcentaje = calcularPorcentajeEvaluacion(entidad.id, tipoLower, evalParaTabla);
+                    }
+                } catch (e) {
+                    porcentaje = null;
+                }
+                if (typeof porcentaje !== 'number' || !Number.isFinite(porcentaje)) {
+                    if (evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
+                        porcentaje = evaluacion.totalMaximo > 0
+                            ? Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100)
+                            : 0;
+                    }
+                }
+                if (typeof porcentaje === 'number' && Number.isFinite(porcentaje)) {
+                    kpiGeneral = `${Math.round(porcentaje)}%`;
+                    kpiColor = porcentaje >= 95 ? '#28a745' : porcentaje >= 90 ? '#ffc107' : '#dc3545';
+                }
             }
 
             let kpi2General = '—';
@@ -357,18 +385,12 @@ function renderMatrizCompleta() {
                             estadoIcono = '❌';
                         }
                     } else {
-                        if (valor === peso) {
+                        if (valor > 0) {
                             estado = '✓';
                             color = '#ffffff';
                             bgColor = '#28a745';
                             estadoTexto = 'Completo';
                             estadoIcono = '✅';
-                        } else if (valor > 0) {
-                            estado = '◐';
-                            color = '#ffffff';
-                            bgColor = '#ffc107';
-                            estadoTexto = 'Parcial';
-                            estadoIcono = '⚠️';
                         } else {
                             estado = '✗';
                             color = '#ffffff';
@@ -426,7 +448,6 @@ function renderMatrizCompleta() {
         `;
     };
 
-    renderTabla('kpi', paramsKPI);
     if (debeMostrarKPI2(window.mesSeleccionado)) {
         renderTabla('kpi2', paramsKPI2);
     }
@@ -489,13 +510,11 @@ function renderMatrizCompleta() {
     console.log('Matriz completa renderizada exitosamente');
     
     // Inicializar soporte de tooltips para dispositivos táctiles y clics
-    inicializarTooltipsMatrizTouch('#matrizWrapperKPI');
     if (debeMostrarKPI2(window.mesSeleccionado)) {
         inicializarTooltipsMatrizTouch('#matrizWrapperKPI2');
     }
     
     // Inicializar funcionalidad de arrastre con mouse e inercia
-    inicializarArrastreMatriz('KPI');
     if (debeMostrarKPI2(window.mesSeleccionado)) {
         inicializarArrastreMatriz('KPI2');
     }

@@ -110,7 +110,14 @@ function getParametrosAplicablesAtencionVenta(entidadId, tipo, mes) {
 
 function calcularKPIAtencionVentaParaEvaluacion(entidadId, tipo, evaluacionLocal, mes) {
   try {
-    const ev = evaluacionLocal && evaluacionLocal.parametros ? evaluacionLocal : null;
+    const base = evaluacionLocal || null;
+    // En meses donde solo se capturó KPI2, el contenedor base puede no traer parámetros.
+    // Para mantener coherencia en conteos/promedios, usamos un fallback a la modalidad disponible.
+    const ev = (base && base.modalidades && base.modalidades.kpi) ? base.modalidades.kpi
+      : (base && base.parametros ? base
+        : (base && base.modalidades && base.modalidades.kpi2) ? base.modalidades.kpi2
+          : (base && base._kpi2) ? base._kpi2
+            : null);
     if (!ev) return null;
     const params = getParametrosAplicablesAtencionVenta(entidadId, tipo, mes);
     const paramsConValor = params.filter(p => ev.parametros && ev.parametros[p.id] !== undefined);
