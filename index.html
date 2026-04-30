@@ -153,9 +153,9 @@
       // Mantener estado de Firebase Auth en refresh
       onAuthStateChanged(auth, async (user) => {
         window.__firebaseCurrentUser = user || null;
-        // Solo considerar "admin" si el rol de la app es admin y el usuario Firebase tiene email (no anónimo)
-        const rolApp = (window.usuarioActual && window.usuarioActual.rol) ? String(window.usuarioActual.rol).toLowerCase() : '';
-        window.firebaseAdminAuthenticated = !!(user && user.email && rolApp === 'admin');
+        // Considerar "admin" únicamente por el email autenticado en Firebase (evita carreras con window.usuarioActual)
+        const adminEmail = 'unknownshoppersmx@gmail.com';
+        window.firebaseAdminAuthenticated = !!(user && user.email && String(user.email).toLowerCase() === adminEmail);
         try {
           if (user && window.firebaseDB && typeof window.firebaseDB.cargarEvaluaciones === 'function') {
             const evaluacionesFirebase = await window.firebaseDB.cargarEvaluaciones();

@@ -35,7 +35,9 @@ async function iniciarSesion() {
 
     // Solo el rol admin habilita acciones de escritura, y requiere sesión Firebase con email.
     const usuario = usuarioPorEmail;
-    window.firebaseAdminAuthenticated = (usuario.rol === 'admin');
+    const fbUser = window.__firebaseCurrentUser || null;
+    const adminEmail = 'unknownshoppersmx@gmail.com';
+    window.firebaseAdminAuthenticated = !!(usuario.rol === 'admin' && fbUser && fbUser.email && String(fbUser.email).toLowerCase() === adminEmail);
 
     usuarioActual = usuario;
     window.usuarioActual = usuario;
