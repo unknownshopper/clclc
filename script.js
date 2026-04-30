@@ -401,6 +401,10 @@ async function editarVideo(entidadId, tipo) {
             alert('Solo un administrador puede editar el enlace de video.');
             return;
         }
+        if (!window.firebaseAdminAuthenticated) {
+            alert('Para guardar el enlace de video debes iniciar sesión en Firebase con la cuenta administradora.');
+            return;
+        }
         const mes = window.mesSeleccionado;
         const evalActual = typeof obtenerEvaluacion === 'function' ? obtenerEvaluacion(entidadId, tipo, mes) : null;
         const urlActual = evalActual && evalActual.videoUrl ? evalActual.videoUrl : '';
@@ -449,6 +453,10 @@ async function manejarVideo(entidadId, tipo) {
 
         if (!tienePermiso('admin')) {
             alert('Aún no hay video cargado para esta evaluación. Sólo un administrador puede agregar el enlace de video.');
+            return;
+        }
+        if (!window.firebaseAdminAuthenticated) {
+            alert('Para guardar el enlace de video debes iniciar sesión en Firebase con la cuenta administradora.');
             return;
         }
 
@@ -563,13 +571,17 @@ async function renderEvaluaciones() {
         window.ordenarEvaluacionesPor = ordenar;
 
         const orden = window.evaluacionesOrden || { campo: null, dir: 'asc' };
-        const campoActivo = (orden.campo === 'kpi2') ? 'kpi2' : 'kpi';
+        const debeKPI2 = debeMostrarKPI2(window.mesSeleccionado);
+        const campoActivo = (orden.campo === 'kpi2')
+            ? 'kpi2'
+            : (orden.campo === 'kpi')
+                ? 'kpi'
+                : (debeKPI2 ? 'kpi2' : 'kpi');
         const arrow = (campo) => {
             if (!orden || orden.campo !== campo) return '';
             return orden.dir === 'asc' ? ' ▲' : ' ▼';
         };
 
-        const debeKPI2 = debeMostrarKPI2(window.mesSeleccionado);
         if (orden.campo === 'entidad') {
             evaluacionesFiltradas = evaluacionesFiltradas
                 .slice()
@@ -3265,6 +3277,20 @@ function integrarDatosFirebase(evaluacionesFirebase) {
                 actual.modalidades[modalidad] = convertido;
                 // cache rápido opcional para UI
                 actual[`_${modalidad}`] = convertido;
+                // Si el documento de la modalidad viene publicado, reflejarlo en el contenedor base.
+                // Esto es importante porque la UI/filtrado por rol revisa estadoPublicacion del contenedor.
+                if (convertido.estadoPublicacion && convertido.estadoPublicacion !== actual.estadoPublicacion) {
+                    // Solo “subimos” a publicado; nunca bajamos a borrador desde una modalidad.
+                    if (convertido.estadoPublicacion === 'publicado') {
+                        actual.estadoPublicacion = 'publicado';
+                        if (convertido.fechaPublicacion) actual.fechaPublicacion = convertido.fechaPublicacion;
+                    }
+                }
+                // Propagar videoUrl al contenedor base para que la UI (que lee evalActual.videoUrl)
+                // lo encuentre aunque el video se haya guardado en el documento KPI2.
+                if (convertido.videoUrl && (!actual.videoUrl || actual.videoUrl !== convertido.videoUrl)) {
+                    actual.videoUrl = convertido.videoUrl;
+                }
                 window.evaluaciones[tipoEntidad][entidadId][mes] = actual;
             } else {
                 // Si no hay KPI legacy, crear un contenedor mínimo.
@@ -3275,12 +3301,12 @@ function integrarDatosFirebase(evaluacionesFirebase) {
                     totalMaximo: 0,
                     kpi: 0,
                     estado: 'Sin evaluar',
-                    estadoPublicacion: 'borrador',
+                    estadoPublicacion: convertido.estadoPublicacion || 'borrador',
                     mes,
-                    fechaPublicacion: null,
+                    fechaPublicacion: convertido.fechaPublicacion || null,
                     fechaCreacion: new Date().toISOString(),
                     timestamp: Date.now(),
-                    videoUrl: null,
+                    videoUrl: convertido.videoUrl || null,
                     modalidades: {}
                 };
                 contenedor.modalidades[modalidad] = convertido;
@@ -3310,6 +3336,11 @@ function existeEnFirebase(entidadId, tipo) {
 async function publicarEvaluacion(entidadId, tipo) {
     if (!tienePermiso('admin')) {
         alert('Solo los administradores pueden publicar evaluaciones');
+        return;
+    }
+
+    if (!window.firebaseAdminAuthenticated) {
+        alert('Para publicar evaluaciones debes iniciar sesión en Firebase con la cuenta administradora.');
         return;
     }
     
