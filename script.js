@@ -247,8 +247,12 @@ function renderHistoricoFallback() {
         let sum = 0;
         let count = 0;
         filtradas.forEach(ev => {
+            const evBase = ev.evaluacion || null;
+            const evParaKPI2 = (evBase && evBase.modalidades && evBase.modalidades.kpi2)
+                ? evBase.modalidades.kpi2
+                : (evBase && evBase._kpi2 ? evBase._kpi2 : evBase);
             const kpi2 = (kpi2Utils && typeof kpi2Utils.calcularKPI2 === 'function')
-                ? kpi2Utils.calcularKPI2(ev.entidadId, ev.tipo, ev.evaluacion)
+                ? kpi2Utils.calcularKPI2(ev.entidadId, ev.tipo, evParaKPI2)
                 : null;
             if (typeof kpi2 === 'number') {
                 sum += (kpi2 * 100);
@@ -583,7 +587,10 @@ async function renderEvaluaciones() {
                         const evalLocal = typeof obtenerEvaluacion === 'function'
                             ? obtenerEvaluacion(e.entidadId, e.tipo, window.mesSeleccionado)
                             : null;
-                        const k2 = calcularKPI2(e.entidadId, e.tipo, evalLocal);
+                        const evalParaKPI2 = (evalLocal && evalLocal.modalidades && evalLocal.modalidades.kpi2)
+                            ? evalLocal.modalidades.kpi2
+                            : (evalLocal && evalLocal._kpi2 ? evalLocal._kpi2 : evalLocal);
+                        const k2 = calcularKPI2(e.entidadId, e.tipo, evalParaKPI2);
                         kpi2v = (typeof k2 === 'number' && !Number.isNaN(k2)) ? (k2 * 100) : null;
                     }
                     return { ...e, __kpi2v: kpi2v };
@@ -648,7 +655,10 @@ async function renderEvaluaciones() {
             const hasKPI2Modalidad = !!(evalLocal && evalLocal.modalidades && evalLocal.modalidades.kpi2);
             const mostrarOjoKPI2 = true;
 
-            const kpi2 = debeMostrarKPI2(window.mesSeleccionado) ? calcularKPI2(evaluacion.entidadId, evaluacion.tipo, evalLocal) : null;
+            const evalParaKPI2 = (evalLocal && evalLocal.modalidades && evalLocal.modalidades.kpi2)
+                ? evalLocal.modalidades.kpi2
+                : (evalLocal && evalLocal._kpi2 ? evalLocal._kpi2 : evalLocal);
+            const kpi2 = debeMostrarKPI2(window.mesSeleccionado) ? calcularKPI2(evaluacion.entidadId, evaluacion.tipo, evalParaKPI2) : null;
             const kpi2Porcentaje = (typeof kpi2 === 'number') ? (kpi2 * 100).toFixed(1) : null;
 
             const kpiNum = parseFloat(kpiPorcentaje);
@@ -1081,11 +1091,12 @@ function actualizarTotalPuntos() {
     let totalMaximo = 0;
     
     checkboxes.forEach(checkbox => {
+        const pesoRaw = Number(checkbox.getAttribute('data-peso'));
+        const peso = Number.isFinite(pesoRaw) ? pesoRaw : 0;
         if (checkbox.checked) {
-            const peso = parseInt(checkbox.getAttribute('data-peso'));
             totalObtenido += peso;
         }
-        totalMaximo += parseInt(checkbox.getAttribute('data-peso'));
+        totalMaximo += peso;
     });
     
     const porcentaje = totalMaximo > 0 ? Math.round((totalObtenido / totalMaximo) * 100) : 0;
@@ -1130,7 +1141,8 @@ async function guardarEvaluacion(entidadValue) {
     
     checkboxes.forEach(checkbox => {
         const paramId = checkbox.id.replace('param-', '');
-        const peso = parseInt(checkbox.getAttribute('data-peso'));
+        const pesoRaw = Number(checkbox.getAttribute('data-peso'));
+        const peso = Number.isFinite(pesoRaw) ? pesoRaw : 0;
         evaluacion[paramId] = checkbox.checked ? peso : 0;
 
         if (!checkbox.checked) {
@@ -1252,19 +1264,29 @@ async function guardarEvaluacion(entidadValue) {
                 }
                 actual.modalidades[modalidadEdicion] = evaluacionLocal;
                 actual[`_${modalidadEdicion}`] = evaluacionLocal;
+
+                // Mantener el contenedor base con totales actuales para que la UI (KPI) no quede en 0
+                // cuando solo existe modalidad KPI2.
+                actual.totalObtenido = evaluacionLocal.totalObtenido;
+                actual.totalMaximo = evaluacionLocal.totalMaximo;
+                actual.kpi = evaluacionLocal.kpi;
+                actual.estado = evaluacionLocal.estado;
+                actual.estadoPublicacion = evaluacionLocal.estadoPublicacion;
+                actual.fechaCreacion = evaluacionLocal.fechaCreacion;
+                actual.timestamp = evaluacionLocal.timestamp;
                 window.evaluaciones[tipoEntidadCache][entidadId][mes] = actual;
             } else {
                 const contenedor = {
                     modalidad: 'kpi',
                     parametros: {},
-                    totalObtenido: 0,
-                    totalMaximo: 0,
-                    kpi: 0,
-                    estado: 'Sin evaluar',
-                    estadoPublicacion: 'borrador',
+                    totalObtenido: evaluacionLocal.totalObtenido,
+                    totalMaximo: evaluacionLocal.totalMaximo,
+                    kpi: evaluacionLocal.kpi,
+                    estado: evaluacionLocal.estado,
+                    estadoPublicacion: evaluacionLocal.estadoPublicacion,
                     fechaPublicacion: null,
-                    fechaCreacion: new Date().toISOString(),
-                    timestamp: Date.now(),
+                    fechaCreacion: evaluacionLocal.fechaCreacion,
+                    timestamp: evaluacionLocal.timestamp,
                     videoUrl: null,
                     modalidades: {}
                 };
@@ -1615,6 +1637,9 @@ function generarGraficosKPI() {
         const entidadId = evaluacion.entidadId;
         const tipo = evaluacion.tipo;
         const evLocal = evaluacion.evaluacion || null;
+        const evParaKPI2 = (evLocal && evLocal.modalidades && evLocal.modalidades.kpi2)
+            ? evLocal.modalidades.kpi2
+            : (evLocal && evLocal._kpi2 ? evLocal._kpi2 : evLocal);
 
         // KPI: recalcular desde parámetros para no depender de totales/kpi históricos (p.ej. cambios soloKPI2 como existencia)
         let kpiPorcentaje = null;
@@ -1633,14 +1658,14 @@ function generarGraficosKPI() {
 
         if (kpiPorcentaje !== null && kpiPorcentaje !== undefined) {
             datosKPI.push(kpiPorcentaje);
-            const kpi2 = calcularKPI2ParaGrafica(entidadId, tipo, evLocal);
+            const kpi2 = calcularKPI2ParaGrafica(entidadId, tipo, evParaKPI2);
             datosKPI2.push(typeof kpi2 === 'number' ? Math.round(kpi2 * 100) : null);
             entidades.push(evaluacion.entidad);
             metas.push({
                 entidad: evaluacion.entidad,
                 entidadId,
                 tipo, // 'sucursal' | 'franquicia' | 'competencia'
-                evaluacion: evLocal
+                evaluacion: evParaKPI2
             });
         }
     });
@@ -2994,10 +3019,27 @@ function obtenerEvaluacionesDelMes(mes) {
                 const sucursal = window.sucursales?.find(s => s.id === sucursalId);
                 if (sucursal) {
                     // Calcular KPI directamente de los totales almacenados
-                    const totalObtenido = evaluacion.totalObtenido || 0;
-                    const totalMaximo = evaluacion.totalMaximo || 0;
-                    const kpiPorcentaje = totalMaximo > 0 ? 
-                        Math.round((totalObtenido / totalMaximo) * 100) : 0;
+                    let kpiPorcentaje = null;
+                    try {
+                        const evBase = evaluacion || null;
+                        const evParaKPI = (evBase && evBase.modalidades && evBase.modalidades.kpi)
+                            ? evBase.modalidades.kpi
+                            : (evBase && evBase.modalidades && evBase.modalidades.kpi2)
+                                ? evBase.modalidades.kpi2
+                                : (evBase && evBase._kpi2 ? evBase._kpi2 : evBase);
+                        if (typeof calcularPorcentajeEvaluacion === 'function' && evParaKPI) {
+                            kpiPorcentaje = calcularPorcentajeEvaluacion(sucursalId, 'sucursal', evParaKPI);
+                        }
+                    } catch (e) {
+                        kpiPorcentaje = null;
+                    }
+                    if (typeof kpiPorcentaje !== 'number' || !Number.isFinite(kpiPorcentaje)) {
+                        const totalObtenido = evaluacion.totalObtenido || 0;
+                        const totalMaximo = evaluacion.totalMaximo || 0;
+                        kpiPorcentaje = totalMaximo > 0
+                            ? Math.round((totalObtenido / totalMaximo) * 100)
+                            : 0;
+                    }
                     
                     // Obtener fecha de created_at o fechaCreacion
                     const fechaFormateada = formatearFechaHoraCorta(
@@ -3030,10 +3072,27 @@ function obtenerEvaluacionesDelMes(mes) {
                     const nombreFranquicia = franquicia ? franquicia.nombre : franquiciaId;
                     
                     // Calcular KPI directamente de los totales almacenados
-                    const totalObtenido = evaluacion.totalObtenido || 0;
-                    const totalMaximo = evaluacion.totalMaximo || 0;
-                    const kpiPorcentaje = totalMaximo > 0 ? 
-                        Math.round((totalObtenido / totalMaximo) * 100) : 0;
+                    let kpiPorcentaje = null;
+                    try {
+                        const evBase = evaluacion || null;
+                        const evParaKPI = (evBase && evBase.modalidades && evBase.modalidades.kpi)
+                            ? evBase.modalidades.kpi
+                            : (evBase && evBase.modalidades && evBase.modalidades.kpi2)
+                                ? evBase.modalidades.kpi2
+                                : (evBase && evBase._kpi2 ? evBase._kpi2 : evBase);
+                        if (typeof calcularPorcentajeEvaluacion === 'function' && evParaKPI) {
+                            kpiPorcentaje = calcularPorcentajeEvaluacion(franquiciaId, 'franquicia', evParaKPI);
+                        }
+                    } catch (e) {
+                        kpiPorcentaje = null;
+                    }
+                    if (typeof kpiPorcentaje !== 'number' || !Number.isFinite(kpiPorcentaje)) {
+                        const totalObtenido = evaluacion.totalObtenido || 0;
+                        const totalMaximo = evaluacion.totalMaximo || 0;
+                        kpiPorcentaje = totalMaximo > 0
+                            ? Math.round((totalObtenido / totalMaximo) * 100)
+                            : 0;
+                    }
                     
                     // Obtener fecha de created_at o fechaCreacion
                     const fechaFormateada = formatearFechaHoraCorta(
@@ -3064,10 +3123,27 @@ function obtenerEvaluacionesDelMes(mes) {
                 const competencia = window.competencia?.find(c => c.id === competenciaId);
                 if (competencia) {
                     // Calcular KPI directamente de los totales almacenados
-                    const totalObtenido = evaluacion.totalObtenido || 0;
-                    const totalMaximo = evaluacion.totalMaximo || 0;
-                    const kpiPorcentaje = totalMaximo > 0 ? 
-                        Math.round((totalObtenido / totalMaximo) * 100) : 0;
+                    let kpiPorcentaje = null;
+                    try {
+                        const evBase = evaluacion || null;
+                        const evParaKPI = (evBase && evBase.modalidades && evBase.modalidades.kpi)
+                            ? evBase.modalidades.kpi
+                            : (evBase && evBase.modalidades && evBase.modalidades.kpi2)
+                                ? evBase.modalidades.kpi2
+                                : (evBase && evBase._kpi2 ? evBase._kpi2 : evBase);
+                        if (typeof calcularPorcentajeEvaluacion === 'function' && evParaKPI) {
+                            kpiPorcentaje = calcularPorcentajeEvaluacion(competenciaId, 'competencia', evParaKPI);
+                        }
+                    } catch (e) {
+                        kpiPorcentaje = null;
+                    }
+                    if (typeof kpiPorcentaje !== 'number' || !Number.isFinite(kpiPorcentaje)) {
+                        const totalObtenido = evaluacion.totalObtenido || 0;
+                        const totalMaximo = evaluacion.totalMaximo || 0;
+                        kpiPorcentaje = totalMaximo > 0
+                            ? Math.round((totalObtenido / totalMaximo) * 100)
+                            : 0;
+                    }
                     
                     // Obtener fecha de created_at o fechaCreacion
                     const fechaFormateada = formatearFechaHoraCorta(

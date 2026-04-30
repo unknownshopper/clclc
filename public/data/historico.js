@@ -32,7 +32,11 @@ function calcularKPI2ParaEvaluacion(entidadId, tipo, evaluacionLocal) {
   try {
     const kpi2Utils = window.kpi2Utils || null;
     if (kpi2Utils && typeof kpi2Utils.calcularKPI2 === 'function') {
-      return kpi2Utils.calcularKPI2(entidadId, tipo, evaluacionLocal);
+      const evBase = evaluacionLocal || null;
+      const evParaKPI2 = (evBase && evBase.modalidades && evBase.modalidades.kpi2)
+        ? evBase.modalidades.kpi2
+        : (evBase && evBase._kpi2 ? evBase._kpi2 : evBase);
+      return kpi2Utils.calcularKPI2(entidadId, tipo, evParaKPI2);
     }
     return null;
   } catch (e) {
@@ -123,7 +127,10 @@ function calcularKPIAtencionVentaParaEvaluacion(entidadId, tipo, evaluacionLocal
 
 function calcularKPI2AtencionVentaParaEvaluacion(entidadId, tipo, evaluacionLocal, mes) {
   try {
-    const ev = evaluacionLocal && evaluacionLocal.parametros ? evaluacionLocal : null;
+    const base = evaluacionLocal || null;
+    const ev = (base && base.modalidades && base.modalidades.kpi2) ? base.modalidades.kpi2
+      : (base && base._kpi2 ? base._kpi2
+        : (base && base.parametros ? base : null));
     const kpi2Utils = window.kpi2Utils || null;
     if (!ev || !kpi2Utils || typeof kpi2Utils.getPesoKPI2 !== 'function') return null;
 
