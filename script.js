@@ -566,7 +566,16 @@ async function renderEvaluaciones() {
         };
 
         const debeKPI2 = debeMostrarKPI2(window.mesSeleccionado);
-        if (orden.campo === 'kpi' || (orden.campo === 'kpi2' && debeKPI2)) {
+        if (orden.campo === 'entidad') {
+            evaluacionesFiltradas = evaluacionesFiltradas
+                .slice()
+                .sort((a, b) => {
+                    const dir = (orden.dir === 'desc') ? -1 : 1;
+                    const an = String(a.entidad || '').toLowerCase();
+                    const bn = String(b.entidad || '').toLowerCase();
+                    return an.localeCompare(bn, 'es', { sensitivity: 'base' }) * dir;
+                });
+        } else if (orden.campo === 'kpi' || (orden.campo === 'kpi2' && debeKPI2)) {
             evaluacionesFiltradas = evaluacionesFiltradas
                 .map((e) => {
                     let kpi2v = null;
@@ -602,7 +611,7 @@ async function renderEvaluaciones() {
                     <thead>
                         <tr style="background: #0077cc; color: white;">
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Tipo</th>
-                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Entidad</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none;" onclick="ordenarEvaluacionesPor('entidad')" title="Ordenar por Entidad">Entidad${arrow('entidad')}</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none; opacity:${opKPI};" onclick="ordenarEvaluacionesPor('kpi')" title="Ordenar por KPI">KPI${arrow('kpi')}</th>
                             ${debeMostrarKPI2(window.mesSeleccionado) ? `<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none; opacity:${opKPI2};" onclick="ordenarEvaluacionesPor('kpi2')" title="Ordenar por KPI2">KPI2${arrow('kpi2')}</th>` : ''}
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Estado</th>
