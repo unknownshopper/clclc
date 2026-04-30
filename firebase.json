@@ -19,7 +19,8 @@
       ".github/**",
       ".windsurf/**",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "contrato.html"
     ],
     "rewrites": [
       {
