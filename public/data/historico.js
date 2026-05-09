@@ -67,6 +67,26 @@ function calcularKPI2GlobalMesConFiltros(mes) {
   return { kpi: Math.round(sum / count), count };
 }
 
+function listarParametrosEvaluadosAtencionVentaMes(mes) {
+  try {
+    if (typeof obtenerEvaluacionesDelMes !== 'function') return [];
+    if (typeof filtrarDatosPorRol !== 'function') return [];
+    const todas = obtenerEvaluacionesDelMes(mes) || [];
+    const filtradas = filtrarDatosPorRol(todas) || [];
+    const set = new Set();
+    filtradas.forEach(ev => {
+      const params = getParametrosAplicablesAtencionVenta(ev.entidadId, ev.tipo, mes);
+      params.forEach(p => {
+        const n = (p && p.nombre) ? String(p.nombre).trim() : '';
+        if (n) set.add(n);
+      });
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  } catch (e) {
+    return [];
+  }
+}
+
 function getParametrosExcluidosNormalizados(entidadId, tipo) {
   try {
     const tipoLower = (tipo || '').toLowerCase();
@@ -242,6 +262,15 @@ function renderHistorico() {
   const countsAV1 = comparablesAV.map(r => r.res.count);
   const countsAV2 = comparablesAV.map(r => r.res2.count);
 
+  const paramsAV = listarParametrosEvaluadosAtencionVentaMes(comparablesAV.length ? comparablesAV[comparablesAV.length - 1].mes : (meses[meses.length - 1] || null));
+  const chipsAV = (paramsAV || []).map(n => `<span style="display:inline-block; padding:4px 10px; border-radius:999px; background:#f1f5f9; border:1px solid #e2e8f0; color:#334155; font-size:12px; margin:3px 6px 0 0;">${n}</span>`).join('');
+  const bloqueParamsAV = chipsAV
+    ? `<div style="text-align:center; margin-bottom: 10px;">
+        <div style="font-size: 12px; color:#64748b; margin-bottom: 6px;">Parámetros evaluados:</div>
+        <div>${chipsAV}</div>
+      </div>`
+    : '';
+
   const html = `
     <div style="margin-bottom: 20px;">
       <h2 style="color:#0077cc; text-align:center;">Histórico - Resultados Globales por Mes</h2>
@@ -251,9 +280,10 @@ function renderHistorico() {
       <canvas id="graficoHistoricoComparacion" width="800" height="420" style="max-width:100%;"></canvas>
     </div>
 
-    <div style="margin-top: 18px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 420px; position: relative;">
+    <div style="margin-top: 18px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-height: 420px; position: relative;">
       <div style="text-align:center; font-weight: 800; color:#2d3e50; margin-bottom: 6px;">Atención + Venta</div>
       <div style="text-align:center; color:#6c757d; font-size: 12px; margin-bottom: 10px;">(Bienvenida + Producto/Ventas + Atención en mesa + Tiempos de espera)</div>
+      ${bloqueParamsAV}
       <canvas id="graficoHistoricoComparacionAtencionVenta" width="800" height="420" style="max-width:100%;"></canvas>
     </div>
   `;

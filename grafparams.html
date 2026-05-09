@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Parámetros de Gráficas - Atención + Venta</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="logchch.png" type="image/png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1 style="margin: 0; font-size: 22px;">Parámetros de Gráficas</h1>
+    <div style="opacity:0.85; font-size: 13px; margin-top: 6px;">Atención + Venta</div>
+  </header>
+
+  <nav>
+    <a href="index.html" class="tab-btn" style="text-decoration:none; display:inline-block;">Volver al sistema</a>
+  </nav>
+
+  <main>
+    <div style="max-width: 1200px; margin: 0 auto;">
+      <div style="background: white; padding: 18px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #dee2e6;">
+        <div style="display:flex; gap: 12px; align-items: end; flex-wrap: wrap; justify-content: space-between;">
+          <div>
+            <div style="font-weight: 800; color:#2d3e50;">Parámetros usados para construir la gráfica de Atención + Venta</div>
+            <div style="color:#6c757d; font-size: 12px; margin-top: 4px;">Incluye pesos KPI (original) y pesos KPI2 (PONDERA IA) por modelo.</div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+            <div>
+              <div style="font-size: 12px; color:#64748b; margin-bottom: 4px;">Mes</div>
+              <input id="mesInput" type="month" style="padding:8px 10px; border:1px solid #dee2e6; border-radius:8px;" />
+            </div>
+            <button id="btnRefrescar" class="tab-btn" style="border-radius:8px;">Actualizar</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="height: 12px;"></div>
+
+      <div id="tablaContainer" style="background: white; padding: 18px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #dee2e6; overflow:auto;"></div>
+
+      <div style="height: 10px;"></div>
+
+      <div style="color:#6c757d; font-size: 12px; text-align:center;">
+        Nota: el cálculo del KPI2 aplica exclusiones por entidad y vigencia por mes. Esta vista muestra el set de parámetros del rubro Atención + Venta y sus pesos.
+      </div>
+    </div>
+  </main>
+
+  <script src="./data/sucursales.js"></script>
+  <script src="./data/franquicias.js"></script>
+  <script src="./data/parametros.js"></script>
+  <script src="./data/parametros_excluidos.js"></script>
+  <script src="./utils.js"></script>
+
+  <script>
+    (function() {
+      const CATEGORIAS_AV = new Set(['bienvenida', 'producto_ventas', 'atencion_mesa', 'tiempos']);
+
+      function pad2(n) { return String(n).padStart(2, '0'); }
+      function mesActual() {
+        const d = new Date();
+        return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+      }
+
+      function getParamIdByNombre(nombre) {
+        const n = (nombre || '').toString().trim().toLowerCase();
+        const ps = Array.isArray(window.parametros) ? window.parametros : [];
+        const p = ps.find(x => (x?.nombre || '').toString().trim().toLowerCase() === n);
+        return p ? p.id : null;
+      }
+
+      function normalizarId(id) {
+        return (id || '').toString().toLowerCase().replace(/[-_]/g, '');
+      }
+
+      function excluidosSetParaEntidad(entidadId, tipo) {
+        try {
+          const ps = Array.isArray(window.parametros) ? window.parametros : [];
+          const lista = (tipo === 'franquicia')
+            ? (window.parametrosExcluidosPorFranquicia?.[entidadId] || [])
+            : (window.parametrosExcluidosPorSucursal?.[entidadId] || []);
+          const ids = (lista || []).map(nombre => {
+            const n = (nombre || '').toString().trim().toLowerCase();
+            const p = ps.find(x => (x?.nombre || '').toString().trim().toLowerCase() === n);
+            return p ? normalizarId(p.id) : null;
+          }).filter(Boolean);
+          return new Set(ids);
+        } catch (e) {
+          return new Set();
+        }
+      }
+
+      function aplicaAEntidad(p, entidadId, tipo) {
+        if (!p) return false;
+        if (p.aplicaATodas) return true;
+        if (tipo === 'sucursal') {
+          return Array.isArray(p.aplicaASucursales) && p.aplicaASucursales.includes(entidadId);
+        }
+        if (tipo === 'franquicia') {
+          return Array.isArray(p.aplicaAFranquicias) && p.aplicaAFranquicias.includes(entidadId);
+        }
+        return false;
+      }
+
+      function getModelo(entidadId, tipo) {
+        try {
+          if (window.kpi2Utils && typeof window.kpi2Utils.getModeloEntidad === 'function') {
+            return window.kpi2Utils.getModeloEntidad(entidadId, tipo) || '';
+          }
+        } catch (e) {}
+        return '';
+      }
+
+      function pesoKPI2(param, modelo) {
+        try {
+          if (!window.kpi2Utils || typeof window.kpi2Utils.getPesoKPI2 !== 'function') return Number(param?.peso) || 0;
+          return Number(window.kpi2Utils.getPesoKPI2(param.id, param.peso, modelo)) || 0;
+        } catch (e) {
+          return Number(param?.peso) || 0;
+        }
+      }
+
+      function getEntidadesActivas() {
+        const s = (Array.isArray(window.sucursales) ? window.sucursales : []).filter(x => x && x.activa).map(x => ({ tipo: 'sucursal', id: x.id, nombre: x.nombre }));
+        const f = (Array.isArray(window.franquicias) ? window.franquicias : []).filter(x => x && x.activa).map(x => ({ tipo: 'franquicia', id: x.id, nombre: x.nombre }));
+        return s.concat(f);
+      }
+
+      function buildTabla(mes) {
+        const ps = Array.isArray(window.parametros) ? window.parametros : [];
+        const paramsAV = ps.filter(p => p && CATEGORIAS_AV.has(p.categoriaId));
+
+        const vigentes = paramsAV.filter(p => !p.vigenteDesde || !mes || mes >= p.vigenteDesde);
+
+        // Conteo de exclusiones y aplicabilidad por entidad.
+        const entidades = getEntidadesActivas();
+        const excludedCount = new Map();
+        const appliesCount = new Map();
+
+        vigentes.forEach(p => {
+          excludedCount.set(p.id, 0);
+          appliesCount.set(p.id, 0);
+        });
+
+        entidades.forEach(ent => {
+          const exclSet = excluidosSetParaEntidad(ent.id, ent.tipo);
+          vigentes.forEach(p => {
+            if (!aplicaAEntidad(p, ent.id, ent.tipo)) return;
+            appliesCount.set(p.id, (appliesCount.get(p.id) || 0) + 1);
+            if (exclSet.has(normalizarId(p.id))) {
+              excludedCount.set(p.id, (excludedCount.get(p.id) || 0) + 1);
+            }
+          });
+        });
+
+        const modelos = ['Cafetería', 'Express', 'Móvil'];
+
+        const rows = vigentes
+          .slice()
+          .sort((a, b) => {
+            const ca = (a.categoriaId || '').toString();
+            const cb = (b.categoriaId || '').toString();
+            if (ca !== cb) return ca.localeCompare(cb, 'es', { sensitivity: 'base' });
+            return (a.nombre || '').toString().localeCompare((b.nombre || '').toString(), 'es', { sensitivity: 'base' });
+          })
+          .map(p => {
+            const pk = Number(p.peso) || 0;
+            const p2c = pesoKPI2(p, 'Cafetería');
+            const p2e = pesoKPI2(p, 'Express');
+            const p2m = pesoKPI2(p, 'Móvil');
+            const apl = appliesCount.get(p.id) || 0;
+            const exc = excludedCount.get(p.id) || 0;
+            const excText = apl > 0 ? `${exc}/${apl}` : '—';
+            return {
+              categoriaId: p.categoriaId,
+              id: p.id,
+              nombre: p.nombre,
+              tipo: p.tipo,
+              peso: pk,
+              peso2C: p2c,
+              peso2E: p2e,
+              peso2M: p2m,
+              vigenteDesde: p.vigenteDesde || '—',
+              soloKPI2: p.soloKPI2 ? 'Sí' : 'No',
+              excluido: excText
+            };
+          });
+
+        const badge = (txt, bg, bd, col) => `<span style="display:inline-block; padding:3px 10px; border-radius:999px; background:${bg}; border:1px solid ${bd}; color:${col}; font-size:12px;">${txt}</span>`;
+
+        let html = '';
+        html += `<div style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom: 12px;">
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            ${badge('Bienvenida', '#eff6ff', '#bfdbfe', '#1d4ed8')}
+            ${badge('Producto/Ventas', '#f5f3ff', '#ddd6fe', '#6d28d9')}
+            ${badge('Atención en mesa', '#ecfeff', '#a5f3fc', '#0e7490')}
+            ${badge('Tiempos', '#f0fdf4', '#bbf7d0', '#166534')}
+          </div>
+          <div style="color:#64748b; font-size: 12px;">Mes: <strong style="color:#2d3e50;">${mes || '—'}</strong></div>
+        </div>`;
+
+        html += `<table class="evaluaciones-table" style="width:100%; border-collapse: collapse; font-size: 13px;">
+          <thead>
+            <tr style="background: #0077cc; color: white;">
+              <th style="padding: 10px; text-align:left; border-bottom: 1px solid #ddd;">Categoría</th>
+              <th style="padding: 10px; text-align:left; border-bottom: 1px solid #ddd;">Parámetro</th>
+              <th style="padding: 10px; text-align:left; border-bottom: 1px solid #ddd;">ID</th>
+              <th style="padding: 10px; text-align:center; border-bottom: 1px solid #ddd;">Peso KPI</th>
+              <th style="padding: 10px; text-align:center; border-bottom: 1px solid #ddd;">Peso KPI2 Cafetería</th>
+              <th style="padding: 10px; text-align:center; border-bottom: 1px solid #ddd;">Peso KPI2 Express</th>
+              <th style="padding: 10px; text-align:center; border-bottom: 1px solid #ddd;">Peso KPI2 Móvil</th>
+              <th style="padding: 10px; text-align:center; border-bottom: 1px solid #ddd;" title="Número de entidades donde este parámetro está excluido / número de entidades donde aplica">Excluido</th>
+              <th style="padding: 10px; text-align:center; border-bottom: 1px solid #ddd;">Vigente desde</th>
+              <th style="padding: 10px; text-align:center; border-bottom: 1px solid #ddd;">Solo KPI2</th>
+            </tr>
+          </thead>
+          <tbody>
+        `;
+
+        rows.forEach((r, idx) => {
+          const bg = idx % 2 === 0 ? '#f8f9fa' : 'white';
+          const cat = r.categoriaId === 'bienvenida' ? 'Bienvenida'
+            : r.categoriaId === 'producto_ventas' ? 'Producto/Ventas'
+            : r.categoriaId === 'atencion_mesa' ? 'Atención en mesa'
+            : r.categoriaId === 'tiempos' ? 'Tiempos'
+            : r.categoriaId;
+
+          html += `<tr style="background:${bg};">
+            <td style="padding: 10px; border-bottom: 1px solid #ddd; color:#2d3e50; font-weight:600;">${cat}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd;">${r.nombre || ''}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd; color:#64748b; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 12px;">${r.id}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align:center; font-weight:700;">${r.peso}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align:center; font-weight:700; color:#7c3aed;">${r.peso2C}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align:center; font-weight:700; color:#7c3aed;">${r.peso2E}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align:center; font-weight:700; color:#7c3aed;">${r.peso2M}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align:center; color:#64748b;">${r.excluido}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align:center; color:#64748b;">${r.vigenteDesde}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align:center;">${r.soloKPI2 === 'Sí' ? '<span style="color:#16a34a; font-weight:800;">Sí</span>' : '<span style="color:#64748b;">No</span>'}</td>
+          </tr>`;
+        });
+
+        html += `</tbody></table>`;
+
+        document.getElementById('tablaContainer').innerHTML = html;
+      }
+
+      function init() {
+        const mesInput = document.getElementById('mesInput');
+        mesInput.value = mesActual();
+        document.getElementById('btnRefrescar').onclick = () => buildTabla(mesInput.value);
+        buildTabla(mesInput.value);
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
