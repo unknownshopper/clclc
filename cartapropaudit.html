@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Carta Propuesta - Auditoría Digital</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="logchch.png" type="image/png" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    @page { margin: 18mm; }
+    @media print {
+      body { background: #fff !important; }
+      header, nav { display: none !important; }
+      main { box-shadow: none !important; margin: 0 !important; padding: 0 !important; border-radius: 0 !important; }
+      a { color: inherit !important; text-decoration: none !important; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-print { display: none !important; }
+      .print-card { box-shadow: none !important; }
+      p { break-inside: avoid; page-break-inside: avoid; }
+      .print-card { break-inside: avoid; page-break-inside: avoid; }
+      h1, h2, h3 { break-after: avoid; page-break-after: avoid; }
+      p { orphans: 3; widows: 3; }
+      .print-new-page { break-before: page; page-break-before: always; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 style="margin: 0; font-size: 22px;">Carta Propuesta</h1>
+    <div style="opacity:0.85; font-size: 13px; margin-top: 6px;">Auditoría Digital (Redes Sociales & Sistema Administrativo)</div>
+  </header>
+
+  <nav>
+    <a href="index.html" class="tab-btn" style="text-decoration:none; display:inline-block;">Volver al sistema</a>
+    <button class="tab-btn no-print" style="border-radius: 8px;" onclick="window.print()">Descargar PDF</button>
+  </nav>
+
+  <main>
+    <div style="max-width: 980px; margin: 0 auto;">
+      <div class="print-card" style="background: #fff; border: 1px solid #dee2e6; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+        <div style="text-align:center; margin-bottom: 14px;">
+          <img src="logch.png" alt="The Unknown Shopper" style="height: 44px; width:auto; object-fit: contain;" />
+          <div style="color:#64748b; font-size: 12px; margin-top: 6px;">Documento interno</div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; gap: 12px; flex-wrap:wrap;">
+          <div style="color:#2d3e50;">
+            <div style="font-weight: 800;">Dirigido a:</div>
+            <div style="margin-top: 4px;"><strong>Antonio Moreno</strong></div>
+            <div style="color:#64748b; margin-top: 2px;">Gerente Operativo · Café La Cabaña</div>
+          </div>
+          <div style="color:#2d3e50; text-align:right;">
+            <div style="font-weight: 800;">Fecha:</div>
+            <div id="fechaHoy" style="margin-top: 4px; color:#64748b;"></div>
+          </div>
+        </div>
+
+        <div style="height: 16px;"></div>
+
+        <div style="color:#2d3e50; font-weight: 800; font-size: 18px;">Auditoría digital y supervisión operativa</div>
+        <div style="height: 10px;"></div>
+
+        <p style="margin: 0 0 14px 0; color:#444; line-height: 1.8;">
+          Con el objetivo de fortalecer el control operativo y la toma de decisiones, proponemos complementar el programa de evaluaciones con una supervisión digital enfocada en dos frentes: redes sociales y el sistema administrativo (ERP). La intención es alinear la percepción pública, la comunicación y el desempeño comercial con la realidad de la operación diaria, detectando variaciones, oportunidades y riesgos antes de que se conviertan en un problema.
+        </p>
+
+        <p style="margin: 0 0 14px 0; color:#444; line-height: 1.8;">
+          En redes sociales, la prioridad es contar con acceso a <strong>Facebook Business (Meta Business Suite / Business Manager)</strong> para analizar el comportamiento de las campañas, gráficas de rendimiento, segmentación, inversión y resultados de pauta. Esto permite evaluar con claridad qué promociones y mensajes están funcionando, qué sucursales o zonas responden mejor, y cómo optimizar el presupuesto para que la comunicación se traduzca en tráfico y ventas, no solo en alcance.
+        </p>
+
+        <p style="margin: 0; color:#444; line-height: 1.8;">
+          En paralelo, la revisión del sistema administrativo (ERP) busca validar consistencia entre lo que se comunica y lo que realmente se vende: productos activos, precios, promociones, existencias, reportes de venta y posibles variaciones entre unidades. Una auditoría ligera y periódica ayuda a detectar desviaciones (productos no autorizados, cambios de precio, faltantes recurrentes o promociones mal cargadas) y a documentar hallazgos para corregirlos con acciones concretas.
+        </p>
+
+        <div class="print-new-page">
+          <div style="height: 18px;"></div>
+          <hr style="border:0; border-top: 1px solid #e9ecef;" />
+          <div style="height: 14px;"></div>
+
+          <div style="color:#444; line-height: 1.8;">
+            Quedo a tus órdenes para definir el alcance de accesos, periodicidad de reportes y el formato de entregables, procurando siempre la confidencialidad y el uso responsable de la información.
+          </div>
+
+          <div style="height: 14px;"></div>
+
+          <div style="color:#2d3e50; font-weight: 800;">Atentamente,</div>
+          <div style="height: 8px;"></div>
+          <div style="color:#2d3e50;"><strong>Alberto García</strong></div>
+          <div style="color:#64748b;">The Unknown Shopper</div>
+
+          <div style="height: 16px;"></div>
+          <div style="text-align:center; color:#94a3b8; font-size: 12px;">
+            <a href="https://unknownshoppers.com" target="_blank" rel="noopener noreferrer" style="color:#94a3b8; text-decoration:none;">https://unknownshoppers.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (function() {
+      try {
+        const d = new Date();
+        const fmt = new Intl.DateTimeFormat('es-MX', { year: 'numeric', month: 'long', day: '2-digit' });
+        document.getElementById('fechaHoy').textContent = fmt.format(d);
+      } catch (e) {
+        document.getElementById('fechaHoy').textContent = '';
+      }
+    })();
+  </script>
+</body>
+</html>

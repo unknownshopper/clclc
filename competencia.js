@@ -25,15 +25,22 @@ window.competencia = window.competencia || [
         fechaCreacion: new Date().toISOString()
     },
     {
-        id: 'cafeloco',
-        nombre: 'Cafeloco',
+        id: 'cafe-laut',
+        nombre: 'Café Laut',
         direccion: 'Ubicación por definir',
         activa: true,
         fechaCreacion: new Date().toISOString()
     },
     {
-        id: 'cafeteria',
-        nombre: 'Cafetería',
+        id: 'elementos',
+        nombre: 'Elementos',
+        direccion: 'Ubicación por definir',
+        activa: true,
+        fechaCreacion: new Date().toISOString()
+    },
+    {
+        id: 'cafeto',
+        nombre: 'Cafeto',
         direccion: 'Ubicación por definir',
         activa: true,
         fechaCreacion: new Date().toISOString()

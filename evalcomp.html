@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parámetros de Evaluación - Competencia</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .reporte-wrap {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 18px 16px 26px 16px;
+        }
+
+        .reporte-header {
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 14px;
+            background: #fff;
+            color: #2d3e50;
+            padding: 16px 18px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+            margin-bottom: 14px;
+        }
+
+        .reporte-header-top {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .reporte-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 280px;
+        }
+
+        .reporte-brand-logo {
+            width: 150px;
+            height: 76px;
+            border-radius: 0;
+            background: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            overflow: hidden;
+            flex: 0 0 auto;
+        }
+
+        .reporte-brand-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 0;
+            filter: drop-shadow(0 3px 10px rgba(0,0,0,0.22));
+        }
+
+        .reporte-title {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 900;
+            line-height: 1.15;
+        }
+
+        .reporte-subtitle {
+            margin: 3px 0 0 0;
+            color: #6c757d;
+            font-size: 12px;
+            line-height: 1.25;
+        }
+
+        .reporte-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(180px, 1fr));
+            gap: 10px 14px;
+            align-items: start;
+            justify-content: end;
+            min-width: 320px;
+        }
+
+        .reporte-meta-item {
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #2d3e50 0%, #1b2736 100%);
+            border: 1px solid rgba(255,255,255,0.16);
+        }
+
+        .reporte-meta-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.84);
+            font-weight: 800;
+            letter-spacing: 0.2px;
+            margin: 0 0 2px 0;
+        }
+
+        .reporte-meta-value {
+            font-size: 12px;
+            font-weight: 900;
+            margin: 0;
+            color: #fff;
+        }
+
+        .reporte-note {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            font-size: 12px;
+            line-height: 1.35;
+            color: #6c757d;
+        }
+
+        .reporte-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .tabla-ponderancia {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 860px;
+            table-layout: fixed;
+        }
+
+        .tabla-ponderancia th,
+        .tabla-ponderancia td {
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            vertical-align: top;
+        }
+
+        .tabla-ponderancia thead th {
+            background: #0077cc;
+            color: #fff;
+            font-size: 12px;
+            letter-spacing: 0.2px;
+        }
+
+        .tabla-ponderancia .col-index { width: 70px; }
+        .tabla-ponderancia .col-categoria { width: 220px; }
+        .tabla-ponderancia .col-parametro { width: auto; }
+        .tabla-ponderancia .col-peso { width: 110px; }
+
+        .card {
+            background: #fff;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .card-body {
+            padding: 14px 14px 6px 14px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .search-row input {
+            flex: 1;
+            min-width: 240px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(0,0,0,0.14);
+            outline: none;
+        }
+
+        .search-row input:focus {
+            border-color: rgba(0,119,204,0.55);
+            box-shadow: 0 0 0 3px rgba(0,119,204,0.16);
+        }
+
+        .resumen {
+            font-size: 12px;
+            color: #6c757d;
+            padding: 0 2px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        @page { margin: 18mm; }
+        @media print {
+            body { background: #fff !important; }
+            .no-print { display: none !important; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            a { color: inherit !important; text-decoration: none !important; }
+            p { break-inside: avoid; page-break-inside: avoid; }
+            h1, h2, h3 { break-after: avoid; page-break-after: avoid; }
+            p { orphans: 3; widows: 3; }
+        }
+    </style>
+</head>
+<body>
+    <div class="reporte-wrap">
+        <div class="reporte-header">
+            <div class="reporte-header-top">
+                <div class="reporte-brand">
+                    <div class="reporte-brand-logo">
+                        <img src="logch.png" alt="The Unknown Shopper">
+                    </div>
+                    <div>
+                        <h1 class="reporte-title">Parámetros de Evaluación · Competencia</h1>
+                        <div class="reporte-subtitle">Puntos de evaluación y ponderancias para reportes comparativos del mercado</div>
+                    </div>
+                </div>
+
+                <div class="reporte-meta">
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Empresa</div>
+                        <div class="reporte-meta-value">Café La Cabaña</div>
+                    </div>
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Emisión</div>
+                        <div class="reporte-meta-value" id="fechaEmision">—</div>
+                    </div>
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Alcance</div>
+                        <div class="reporte-meta-value">Competidores (Benchmark)</div>
+                    </div>
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Fuente</div>
+                        <div class="reporte-meta-value">Sistema Unknown Shopper</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reporte-actions no-print">
+                <a href="index.html" class="tab-btn" style="text-decoration:none; display:inline-block;">Volver al sistema</a>
+                <button class="tab-btn" onclick="window.print()" style="border-radius: 10px;">Descargar PDF</button>
+            </div>
+
+            <div class="reporte-note">
+                Los resultados y entregables se presentan mediante el sistema CLC.
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div style="color:#2d3e50; line-height: 1.65; margin-bottom: 12px;">
+                    Este documento funciona como guía de referencia para el reporte de competencia: detalla los puntos de evaluación, su peso (ponderancia) y el porqué de cada uno. La intención es asegurar que las visitas a competidores se midan con un criterio homogéneo, comparable y accionable, enfocándose en ejecución comercial, tiempos y experiencia del cliente.
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px;">
+                    <div style="border: 1px solid rgba(0,0,0,0.08); background: #ffffff; border-radius: 12px; padding: 12px 14px;">
+                        <div style="font-weight: 900; color:#2d3e50; margin-bottom: 6px;">Marcas propuestas (competencia)</div>
+                        <div style="color:#2d3e50; line-height: 1.7;">
+                            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top: 4px;">
+                                <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; background:#f1f5f9; border:1px solid #e2e8f0; color:#334155; font-size:12px; font-weight:800;">CACEP</span>
+                                <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; background:#f1f5f9; border:1px solid #e2e8f0; color:#334155; font-size:12px; font-weight:800;">Starbucks</span>
+                                <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; background:#f1f5f9; border:1px solid #e2e8f0; color:#334155; font-size:12px; font-weight:800;">Gloria Jeans</span>
+                                <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; background:#f1f5f9; border:1px solid #e2e8f0; color:#334155; font-size:12px; font-weight:800;">Café Laut</span>
+                                <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; background:#f1f5f9; border:1px solid #e2e8f0; color:#334155; font-size:12px; font-weight:800;">Elementos</span>
+                                <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; background:#f1f5f9; border:1px solid #e2e8f0; color:#334155; font-size:12px; font-weight:800;">Cafeto</span>
+                            </div>
+                            <div style="margin-top: 10px; color:#64748b; font-size: 12px;">
+                                <strong>Otras marcas de interés:</strong>
+                                <span style="display:inline-block; border-bottom: 1px dashed #cbd5e1; min-width: 320px; height: 14px; vertical-align: baseline; margin-left: 8px;"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px;">
+                    <div style="border: 1px solid rgba(0,0,0,0.08); background: #f8fafc; border-radius: 12px; padding: 12px 14px;">
+                        <div style="font-weight: 900; color:#2d3e50; margin-bottom: 6px;">Propuesta económica</div>
+                        <div style="color:#2d3e50; line-height: 1.7;">
+                            <div><strong>Costo por sucursal:</strong> $1,200 + IVA</div>
+                            <div><strong>Consumo:</strong> incluido</div>
+                            <div><strong>Tiempo de entrega:</strong> 1 semana a partir de la autorización</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="search-row">
+                    <input id="buscarParametro" type="text" placeholder="Buscar por parámetro, categoría o justificación...">
+                    <div class="resumen" id="ponderanciaResumen">—</div>
+                </div>
+
+                <div class="table-wrap">
+                    <table class="tabla-ponderancia" id="tablaPonderancia">
+                        <thead>
+                            <tr>
+                                <th class="col-index" style="padding: 12px 14px; text-align:left;">#</th>
+                                <th class="col-categoria" style="padding: 12px 14px; text-align:left;">Categoría</th>
+                                <th class="col-parametro" style="padding: 12px 14px; text-align:left;">Parámetro y justificación</th>
+                                <th class="col-peso" style="padding: 12px 14px; text-align:right;">Peso</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div class="reporte-note" style="margin-top: 12px;">
+                    Este documento define los parámetros y ponderancias que se aplicarán en la evaluación de competencia. La ponderancia busca priorizar variables con impacto en conversión, ejecución y experiencia real del cliente, y mantener controlado el “inflado” del indicador con variables solo estéticas.
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 14px; text-align:center; color:#94a3b8; font-size: 12px;">
+            <a href="https://unknownshoppers.com" target="_blank" rel="noopener noreferrer" style="color:#94a3b8; text-decoration:none;">https://unknownshoppers.com</a>
+            <span id="footerStamp" style="margin-left: 10px;"></span>
+        </div>
+    </div>
+
+    <script src="data/parametros.js"></script>
+    <script>
+        const PONDERA_COMP = {
+            bienvenida_contacto_visual: {
+                justificacion: 'Es el primer contacto: define percepción inmediata, disposición a comprar y calidad de servicio desde el arranque.'
+            },
+            bienvenida_agradecimiento: {
+                justificacion: 'Cierre correcto mejora recordación y fidelidad. En competencia ayuda a comparar consistencia de protocolo.'
+            },
+            conocimiento_productos: {
+                justificacion: 'Impacta conversión y confianza del cliente: sin conocimiento no hay recomendación ni upsell real.'
+            },
+            producto_mes: {
+                justificacion: 'Mide ejecución comercial del momento y alineación con campañas: útil para comparar empuje de temporada.'
+            },
+            venta_cruzada: {
+                justificacion: 'Variable directa de venta asistida: permite medir intención de incrementar ticket vs. solo tomar pedido.'
+            },
+            app_cabana: {
+                justificacion: 'Referencia a programa/app: útil cuando exista equivalente en competencia. Si no aplica, se excluirá por competidor.'
+            },
+            mencion_promociones: {
+                justificacion: 'Ejecución de promoción vigente: permite comparar agresividad comercial y claridad al comunicar ofertas.'
+            },
+            atencion_mesa: {
+                justificacion: 'Cuando existe servicio en mesa, mide seguimiento y hospitalidad. Si el formato no aplica, se excluye.'
+            },
+            entrega_ticket: {
+                justificacion: 'Control y transparencia en compra: relevante para comparar formalidad del proceso.'
+            },
+            tiempo_espera_atencion: {
+                justificacion: 'La velocidad de ser atendido define fricción inicial y abandono: indicador operativo clave en competencia.'
+            },
+            tiempo_fila: {
+                justificacion: 'Mide saturación y capacidad: útil para comparar operación en horas pico.'
+            },
+            tiempo_espera_cafe: {
+                justificacion: 'Tiempo de preparación es una de las principales fuentes de queja: impacta experiencia y repetición.'
+            },
+            cantidad_colaboradores: {
+                justificacion: 'Permite contextualizar tiempos y operación: ayuda a explicar rendimiento vs. dotación.'
+            },
+            apariencia_personal: {
+                justificacion: 'Higiene/presentación influye en percepción de calidad y confianza en alimentos/bebidas.'
+            },
+            tableta: {
+                justificacion: 'Uso de tecnología en toma de pedido/pagos: útil para comparar eficiencia si existe.'
+            },
+            pin_personalizador: {
+                justificacion: 'Detalle de identidad/personalización: cuenta, pero no debe dominar el score (se mantiene controlado).' 
+            },
+            presentacion_vaso: {
+                justificacion: 'Ejecución de personalización y cuidado: indica control de proceso en barra.'
+            },
+            presentacion_cafe: {
+                justificacion: 'La presentación del producto es visible y afecta percepción de calidad inmediatamente.'
+            },
+            presentacion_alimento: {
+                justificacion: 'Impacto directo en percepción y valor; comparar estándar visual vs. promesa comercial.'
+            },
+            panera_estado: {
+                justificacion: 'Orden e higiene de exhibición: relevante pero secundario frente a servicio/tiempos.'
+            },
+            existencia: {
+                justificacion: 'Sin existencia no hay venta ni cumplimiento de oferta: crítico para comparar operación real.'
+            },
+            fachada_limpieza: {
+                justificacion: 'Imagen exterior influye en entrada; se pondera bajo para evitar distorsión del KPI.'
+            },
+            letrero_anuncio: {
+                justificacion: 'Visibilidad de marca y señalización; ponderancia baja por impacto indirecto.'
+            },
+            jardineras_macetas: {
+                justificacion: 'Estético/ambiente; cuenta como estándar pero se mantiene mínimo.'
+            },
+            iluminacion: {
+                justificacion: 'Ambiente; ponderancia baja para priorizar servicio/venta.'
+            },
+            puertas_vidrios: {
+                justificacion: 'Limpieza visible: importante para percepción, no debe compensar mala atención.'
+            },
+            musica_volumen: {
+                justificacion: 'Ambiente; afecta permanencia, pero con peso bajo.'
+            },
+            area_mostrador: {
+                justificacion: 'Orden operativo: se considera sin inflar el resultado.'
+            },
+            mesas_sillas_limpieza: {
+                justificacion: 'Higiene visible y confort: se mantiene baja para no dominar el score.'
+            },
+            piso_limpieza: {
+                justificacion: 'Higiene general; peso moderado-bajo para mantener enfoque en operación/servicio.'
+            },
+            banos_estado: {
+                justificacion: 'Puede arruinar percepción global; se considera con peso controlado.'
+            },
+            basura_estado: {
+                justificacion: 'Orden/higiene; bajo impacto directo en venta, se mantiene bajo.'
+            },
+            barra_limpieza: {
+                justificacion: 'Backbar ordenado apoya ejecución, pero es indirecto al cliente.'
+            },
+            clima_funcionando: {
+                justificacion: 'Confort influye en permanencia y consumo; se pondera sin desplazar atención/venta.'
+            },
+            mesas_sillas_estado: {
+                justificacion: 'Mantenimiento y percepción de calidad; ponderancia baja.'
+            }
+        };
+
+        function normalizarTexto(valor) {
+            return (valor || '').toString().toLowerCase().trim();
+        }
+
+        function getNombreCategoria(categoriaId) {
+            try {
+                if (typeof categorias !== 'undefined' && Array.isArray(categorias)) {
+                    const cat = categorias.find(c => c.id === categoriaId);
+                    return (cat && cat.nombre) ? cat.nombre : (categoriaId || '');
+                }
+            } catch (e) {}
+            return categoriaId || '';
+        }
+
+        function getJustificacion(param) {
+            const entry = param && param.id ? PONDERA_COMP[param.id] : null;
+            if (entry && entry.justificacion) return entry.justificacion;
+            return 'Justificación pendiente de especificación.';
+        }
+
+        function renderTablaPonderancia(filtro) {
+            const tabla = document.getElementById('tablaPonderancia');
+            const tbody = tabla ? tabla.querySelector('tbody') : null;
+            if (!tbody) return;
+
+            const params = Array.isArray(window.parametros) ? window.parametros.slice() : [];
+            params.sort((a, b) => {
+                const catA = getNombreCategoria(a.categoriaId);
+                const catB = getNombreCategoria(b.categoriaId);
+                if (catA !== catB) return catA.localeCompare(catB);
+                return (a.nombre || '').localeCompare(b.nombre || '');
+            });
+
+            const f = normalizarTexto(filtro);
+            const filtrados = f
+                ? params.filter(p => {
+                    const cat = getNombreCategoria(p.categoriaId);
+                    const just = getJustificacion(p);
+                    return (
+                        normalizarTexto(p.nombre).includes(f) ||
+                        normalizarTexto(p.id).includes(f) ||
+                        normalizarTexto(cat).includes(f) ||
+                        normalizarTexto(just).includes(f)
+                    );
+                })
+                : params;
+
+            tbody.innerHTML = '';
+
+            const totalFiltrado = filtrados.reduce((sum, p) => sum + (Number(p.peso) || 0), 0);
+            const totalAll = params.reduce((sum, p) => sum + (Number(p.peso) || 0), 0);
+
+            const resumen = document.getElementById('ponderanciaResumen');
+            if (resumen) {
+                const countText = filtrados.length + ' / ' + params.length + ' parámetros';
+                const pesoText = f
+                    ? ('Total (filtrado): ' + totalFiltrado + ' · Total: ' + totalAll)
+                    : ('Total: ' + totalAll);
+                resumen.textContent = countText + ' · ' + pesoText;
+            }
+
+            filtrados.forEach((p, idx) => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #f0f0f0';
+                tr.style.background = idx % 2 === 0 ? '#ffffff' : '#f8f9fa';
+
+                const categoriaNombre = getNombreCategoria(p.categoriaId);
+                const peso = Number(p.peso) || 0;
+                const justificacion = getJustificacion(p);
+
+                tr.innerHTML = (
+                    '<td style="padding: 12px 14px; font-weight: 700; color:#2d3e50;">' + (idx + 1) + '</td>' +
+                    '<td style="padding: 12px 14px; color:#495057;">' +
+                        '<span style="display:inline-flex; align-items:center; gap:8px;">' +
+                            '<span style="width:10px; height:10px; border-radius:999px; background:#0077cc;"></span>' +
+                            categoriaNombre +
+                        '</span>' +
+                    '</td>' +
+                    '<td style="padding: 12px 14px; color:#1a2533;">' +
+                        '<div style="font-weight: 700;">' + (p.nombre || '') + '</div>' +
+                        '<div style="margin-top: 4px; color:#6c757d; font-size: 12px; line-height: 1.3;">' + (p.descripcion || '') + '</div>' +
+                        '<div style="margin-top: 6px; color:#2d3e50; font-size: 12px; line-height: 1.35;"><strong>Justificación:</strong> ' + justificacion + '</div>' +
+                    '</td>' +
+                    '<td style="padding: 12px 14px; text-align: right; font-weight: 900; color:#0077cc;">' + peso + '</td>'
+                );
+
+                tbody.appendChild(tr);
+            });
+
+            const trTotal = document.createElement('tr');
+            trTotal.style.borderTop = '2px solid #dee2e6';
+            trTotal.style.background = '#eef4ff';
+            trTotal.innerHTML = (
+                '<td style="padding: 12px 14px; font-weight: 900; color:#2d3e50;">' + (filtrados.length + 1) + '</td>' +
+                '<td style="padding: 12px 14px; font-weight: 900; color:#2d3e50;">TOTAL</td>' +
+                '<td style="padding: 12px 14px; font-weight: 800; color:#2d3e50;">Suma total de puntuaciones</td>' +
+                '<td style="padding: 12px 14px; text-align: right; font-weight: 900; color:#0077cc;">' + totalAll + '</td>'
+            );
+            tbody.appendChild(trTotal);
+        }
+
+        function formatearFecha(fecha) {
+            try {
+                return new Intl.DateTimeFormat('es-MX', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: '2-digit'
+                }).format(fecha);
+            } catch (e) {
+                return '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const hoy = new Date();
+            const fecha = document.getElementById('fechaEmision');
+            if (fecha) fecha.textContent = formatearFecha(hoy);
+            const stamp = document.getElementById('footerStamp');
+            if (stamp) stamp.textContent = 'Generado: ' + hoy.toLocaleString();
+
+            const input = document.getElementById('buscarParametro');
+            if (input) {
+                input.addEventListener('input', function() {
+                    renderTablaPonderancia(input.value);
+                });
+            }
+            renderTablaPonderancia('');
+        });
+    </script>
+</body>
+</html>
