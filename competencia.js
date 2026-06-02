@@ -60,6 +60,51 @@ window.parametrosExcluidosPorCompetencia = {
     // Se puede configurar según necesidades específicas
 };
 
+// Configuración (por competidor) para ocultar/mostrar parámetros y asignar ponderancias
+window.competenciaConfig = window.competenciaConfig || {};
+
+function cargarCompetenciaConfigDesdeStorage() {
+    try {
+        const raw = localStorage.getItem('competenciaConfig');
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+            window.competenciaConfig = parsed;
+        }
+    } catch (e) {
+        console.warn('No se pudo cargar competenciaConfig desde localStorage:', e);
+    }
+}
+
+function guardarCompetenciaConfigEnStorage() {
+    try {
+        localStorage.setItem('competenciaConfig', JSON.stringify(window.competenciaConfig || {}));
+    } catch (e) {
+        console.warn('No se pudo guardar competenciaConfig en localStorage:', e);
+    }
+}
+
+function puedeConfigurarCompetencia() {
+    try {
+        const rol = (window.usuarioActual && window.usuarioActual.rol) ? String(window.usuarioActual.rol).toLowerCase() : '';
+        const email = (window.usuarioActual && window.usuarioActual.email) ? String(window.usuarioActual.email).toLowerCase() : '';
+        const esAdminUnknown = rol === 'admin' && !!window.firebaseAdminAuthenticated;
+        const esDg = rol === 'dg' || email === 'dg@cafelacabana.com';
+        const esDirGral = email === 'dirgral@cafelacabana.com';
+        return !!(esAdminUnknown || esDg || esDirGral);
+    } catch (e) {
+        return false;
+    }
+}
+
+if (typeof window !== 'undefined') {
+    try {
+        cargarCompetenciaConfigDesdeStorage();
+    } catch (e) {
+        console.warn('Init competenciaConfig error:', e);
+    }
+}
+
 // ===== FUNCIONES DE GESTIÓN DE COMPETIDORES =====
 
 // Función para renderizar la vista de competencia
@@ -186,7 +231,7 @@ function renderCompetencia() {
                         </button>
                     ` : ''}
                     
-                    ${tienePermiso('editar') ? `
+                    ${puedeConfigurarCompetencia() ? `
                         <button onclick="editarCompetidor('${competidor.id}')" 
                                 class="btn btn-warning btn-sm">
                             <i class="fas fa-edit"></i> Editar
@@ -507,13 +552,37 @@ function cargarParametrosParaCompetencia(competidorId) {
     
     // Obtener parámetros aplicables (usar todos los parámetros para competencia)
     let parametrosAplicables = window.parametros ? window.parametros.slice() : [];
-    
-    // Aplicar exclusiones específicas para competencia si existen
+
+    // Aplicar exclusiones/ponderancias desde configuración (por competidor)
+    const cfg = (window.competenciaConfig && window.competenciaConfig[competidorId]) ? window.competenciaConfig[competidorId] : null;
+    const ocultosCfg = cfg && Array.isArray(cfg.ocultos) ? cfg.ocultos : [];
+    const pesosCfg = cfg && cfg.pesos && typeof cfg.pesos === 'object' ? cfg.pesos : {};
+
+    // Compatibilidad: aplicar exclusiones existentes (histórico) si existen
+    let excluidosLegacy = [];
     if (window.parametrosExcluidosPorCompetencia && window.parametrosExcluidosPorCompetencia[competidorId]) {
-        const excluidos = window.parametrosExcluidosPorCompetencia[competidorId];
-        console.log(`Aplicando exclusiones para competencia ${competidorId}:`, excluidos);
-        parametrosAplicables = parametrosAplicables.filter(p => !excluidos.includes(p.nombre));
+        excluidosLegacy = window.parametrosExcluidosPorCompetencia[competidorId] || [];
+        console.log(`Aplicando exclusiones para competencia ${competidorId}:`, excluidosLegacy);
     }
+
+    parametrosAplicables = parametrosAplicables
+        .filter(p => {
+            const pid = String(p.id);
+            const pname = String(p.nombre);
+            // ocultosCfg trabaja por id
+            if (ocultosCfg.includes(pid)) return false;
+            // legacy puede traer nombres o ids
+            if (excluidosLegacy.includes(pid) || excluidosLegacy.includes(pname)) return false;
+            return true;
+        })
+        .map(p => {
+            const pid = String(p.id);
+            const nuevoPeso = (pesosCfg && pesosCfg[pid] != null) ? Number(pesosCfg[pid]) : null;
+            if (Number.isFinite(nuevoPeso) && nuevoPeso >= 0) {
+                return { ...p, peso: nuevoPeso };
+            }
+            return p;
+        });
     
     console.log(`Parámetros aplicables para competencia: ${parametrosAplicables.length}`);
     
@@ -607,8 +676,177 @@ function verEvaluacionCompetencia(competidorId) {
 
 // Función para editar competidor
 function editarCompetidor(competidorId) {
-    console.log('Editar competidor:', competidorId);
-    alert('Funcionalidad de edición en desarrollo');
+    if (!puedeConfigurarCompetencia()) {
+        alert('No tiene permisos para configurar competencia');
+        return;
+    }
+    abrirModalConfigCompetencia(competidorId);
+}
+
+function abrirModalConfigCompetencia(competidorId) {
+    console.log('Abriendo modal de configuración de competencia:', competidorId);
+
+    if (!competidorId) {
+        alert('Error: ID de competidor no especificado');
+        return;
+    }
+
+    const competidor = window.competencia.find(c => c.id === competidorId);
+    if (!competidor) {
+        alert('Error: Competidor no encontrado');
+        return;
+    }
+
+    const modal = document.getElementById('modal-nueva-evaluacion');
+    const selectEntidad = document.getElementById('select-entidad-evaluacion');
+    const parametrosContainer = document.getElementById('parametros-evaluacion-container');
+    const totalPuntosDiv = document.getElementById('total-puntos-evaluacion');
+    const btnGuardar = document.getElementById('btn-guardar-evaluacion');
+
+    if (!modal || !parametrosContainer || !btnGuardar) {
+        alert('Error: Modal de evaluación no encontrado');
+        return;
+    }
+
+    // Ocultar selector de entidad
+    const labelEntidad = document.querySelector('label[for="select-entidad-evaluacion"]');
+    if (labelEntidad) labelEntidad.style.display = 'none';
+    if (selectEntidad) selectEntidad.style.display = 'none';
+
+    // Cambiar el título del modal
+    const modalTitle = document.querySelector('#modal-nueva-evaluacion h2');
+    if (modalTitle) {
+        modalTitle.textContent = `Configurar Competencia - ${competidor.nombre}`;
+    }
+
+    // El total no aplica en configuración
+    if (totalPuntosDiv) totalPuntosDiv.textContent = '';
+
+    const cfg = window.competenciaConfig[competidorId] || { ocultos: [], pesos: {} };
+    const ocultos = Array.isArray(cfg.ocultos) ? cfg.ocultos : [];
+    const pesos = (cfg.pesos && typeof cfg.pesos === 'object') ? cfg.pesos : {};
+
+    const params = window.parametros ? window.parametros.slice() : [];
+    const categorias = {};
+    params.forEach(param => {
+        if (!categorias[param.categoriaId]) categorias[param.categoriaId] = [];
+        categorias[param.categoriaId].push(param);
+    });
+
+    let html = '<div style="max-height: 420px; overflow-y: auto; margin: 10px 0;">';
+    html += `
+        <div style="margin-bottom: 15px; padding: 10px; background: #f8fafc; border: 1px solid rgba(0,0,0,0.08); border-radius: 6px;">
+            <div style="font-size: 12px; color: #475569; line-height: 1.4;">
+                Usa esta pantalla para <strong>ocultar/mostrar</strong> parámetros en la evaluación de competencia y para <strong>asignar ponderancias</strong>.
+            </div>
+            <div style="margin-top: 10px; display:flex; gap:10px; flex-wrap:wrap;">
+                <button type="button" class="btn btn-info btn-sm" onclick="configCompetenciaMostrarTodos()">Mostrar todos</button>
+                <button type="button" class="btn btn-warning btn-sm" onclick="configCompetenciaOcultarTodos()">Ocultar todos</button>
+            </div>
+        </div>
+    `;
+
+    Object.keys(categorias).forEach(categoriaId => {
+        const categoria = categorias[categoriaId];
+        const nombreCategoria = getCategoriaName ? getCategoriaName(categoriaId) : categoriaId;
+        html += `
+            <div style="margin-bottom: 20px; border: 1px solid #ddd; border-radius: 5px; padding: 10px;">
+                <h4 style="margin: 0; color: #0077cc; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                    ${nombreCategoria} (${categoria.length} parámetros)
+                </h4>
+        `;
+
+        categoria.forEach(param => {
+            const pid = String(param.id);
+            const visible = !ocultos.includes(pid);
+            const pesoActual = (pesos && pesos[pid] != null) ? Number(pesos[pid]) : Number(param.peso);
+            const pesoSafe = Number.isFinite(pesoActual) ? pesoActual : Number(param.peso) || 0;
+            html += `
+                <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f9f9f9; border-radius: 4px; gap: 12px;">
+                    <div style="flex: 1; display: flex; align-items: center;">
+                        <div>
+                            <strong>${param.nombre}</strong>
+                            <div style="font-size: 12px; color: #666;">${param.descripcion}</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap: 10px;">
+                        <label style="display:flex; align-items:center; gap: 6px; font-size: 12px; color:#334155;">
+                            <input type="checkbox" class="config-comp-visible" id="config-visible-${pid}" ${visible ? 'checked' : ''}>
+                            Mostrar
+                        </label>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-size: 12px; color:#334155;">Peso</span>
+                            <input type="number" min="0" step="1" value="${pesoSafe}" class="config-comp-peso" id="config-peso-${pid}" style="width: 90px; padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.15);">
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+    });
+
+    html += '</div>';
+    parametrosContainer.innerHTML = html;
+
+    btnGuardar.style.display = 'block';
+    btnGuardar.textContent = 'Guardar Configuración';
+    btnGuardar.onclick = () => guardarConfigCompetencia(competidorId);
+
+    modal.style.display = 'flex';
+}
+
+function configCompetenciaMostrarTodos() {
+    document.querySelectorAll('.config-comp-visible').forEach(chk => { chk.checked = true; });
+}
+
+function configCompetenciaOcultarTodos() {
+    document.querySelectorAll('.config-comp-visible').forEach(chk => { chk.checked = false; });
+}
+
+function guardarConfigCompetencia(competidorId) {
+    if (!puedeConfigurarCompetencia()) {
+        alert('No tiene permisos para configurar competencia');
+        return;
+    }
+    try {
+        const cfg = { ocultos: [], pesos: {} };
+        const params = window.parametros ? window.parametros.slice() : [];
+
+        params.forEach(param => {
+            const pid = String(param.id);
+            const chk = document.getElementById(`config-visible-${pid}`);
+            const inp = document.getElementById(`config-peso-${pid}`);
+
+            const visible = !!(chk && chk.checked);
+            if (!visible) cfg.ocultos.push(pid);
+
+            const valor = inp ? Number(inp.value) : Number(param.peso);
+            if (Number.isFinite(valor) && valor >= 0) {
+                cfg.pesos[pid] = Math.round(valor);
+            }
+        });
+
+        window.competenciaConfig[competidorId] = cfg;
+        guardarCompetenciaConfigEnStorage();
+
+        // Mantener objeto legacy por compatibilidad (almacena ids ocultos)
+        window.parametrosExcluidosPorCompetencia = window.parametrosExcluidosPorCompetencia || {};
+        window.parametrosExcluidosPorCompetencia[competidorId] = cfg.ocultos.slice();
+
+        alert('Configuración guardada');
+
+        // Cerrar modal usando la función existente
+        if (typeof cerrarModalEvaluacionCompetencia === 'function') {
+            cerrarModalEvaluacionCompetencia();
+        } else {
+            const modal = document.getElementById('modal-nueva-evaluacion');
+            if (modal) modal.style.display = 'none';
+        }
+    } catch (e) {
+        console.error('Error guardando configuración de competencia:', e);
+        alert('Error guardando configuración');
+    }
 }
 
 // Función para eliminar evaluación de competencia
