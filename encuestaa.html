@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Propuesta A - Integración de Encuesta en Sistema del Cliente</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="logchch.png" type="image/png" />
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .reporte-wrap {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 18px 16px 26px 16px;
+        }
+
+        .reporte-header {
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 14px;
+            background: #fff;
+            color: #2d3e50;
+            padding: 16px 18px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+            margin-bottom: 14px;
+        }
+
+        .reporte-header-top {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .reporte-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 280px;
+        }
+
+        .reporte-brand-logo {
+            width: 150px;
+            height: 76px;
+            border-radius: 0;
+            background: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            overflow: hidden;
+            flex: 0 0 auto;
+        }
+
+        .reporte-brand-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 0;
+            filter: drop-shadow(0 3px 10px rgba(0,0,0,0.22));
+        }
+
+        .reporte-title {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 900;
+            line-height: 1.15;
+        }
+
+        .reporte-subtitle {
+            margin: 3px 0 0 0;
+            color: #6c757d;
+            font-size: 12px;
+            line-height: 1.25;
+        }
+
+        .reporte-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(180px, 1fr));
+            gap: 10px 14px;
+            align-items: start;
+            justify-content: end;
+            min-width: 320px;
+        }
+
+        .reporte-meta-item {
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #2d3e50 0%, #1b2736 100%);
+            border: 1px solid rgba(255,255,255,0.16);
+        }
+
+        .reporte-meta-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.84);
+            font-weight: 800;
+            letter-spacing: 0.2px;
+            margin: 0 0 2px 0;
+        }
+
+        .reporte-meta-value {
+            font-size: 12px;
+            font-weight: 900;
+            margin: 0;
+            color: #fff;
+        }
+
+        .reporte-note {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            font-size: 12px;
+            line-height: 1.45;
+            color: #6c757d;
+        }
+
+        .reporte-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 12px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .card-body {
+            padding: 14px 14px 6px 14px;
+        }
+
+        .section-title {
+            margin: 0;
+            color: #2d3e50;
+            font-weight: 900;
+            font-size: 16px;
+        }
+
+        .muted {
+            color: #6c757d;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 760px;
+        }
+
+        thead th {
+            background: #0077cc;
+            color: #fff;
+            font-size: 12px;
+            letter-spacing: 0.2px;
+            text-align: left;
+            padding: 12px 14px;
+        }
+
+        tbody td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            vertical-align: top;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #eef4ff;
+            border: 1px solid #cfe2ff;
+            color: #1d4ed8;
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .block {
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 12px;
+            padding: 12px 14px;
+            background: #fff;
+            color: #2d3e50;
+            line-height: 1.7;
+        }
+
+        @page { margin: 18mm; }
+        @media print {
+            body { background: #fff !important; }
+            .no-print { display: none !important; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            a { color: inherit !important; text-decoration: none !important; }
+            p { break-inside: avoid; page-break-inside: avoid; }
+            h1, h2, h3 { break-after: avoid; page-break-after: avoid; }
+            p { orphans: 3; widows: 3; }
+        }
+    </style>
+</head>
+<body>
+    <div class="reporte-wrap">
+        <div class="reporte-header">
+            <div class="reporte-header-top">
+                <div class="reporte-brand">
+                    <div class="reporte-brand-logo">
+                        <img src="logch.png" alt="The Unknown Shopper">
+                    </div>
+                    <div>
+                        <h1 class="reporte-title">Propuesta A · Integración de Encuestas (QR por Encuestrador)</h1>
+                        <div class="reporte-subtitle">Implementación dentro del sistema/servidor del cliente</div>
+                    </div>
+                </div>
+
+                <div class="reporte-meta">
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Empresa</div>
+                        <div class="reporte-meta-value">Café La Cabaña</div>
+                    </div>
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Emisión</div>
+                        <div class="reporte-meta-value" id="fechaEmision">—</div>
+                    </div>
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Canal</div>
+                        <div class="reporte-meta-value">QR por encuestador</div>
+                    </div>
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Modalidad</div>
+                        <div class="reporte-meta-value">Integración (cliente)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reporte-actions no-print">
+                <a href="index.html" class="tab-btn" style="text-decoration:none; display:inline-block;">Volver al sistema</a>
+                <button class="tab-btn" onclick="window.print()" style="border-radius: 10px;">Descargar PDF</button>
+            </div>
+
+            <div class="reporte-note">
+                Este documento describe el alcance, requerimientos técnicos y condiciones para integrar el sistema de encuestas dentro del servidor/sistema del cliente. El objetivo es habilitar trazabilidad por sucursal y encuestador (mesero/cajero) conservando anonimato opcional para el cliente.
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card" style="grid-column: span 12;">
+                <div class="card-body">
+                    <h2 class="section-title">Alcance propuesto</h2>
+                    <div class="muted" style="margin-top: 6px;">
+                        Arranque previsto: <strong>16 sucursales</strong> + <strong>9 franquicias</strong> (25 unidades). La cantidad de encuestadores (meseros/cajeros) se confirmará posteriormente.
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 220px;">Componente</th>
+                                    <th>Incluye</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Encuesta optimizada</strong></td>
+                                    <td>CSAT 1–5, Atención 1–5, Tiempos 1–5, NPS 0–10, Comentario opcional y flujo condicional de contacto.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>QR por encuestador</strong></td>
+                                    <td>URL única por mesero/cajero con <span class="badge">sid</span> + <span class="badge">mid</span> + <span class="badge">k</span> (token).</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Trazabilidad</strong></td>
+                                    <td>Registro de sucursal, encuestador, fecha/hora y respuestas.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Privacidad</strong></td>
+                                    <td>Anonimato por defecto; nombre/teléfono opcionales. Contacto solo con consentimiento explícito.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Panel de resultados</strong></td>
+                                    <td>Dashboard y filtros por sucursal/encuestador/mes, listado de comentarios y casos con contacto aceptado.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="block" style="background:#f8fafc; margin-top: 10px;">
+                        <div style="font-weight: 900;">Glosario (alcance)</div>
+                        <div class="muted" style="margin-top: 6px;">
+                            <strong>CSAT:</strong> Customer Satisfaction Score. Escala de satisfacción (en esta propuesta 1–5).
+                            <br>
+                            <strong>NPS:</strong> Net Promoter Score. Pregunta “¿qué tan probable es que recomiendes?” (en esta propuesta 0–10).
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: span 12;">
+                <div class="card-body">
+                    <h2 class="section-title">Requerimientos de acceso (para implementar en su sistema)</h2>
+                    <div class="muted" style="margin-top: 6px;">
+                        Para avanzar se requiere acceso y visibilidad del flujo actual donde hoy vive la encuesta (mismo dominio donde apunta el QR actual).
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 280px;">Requerimiento</th>
+                                    <th>Detalle</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Acceso técnico al sitio</strong></td>
+                                    <td>Tipo de stack (WordPress / custom / etc.), URL del formulario actual y acceso a ambientes (staging/producción) si existen.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Repositorio o código</strong></td>
+                                    <td>Acceso a repositorio (Git) o entrega de código fuente (si aplica) para integrar el formulario y lógica de guardado.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Base de datos / almacenamiento</strong></td>
+                                    <td>Definir dónde quedarán las respuestas: DB del cliente, CRM, ERP o tabla específica; con estructura acordada.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Credenciales / llaves</strong></td>
+                                    <td>Si hay servicios externos (APIs, captcha, analítica), proveer credenciales temporales para desarrollo.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Contacto técnico</strong></td>
+                                    <td>Responsable del lado del cliente para validación de accesos, despliegues y pruebas.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Política de privacidad</strong></td>
+                                    <td>Texto de consentimiento para nombre/teléfono y canal de contacto (llamada/WhatsApp), con aprobación del cliente.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="block" style="background:#f8fafc; margin-top: 10px;">
+                        <div style="font-weight: 900;">Nota</div>
+                        <div class="muted" style="margin-top: 6px;">
+                            Si no se cuenta con acceso al código o no es posible modificar el sistema actual, se recomienda migrar a un módulo independiente (producto Unknown Shoppers). Esta propuesta es exclusivamente para la integración en su sistema.
+                        </div>
+                    </div>
+
+                    <div class="block" style="background:#f8fafc; margin-top: 10px;">
+                        <div style="font-weight: 900;">Glosario (requerimientos)</div>
+                        <div class="muted" style="margin-top: 6px;">
+                            <strong>CRM:</strong> sistema para administrar relación con clientes (contactos, seguimiento, incidencias).
+                            <br>
+                            <strong>ERP:</strong> sistema administrativo/operativo (ventas, inventarios, operaciones, reportes).
+                            <br>
+                            <strong>Staging:</strong> ambiente de prueba previo a producción.
+                            <br>
+                            <strong>Producción:</strong> ambiente en vivo usado por clientes.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: span 12;">
+                <div class="card-body">
+                    <h2 class="section-title">Definición de identificadores (sid / mid / token)</h2>
+                    <div class="muted" style="margin-top: 6px;">
+                        Para asegurar trazabilidad se usan parámetros en URL por QR.
+                    </div>
+
+                    <div class="block" style="background:#ffffff; margin-top: 10px;">
+                        <div style="font-weight: 900; margin-bottom: 6px;">Ejemplo de URL por encuestador</div>
+                        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 12px; color:#334155;">
+                            https://cafelacabana.com/encuesta?sid=altabrisa&mid=mesero-12&k=TOKEN
+                        </div>
+                        <div class="muted" style="margin-top: 8px;">
+                            <span class="badge">sid</span> Sucursal · <span class="badge">mid</span> Encuestador · <span class="badge">k</span> Token
+                        </div>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Campo</th>
+                                    <th style="width: 220px;">Responsable</th>
+                                    <th>Definición</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>sid</strong></td>
+                                    <td>Cliente / Unknown Shoppers</td>
+                                    <td>ID interno por sucursal/franquicia (ej. altabrisa, galerias).</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>mid</strong></td>
+                                    <td>Cliente / Unknown Shoppers</td>
+                                    <td>ID por encuestador (mesero/cajero). Puede ser un consecutivo o clave interna.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>k</strong></td>
+                                    <td>Unknown Shoppers</td>
+                                    <td>Token por encuestador para reducir manipulación manual del URL.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="block" style="background:#f8fafc; margin-top: 10px;">
+                        <div style="font-weight: 900;">Glosario (identificadores)</div>
+                        <div class="muted" style="margin-top: 6px;">
+                            <strong>sid:</strong> identificador de sucursal/franquicia en el enlace del QR.
+                            <br>
+                            <strong>mid:</strong> identificador del encuestador (mesero/cajero) en el enlace del QR.
+                            <br>
+                            <strong>Token (k):</strong> clave asociada al encuestador para reducir manipulación manual del URL.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: span 12;">
+                <div class="card-body">
+                    <h2 class="section-title">Tiempos de entrega (estimación)</h2>
+                    <div class="muted" style="margin-top: 6px;">
+                        El cronograma puede ajustarse según accesos y velocidad de validación del cliente.
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 220px;">Fase</th>
+                                    <th>Descripción</th>
+                                    <th style="width: 180px;">Tiempo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Fase 1 · Levantamiento</strong></td>
+                                    <td>Revisión del flujo actual, stack del sitio, definición de dónde se guardan respuestas y alcance final del panel.</td>
+                                    <td>2–4 días hábiles</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fase 2 · Implementación</strong></td>
+                                    <td>Integración del formulario, trazabilidad por QR (sid/mid/k), validaciones y guardado.</td>
+                                    <td>1–2 semanas</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fase 3 · Panel y despliegue</strong></td>
+                                    <td>Dashboard, filtros, exportables (si aplica), QA y salida a producción.</td>
+                                    <td>3–5 días hábiles</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="block" style="background:#f8fafc; margin-top: 10px;">
+                        <div style="font-weight: 900;">Glosario (tiempos)</div>
+                        <div class="muted" style="margin-top: 6px;">
+                            <strong>Día hábil:</strong> día laborable (normalmente lunes a viernes).
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: span 12;">
+                <div class="card-body">
+                    <h2 class="section-title">Propuesta económica (Opción A)</h2>
+                    <div class="muted" style="margin-top: 6px;">
+                        Monto sujeto a validación de accesos y stack del sistema. Incluye panel de resultados.
+                    </div>
+
+                    <div class="block" style="background:#f8fafc; margin-top: 10px;">
+                        <div><strong>Implementación base:</strong> $20,000 + IVA</div>
+                        <div><strong>Alta por encuestador (QR por persona):</strong> $120 + IVA c/u</div>
+                        <div><strong>Consumo:</strong> no aplica (encuesta)</div>
+                        <div><strong>Tiempo de entrega:</strong> 1–3 semanas (según accesos y validación)</div>
+                    </div>
+
+                    <div class="block" style="background:#f8fafc; margin-top: 10px;">
+                        <div style="font-weight: 900;">Glosario (costos)</div>
+                        <div class="muted" style="margin-top: 6px;">
+                            <strong>IVA:</strong> Impuesto al Valor Agregado (se suma al monto indicado).
+                        </div>
+                    </div>
+
+                    <div class="muted" style="margin-top: 10px;">
+                        Nota: la cantidad de encuestadores (meseros/cajeros) se confirmará. Este costo contempla la configuración y generación de QRs por encuestador.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 14px; text-align:center; color:#94a3b8; font-size: 12px;">
+            <a href="https://unknownshoppers.com" target="_blank" rel="noopener noreferrer" style="color:#94a3b8; text-decoration:none;">https://unknownshoppers.com</a>
+            <span id="footerStamp" style="margin-left: 10px;"></span>
+        </div>
+    </div>
+
+    <script>
+        function formatearFecha(fecha) {
+            try {
+                return new Intl.DateTimeFormat('es-MX', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: '2-digit'
+                }).format(fecha);
+            } catch (e) {
+                return '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const hoy = new Date();
+            const fecha = document.getElementById('fechaEmision');
+            if (fecha) fecha.textContent = formatearFecha(hoy);
+            const stamp = document.getElementById('footerStamp');
+            if (stamp) stamp.textContent = 'Generado: ' + hoy.toLocaleString();
+        });
+    </script>
+</body>
+</html>

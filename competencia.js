@@ -14,7 +14,7 @@ window.competencia = window.competencia || [
         id: 'starbucks',
         nombre: 'Starbucks',
         direccion: 'Ubicación por definir',
-        activa: true,
+        activa: false,
         fechaCreacion: new Date().toISOString()
     },
     {
@@ -25,24 +25,31 @@ window.competencia = window.competencia || [
         fechaCreacion: new Date().toISOString()
     },
     {
+        id: 'laut-communal',
+        nombre: 'LAUT COMMUNAL',
+        direccion: 'Ubicación por definir',
+        activa: true,
+        fechaCreacion: new Date().toISOString()
+    },
+    {
         id: 'cafe-laut',
         nombre: 'Café Laut',
         direccion: 'Ubicación por definir',
-        activa: true,
+        activa: false,
         fechaCreacion: new Date().toISOString()
     },
     {
         id: 'elementos',
         nombre: 'Elementos',
         direccion: 'Ubicación por definir',
-        activa: true,
+        activa: false,
         fechaCreacion: new Date().toISOString()
     },
     {
         id: 'cafeto',
         nombre: 'Cafeto',
         direccion: 'Ubicación por definir',
-        activa: true,
+        activa: false,
         fechaCreacion: new Date().toISOString()
     }
 ];

@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Propuesta - Encuesta QR por Mesero</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="logchch.png" type="image/png" />
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .reporte-wrap {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 18px 16px 26px 16px;
+        }
+
+        .reporte-header {
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 14px;
+            background: #fff;
+            color: #2d3e50;
+            padding: 16px 18px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+            margin-bottom: 14px;
+        }
+
+        .reporte-header-top {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .reporte-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 280px;
+        }
+
+        .reporte-brand-logo {
+            width: 150px;
+            height: 76px;
+            border-radius: 0;
+            background: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            overflow: hidden;
+            flex: 0 0 auto;
+        }
+
+        .reporte-brand-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 0;
+            filter: drop-shadow(0 3px 10px rgba(0,0,0,0.22));
+        }
+
+        .reporte-title {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 900;
+            line-height: 1.15;
+        }
+
+        .reporte-subtitle {
+            margin: 3px 0 0 0;
+            color: #6c757d;
+            font-size: 12px;
+            line-height: 1.25;
+        }
+
+        .reporte-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(180px, 1fr));
+            gap: 10px 14px;
+            align-items: start;
+            justify-content: end;
+            min-width: 320px;
+        }
+
+        .reporte-meta-item {
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #2d3e50 0%, #1b2736 100%);
+            border: 1px solid rgba(255,255,255,0.16);
+        }
+
+        .reporte-meta-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.84);
+            font-weight: 800;
+            letter-spacing: 0.2px;
+            margin: 0 0 2px 0;
+        }
+
+        .reporte-meta-value {
+            font-size: 12px;
+            font-weight: 900;
+            margin: 0;
+            color: #fff;
+        }
+
+        .reporte-note {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            font-size: 12px;
+            line-height: 1.45;
+            color: #6c757d;
+        }
+
+        .reporte-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 12px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .card-body {
+            padding: 14px 14px 6px 14px;
+        }
+
+        .section-title {
+            margin: 0;
+            color: #2d3e50;
+            font-weight: 900;
+            font-size: 16px;
+        }
+
+        .muted {
+            color: #6c757d;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+            font-size: 12px;
+            font-weight: 800;
+            margin-right: 6px;
+            margin-top: 6px;
+        }
+
+        .list {
+            margin: 10px 0 0 0;
+            padding-left: 18px;
+            color: #2d3e50;
+            line-height: 1.65;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 760px;
+        }
+
+        thead th {
+            background: #0077cc;
+            color: #fff;
+            font-size: 12px;
+            letter-spacing: 0.2px;
+            text-align: left;
+            padding: 12px 14px;
+        }
+
+        tbody td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            vertical-align: top;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #eef4ff;
+            border: 1px solid #cfe2ff;
+            color: #1d4ed8;
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        @page { margin: 18mm; }
+        @media print {
+            body { background: #fff !important; }
+            .no-print { display: none !important; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            a { color: inherit !important; text-decoration: none !important; }
+            p { break-inside: avoid; page-break-inside: avoid; }
+            h1, h2, h3 { break-after: avoid; page-break-after: avoid; }
+            p { orphans: 3; widows: 3; }
+        }
+    </style>
+</head>
+<body>
+    <div class="reporte-wrap">
+        <div class="reporte-header">
+            <div class="reporte-header-top">
+                <div class="reporte-brand">
+                    <div class="reporte-brand-logo">
+                        <img src="logch.png" alt="The Unknown Shopper">
+                    </div>
+                    <div>
+                        <h1 class="reporte-title">Propuesta · Encuesta de Cliente (QR por Mesero)</h1>
+                        <div class="reporte-subtitle">Optimización de cuestionario + trazabilidad por sucursal y mesero</div>
+                    </div>
+                </div>
+
+                <div class="reporte-meta">
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Empresa</div>
+                        <div class="reporte-meta-value">Café La Cabaña</div>
+                    </div>
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Emisión</div>
+                        <div class="reporte-meta-value" id="fechaEmision">—</div>
+                    </div>
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Canal</div>
+                        <div class="reporte-meta-value">QR en tienda</div>
+                    </div>
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Entrega</div>
+                        <div class="reporte-meta-value">Sistema CLC</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reporte-actions no-print">
+                <a href="index.html" class="tab-btn" style="text-decoration:none; display:inline-block;">Volver al sistema</a>
+                <button class="tab-btn" onclick="window.print()" style="border-radius: 10px;">Descargar PDF</button>
+            </div>
+
+            <div class="reporte-note">
+                Esta es una propuesta funcional de un nuevo sistema de encuestas. El objetivo es mejorar la calidad de la información y habilitar trazabilidad por sucursal y mesero sin perder la opción de anonimato para el cliente.
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card" style="grid-column: span 12;">
+                <div class="card-body">
+                    <h2 class="section-title">Objetivo del sistema</h2>
+                    <div class="muted" style="margin-top: 6px;">
+                        Contar con una encuesta más efectiva (breve y accionable) y que permita identificar:
+                        <span class="chip">Sucursal</span>
+                        <span class="chip">Mesero</span>
+                        <span class="chip">Fecha/Hora</span>
+                        <span class="chip">Incidentes</span>
+                        sin depender de captura manual del cliente.
+                    </div>
+
+                    <ul class="list">
+                        <li>Reducir fricción: encuesta corta (1 minuto aprox.).</li>
+                        <li>Incrementar confiabilidad: QR por mesero para trazar quién envió/compartió la encuesta.</li>
+                        <li>Habilitar respuesta inmediata: si se detecta mala experiencia, permitir solicitar contacto voluntario para atender el incidente.</li>
+                        <li>Centralizar resultados: entrega y consulta en el sistema CLC.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: span 12;">
+                <div class="card-body">
+                    <h2 class="section-title">Cómo funcionaría (flujo propuesto)</h2>
+                    <div class="muted" style="margin-top: 6px;">
+                        Se conserva el esquema de QR, pero se propone que exista un QR diferente por mesero (y por sucursal), de manera que el formulario reciba estos datos automáticamente.
+                    </div>
+
+                    <div style="margin-top: 10px; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 14px; background:#f8fafc; color:#2d3e50; line-height: 1.7;">
+                        <div style="font-weight: 900; margin-bottom: 6px;">Ejemplo de URL por QR</div>
+                        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 12px; color:#334155;">
+                            https://cafelacabana.com/encuesta?sid=altabrisa&mid=mesero-12&k=TOKEN
+                        </div>
+                        <div class="muted" style="margin-top: 8px;">
+                            <span class="badge">sid</span> Sucursal · <span class="badge">mid</span> Mesero · <span class="badge">k</span> Token
+                        </div>
+                    </div>
+
+                    <ul class="list">
+                        <li><strong>Cliente escanea QR</strong> (en mesa/mostrador o al entregar cuenta).</li>
+                        <li><strong>Formulario abre</strong> con sucursal/mesero precargados (no visibles o visibles solo como confirmación).</li>
+                        <li><strong>Cliente responde</strong> 4–7 preguntas (escala + comentario opcional).</li>
+                        <li>Si hay <strong>mala experiencia</strong>, se activa un paso opcional: “¿Deseas que te contactemos?” y si acepta, se solicita teléfono.</li>
+                        <li><strong>Resultados se guardan</strong> y se consultan dentro del sistema CLC (por sucursal, mesero, mes).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: span 12;">
+                <div class="card-body">
+                    <h2 class="section-title">Cuestionario propuesto (versión optimizada)</h2>
+                    <div class="muted" style="margin-top: 6px;">
+                        Cuestionario corto, comparativo y accionable. Se recomienda utilizar escalas consistentes para facilitar análisis.
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">Orden</th>
+                                    <th>Pregunta</th>
+                                    <th style="width: 160px;">Tipo</th>
+                                    <th style="width: 220px;">Propósito</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>1</strong></td>
+                                    <td>¿Qué tan satisfecho(a) quedaste con tu visita?</td>
+                                    <td>Escala 1–5</td>
+                                    <td>Indicador general (CSAT)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>2</strong></td>
+                                    <td>¿Cómo calificarías la atención del mesero/barista?</td>
+                                    <td>Escala 1–5</td>
+                                    <td>Medir servicio por persona</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>3</strong></td>
+                                    <td>¿Los tiempos de atención y entrega fueron adecuados?</td>
+                                    <td>Escala 1–5</td>
+                                    <td>Identificar fricciones operativas</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>4</strong></td>
+                                    <td>¿Qué tan probable es que nos recomiendes?</td>
+                                    <td>Escala 0–10</td>
+                                    <td>Indicador NPS</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>5</strong></td>
+                                    <td>Comentario breve (opcional): ¿Qué mejorarías o qué te gustó?</td>
+                                    <td>Texto (opcional)</td>
+                                    <td>Contexto cualitativo</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>6</strong></td>
+                                    <td>¿Deseas que te contactemos para dar seguimiento?</td>
+                                    <td>Si/No (condicional)</td>
+                                    <td>Recuperación de servicio</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>7</strong></td>
+                                    <td>Teléfono (solo si acepta contacto)</td>
+                                    <td>Teléfono (condicional)</td>
+                                    <td>Atención inmediata del incidente</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="muted" style="margin-top: 10px;">
+                        Nota: el nombre y teléfono se mantienen como opcionales. Si se detecta mala experiencia (por ejemplo CSAT ≤ 2 o Atención ≤ 2), se sugiere activar el paso de contacto con consentimiento del cliente.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: span 12;">
+                <div class="card-body">
+                    <h2 class="section-title">Datos que se capturarían (para trazabilidad)</h2>
+                    <div class="muted" style="margin-top: 6px;">
+                        La identificación de sucursal y mesero se obtiene desde el QR (parámetros de URL), no desde captura manual.
+                    </div>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Campo</th>
+                                    <th style="width: 180px;">Origen</th>
+                                    <th>Notas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>sucursalId</strong></td>
+                                    <td>QR (URL)</td>
+                                    <td>Identificador estándar interno</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>meseroId</strong></td>
+                                    <td>QR (URL)</td>
+                                    <td>Identificador del mesero (no necesariamente nombre completo)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>token</strong></td>
+                                    <td>QR (URL)</td>
+                                    <td>Control básico para evitar manipulación de URL</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>timestamp</strong></td>
+                                    <td>Sistema</td>
+                                    <td>Fecha/hora de envío</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>respuestas</strong></td>
+                                    <td>Cliente</td>
+                                    <td>CSAT, Atención, Tiempos, NPS, Comentario</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>contactoOptIn</strong></td>
+                                    <td>Cliente</td>
+                                    <td>Consentimiento explícito para contacto</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>telefono</strong></td>
+                                    <td>Cliente (condicional)</td>
+                                    <td>Solo si el cliente acepta y decide compartir</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: span 12;">
+                <div class="card-body">
+                    <h2 class="section-title">Privacidad y consentimiento</h2>
+                    <div class="muted" style="margin-top: 6px;">
+                        Se propone mantener anonimato opcional y pedir datos personales únicamente cuando exista consentimiento. La finalidad es mejorar el servicio y atender incidentes.
+                    </div>
+
+                    <ul class="list">
+                        <li>Por defecto, la encuesta es <strong>anónima</strong>.</li>
+                        <li>El cliente puede agregar <strong>nombre</strong> y <strong>teléfono</strong> de forma opcional.</li>
+                        <li>Si la experiencia fue mala, el sistema puede sugerir (sin obligar) que el cliente deje su contacto para seguimiento, siempre con <strong>aceptación explícita</strong>.</li>
+                        <li>Los datos se usan para recuperación de servicio y análisis; se sugiere definir un periodo de retención interno.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: span 12;">
+                <div class="card-body">
+                    <h2 class="section-title">Entregables en el sistema CLC (propuesto)</h2>
+                    <div class="muted" style="margin-top: 6px;">
+                        Los resultados se consultarían desde el sistema CLC con filtros y alertas.
+                    </div>
+
+                    <ul class="list">
+                        <li>Dashboard por mes: promedio CSAT, NPS, tiempos y atención.</li>
+                        <li>Filtro por <strong>sucursal</strong> y <strong>mesero</strong>.</li>
+                        <li>Listado de comentarios y casos que solicitaron contacto.</li>
+                        <li>Alertas (opcional): notificación cuando se detecte mala experiencia con contacto aceptado.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: span 12;">
+                <div class="card-body">
+                    <h2 class="section-title">Propuesta económica (2 modalidades de implementación)</h2>
+                    <div class="muted" style="margin-top: 6px;">
+                        Alcance considerado para arranque: <strong>16 sucursales</strong> + <strong>9 franquicias</strong> (25 unidades). La cantidad de encuestadores (meseros/cajeros) se confirmará; por ello se propone un costo base + costo por alta de encuestador (QR por persona). En ambas modalidades se incluye el <strong>panel de resultados</strong>.
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 12px;">
+                        <div style="border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 14px; background:#ffffff;">
+                            <div style="font-weight: 900; color:#2d3e50; margin-bottom: 6px;">A) Integración al sistema actual del cliente</div>
+                            <div class="muted">Implementación en <strong>cafelacabana.com</strong> (intervención del sistema existente) y entrega de resultados en el canal acordado con el cliente.</div>
+                            <div style="margin-top: 10px; color:#2d3e50; line-height: 1.7;">
+                                <div><strong>Implementación base:</strong> $20,000 + IVA</div>
+                                <div><strong>Alta por encuestador (QR por persona):</strong> $120 + IVA c/u</div>
+                                <div><strong>Panel de resultados:</strong> incluido</div>
+                                <div style="margin-top: 8px; font-size: 12px; color:#64748b;">Requiere accesos técnicos y validación del flujo actual de encuestas del sitio.</div>
+                            </div>
+                        </div>
+
+                        <div style="border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 14px; background:#f8fafc;">
+                            <div style="font-weight: 900; color:#2d3e50; margin-bottom: 6px;">B) Producto Unknown Shoppers (módulo en CLC)</div>
+                            <div class="muted">Implementación como producto propio, recibiendo encuestas y mostrando reportes en <strong>https://clclc-24987.web.app/</strong>.</div>
+                            <div style="margin-top: 10px; color:#2d3e50; line-height: 1.7;">
+                                <div><strong>Implementación base:</strong> $15,000 + IVA</div>
+                                <div><strong>Alta por encuestador (QR por persona):</strong> $80 + IVA c/u</div>
+                                <div><strong>Panel de resultados:</strong> incluido</div>
+                                <div><strong>Soporte/hosting (opcional):</strong> $1,500 + IVA / mes</div>
+                                <div style="margin-top: 8px; font-size: 12px; color:#64748b;">Permite estandarizar operación, reportes y trazabilidad, sin depender del sistema del cliente.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="muted" style="margin-top: 10px;">
+                        Nota: los montos pueden ajustarse tras confirmar número de encuestadores y validar el alcance final (método de autenticación por QR/token, reglas de privacidad, y esquema de alertas/seguimiento).
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 14px; text-align:center; color:#94a3b8; font-size: 12px;">
+            <a href="https://unknownshoppers.com" target="_blank" rel="noopener noreferrer" style="color:#94a3b8; text-decoration:none;">https://unknownshoppers.com</a>
+            <span id="footerStamp" style="margin-left: 10px;"></span>
+        </div>
+    </div>
+
+    <script>
+        function formatearFecha(fecha) {
+            try {
+                return new Intl.DateTimeFormat('es-MX', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: '2-digit'
+                }).format(fecha);
+            } catch (e) {
+                return '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const hoy = new Date();
+            const fecha = document.getElementById('fechaEmision');
+            if (fecha) fecha.textContent = formatearFecha(hoy);
+            const stamp = document.getElementById('footerStamp');
+            if (stamp) stamp.textContent = 'Generado: ' + hoy.toLocaleString();
+        });
+    </script>
+</body>
+</html>
