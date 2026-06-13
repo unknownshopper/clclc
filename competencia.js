@@ -63,6 +63,59 @@ window.parametrosExcluidosPorCompetencia = {
 // Configuración (por competidor) para ocultar/mostrar parámetros y asignar ponderancias
 window.competenciaConfig = window.competenciaConfig || {};
 
+function obtenerCompetidoresEliminados() {
+    try {
+        const raw = localStorage.getItem('competidoresEliminados');
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        console.warn('No se pudo cargar competidoresEliminados desde localStorage:', e);
+        return [];
+    }
+}
+
+function guardarCompetidoresEliminados(ids) {
+    try {
+        localStorage.setItem('competidoresEliminados', JSON.stringify(Array.isArray(ids) ? ids : []));
+    } catch (e) {
+        console.warn('No se pudo guardar competidoresEliminados en localStorage:', e);
+    }
+}
+
+function cargarCompetidoresDesdeStorage() {
+    try {
+        const eliminados = obtenerCompetidoresEliminados();
+        if (eliminados.length) {
+            window.competencia = window.competencia.filter(c => !eliminados.includes(c.id));
+        }
+
+        const raw = localStorage.getItem('competidoresPersonalizados');
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return;
+        parsed.forEach(competidor => {
+            if (!competidor || !competidor.id || eliminados.includes(competidor.id)) return;
+            const existente = window.competencia.find(c => c.id === competidor.id);
+            if (existente) {
+                Object.assign(existente, competidor);
+            } else {
+                window.competencia.push(competidor);
+            }
+        });
+    } catch (e) {
+        console.warn('No se pudo cargar competidoresPersonalizados desde localStorage:', e);
+    }
+}
+
+function guardarCompetidoresEnStorage() {
+    try {
+        const personalizados = window.competencia.filter(c => c && c.personalizado);
+        localStorage.setItem('competidoresPersonalizados', JSON.stringify(personalizados));
+    } catch (e) {
+        console.warn('No se pudo guardar competidoresPersonalizados en localStorage:', e);
+    }
+}
+
 function cargarCompetenciaConfigDesdeStorage() {
     try {
         const raw = localStorage.getItem('competenciaConfig');
@@ -97,8 +150,68 @@ function puedeConfigurarCompetencia() {
     }
 }
 
+function puedeAdministrarCompetencia() {
+    try {
+        return !!(typeof tienePermiso === 'function' && tienePermiso('editar'));
+    } catch (e) {
+        return false;
+    }
+}
+
+function obtenerYoutubeCompetencia(competidorId, mes = window.mesSeleccionado) {
+    const cfg = window.competenciaConfig && window.competenciaConfig[competidorId] ? window.competenciaConfig[competidorId] : null;
+    if (!cfg || !cfg.youtubeLinks || !mes) return '';
+    return cfg.youtubeLinks[mes] || '';
+}
+
+function agregarEnlaceYoutubeCompetencia(competidorId) {
+    if (!puedeAdministrarCompetencia()) {
+        alert('No tiene permisos para configurar competencia');
+        return;
+    }
+
+    const competidor = window.competencia.find(c => c.id === competidorId);
+    if (!competidor) {
+        alert('Error: Competidor no encontrado');
+        return;
+    }
+
+    const mes = window.mesSeleccionado;
+    const urlActual = obtenerYoutubeCompetencia(competidorId, mes);
+    let videoUrl = prompt(`Agregar enlace de YouTube para ${competidor.nombre} (${formatearMesLegible(mes)}):`, urlActual) || '';
+    videoUrl = videoUrl.trim();
+    if (!videoUrl) return;
+
+    window.competenciaConfig[competidorId] = window.competenciaConfig[competidorId] || { ocultos: [], pesos: {} };
+    window.competenciaConfig[competidorId].youtubeLinks = window.competenciaConfig[competidorId].youtubeLinks || {};
+    window.competenciaConfig[competidorId].youtubeLinks[mes] = videoUrl;
+    guardarCompetenciaConfigEnStorage();
+
+    alert('Enlace de YouTube guardado correctamente.');
+    if (window.vistaActual === 'competencia') {
+        renderCompetencia();
+    }
+}
+
+function renderBotonYoutubeCompetencia(competidorId) {
+    const tieneVideo = !!obtenerYoutubeCompetencia(competidorId);
+    return `
+        <button type="button" onclick="agregarEnlaceYoutubeCompetencia('${competidorId}')" 
+                class="btn btn-danger btn-sm">
+            <i class="fab fa-youtube"></i> ${tieneVideo ? 'Editar YouTube' : 'Agregar YouTube'}
+        </button>
+        ${tieneVideo ? `
+            <button type="button" onclick="verVideo('${competidorId}', 'competencia')" 
+                    class="btn btn-info btn-sm">
+                <i class="fas fa-play"></i> Ver YouTube
+            </button>
+        ` : ''}
+    `;
+}
+
 if (typeof window !== 'undefined') {
     try {
+        cargarCompetidoresDesdeStorage();
         cargarCompetenciaConfigDesdeStorage();
     } catch (e) {
         console.warn('Init competenciaConfig error:', e);
@@ -189,7 +302,10 @@ function renderCompetencia() {
     const evaluacionesCompetencia = obtenerEvaluacionesCompetencia(window.mesSeleccionado);
     const todasHistoricas = obtenerTodasEvaluacionesCompetencia();
     
-    window.competencia.filter(comp => comp.activa).forEach(competidor => {
+    const competidoresActivos = window.competencia.filter(comp => comp.activa);
+    const competidoresInactivos = window.competencia.filter(comp => !comp.activa);
+
+    competidoresActivos.forEach(competidor => {
         const evaluacionMes = evaluacionesCompetencia.find(ev => ev.entidadId === competidor.id);
         const ultima = getUltimaEvaluacionPorCompetidor(competidor.id);
 
@@ -224,18 +340,17 @@ function renderCompetencia() {
                 </div>
                 
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    ${evaluacion ? `
-                        <button onclick="verEvaluacionCompetencia('${competidor.id}')" 
-                                class="btn btn-info btn-sm">
-                            <i class="fas fa-eye"></i> Ver
-                        </button>
-                    ` : ''}
+                    <button onclick="verEvaluacionCompetencia('${competidor.id}')" 
+                            class="btn btn-info btn-sm">
+                        <i class="fas fa-eye"></i> Ver
+                    </button>
                     
-                    ${puedeConfigurarCompetencia() ? `
+                    ${puedeAdministrarCompetencia() ? `
                         <button onclick="editarCompetidor('${competidor.id}')" 
                                 class="btn btn-warning btn-sm">
                             <i class="fas fa-edit"></i> Editar
                         </button>
+                        ${renderBotonYoutubeCompetencia(competidor.id)}
                         ${evaluacion ? `
                             <button onclick="editarEvaluacionCompetencia('${competidor.id}')" 
                                     class="btn btn-primary btn-sm">
@@ -247,6 +362,12 @@ function renderCompetencia() {
                                 <i class="fas fa-plus"></i> Evaluar
                             </button>
                         `}
+                    ` : ''}
+                    ${!puedeAdministrarCompetencia() && obtenerYoutubeCompetencia(competidor.id) ? `
+                        <button type="button" onclick="verVideo('${competidor.id}', 'competencia')" 
+                                class="btn btn-info btn-sm">
+                            <i class="fas fa-play"></i> Ver YouTube
+                        </button>
                     ` : ''}
                     
                     ${tienePermiso('eliminar') && evaluacion ? `
@@ -262,6 +383,29 @@ function renderCompetencia() {
     
     html += `
         </div>
+        ${puedeAdministrarCompetencia() && competidoresInactivos.length ? `
+            <div style="margin-top: 18px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">
+                <h3 style="margin: 0 0 12px 0; color: #334155;">Competidores antiguos / inactivos</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px;">
+                    ${competidoresInactivos.map(competidor => `
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0;">
+                            <div>
+                                <strong style="color: #1f2937;">${competidor.nombre}</strong>
+                                <div style="font-size: 12px; color: #64748b;">${competidor.direccion || 'Ubicación por definir'}</div>
+                            </div>
+                            <div style="display:flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
+                                <button type="button" onclick="reactivarCompetidor('${competidor.id}')" class="btn btn-success btn-sm">
+                                    <i class="fas fa-plus"></i> Activar
+                                </button>
+                                <button type="button" onclick="eliminarCompetidorInactivo('${competidor.id}')" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        ` : ''}
         
         <!-- Estadísticas de competencia -->
         <div style="margin-top: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -390,24 +534,26 @@ function generarEstadisticasCompetencia() {
 
 // Función para abrir modal de nuevo competidor
 function abrirModalNuevoCompetidor() {
+    cerrarModalNuevoCompetidor();
+
     const modalHtml = `
-        <div class="modal" id="modalNuevoCompetidor" style="display: block;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Nuevo Competidor</h2>
-                    <span class="close" onclick="cerrarModalNuevoCompetidor()">&times;</span>
+        <div class="modal" id="modalNuevoCompetidor" style="display: flex; position: fixed; inset: 0; z-index: 10000; background: rgba(30, 41, 59, 0.45); align-items: center; justify-content: center; padding: 20px;">
+            <div class="modal-content" style="background: #fff; width: 100%; max-width: 520px; border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,0.25); overflow: hidden;">
+                <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #e5e7eb;">
+                    <h2 style="margin: 0; color: #1f2937;">Nuevo Competidor</h2>
+                    <button type="button" onclick="cerrarModalNuevoCompetidor()" style="background: none; border: none; font-size: 26px; line-height: 1; cursor: pointer; color: #64748b;">&times;</button>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="nombreCompetidor">Nombre del Competidor:</label>
-                        <input type="text" id="nombreCompetidor" class="form-control" placeholder="Ej: McDonald's">
+                <div class="modal-body" style="padding: 20px;">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="nombreCompetidor" style="display: block; margin-bottom: 6px; font-weight: 600; color: #334155;">Nombre del Competidor:</label>
+                        <input type="text" id="nombreCompetidor" class="form-control" placeholder="Ej: McDonald's" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
                     </div>
-                    <div class="form-group">
-                        <label for="direccionCompetidor">Dirección/Ubicación:</label>
-                        <input type="text" id="direccionCompetidor" class="form-control" placeholder="Ej: Plaza Central">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="direccionCompetidor" style="display: block; margin-bottom: 6px; font-weight: 600; color: #334155;">Dirección/Ubicación:</label>
+                        <input type="text" id="direccionCompetidor" class="form-control" placeholder="Ej: Plaza Central" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid #e5e7eb;">
                     <button onclick="guardarNuevoCompetidor()" class="btn btn-primary">Guardar</button>
                     <button onclick="cerrarModalNuevoCompetidor()" class="btn btn-secondary">Cancelar</button>
                 </div>
@@ -416,6 +562,8 @@ function abrirModalNuevoCompetidor() {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const inputNombre = document.getElementById('nombreCompetidor');
+    if (inputNombre) inputNombre.focus();
 }
 
 // Función para cerrar modal de nuevo competidor
@@ -443,8 +591,25 @@ function guardarNuevoCompetidor() {
         .substring(0, 20);
     
     // Verificar que no exista
-    if (window.competencia.find(c => c.id === id)) {
-        alert('Ya existe un competidor con ese nombre');
+    const existente = window.competencia.find(c => c.id === id);
+    if (existente && existente.activa) {
+        alert('Ya existe un competidor activo con ese nombre');
+        return;
+    }
+
+    if (existente && !existente.activa) {
+        existente.activa = true;
+        existente.direccion = direccion || existente.direccion || 'Ubicación por definir';
+        existente.personalizado = true;
+        const eliminados = obtenerCompetidoresEliminados().filter(eliminadoId => eliminadoId !== id);
+        guardarCompetidoresEliminados(eliminados);
+        guardarCompetidoresEnStorage();
+        window.evaluaciones = window.evaluaciones || {};
+        window.evaluaciones.competencia = window.evaluaciones.competencia || {};
+        window.evaluaciones.competencia[id] = window.evaluaciones.competencia[id] || {};
+        alert(`Competidor "${existente.nombre}" reactivado exitosamente`);
+        cerrarModalNuevoCompetidor();
+        renderCompetencia();
         return;
     }
     
@@ -454,12 +619,18 @@ function guardarNuevoCompetidor() {
         nombre: nombre,
         direccion: direccion || 'Ubicación por definir',
         activa: true,
+        personalizado: true,
         fechaCreacion: new Date().toISOString()
     };
     
     window.competencia.push(nuevoCompetidor);
+    const eliminados = obtenerCompetidoresEliminados().filter(eliminadoId => eliminadoId !== id);
+    guardarCompetidoresEliminados(eliminados);
+    guardarCompetidoresEnStorage();
     
     // Inicializar estructura de evaluaciones
+    window.evaluaciones = window.evaluaciones || {};
+    window.evaluaciones.competencia = window.evaluaciones.competencia || {};
     if (!window.evaluaciones.competencia[id]) {
         window.evaluaciones.competencia[id] = {};
     }
@@ -472,6 +643,67 @@ function guardarNuevoCompetidor() {
     
     alert(`Competidor "${nombre}" agregado exitosamente`);
     cerrarModalNuevoCompetidor();
+    renderCompetencia();
+}
+
+function reactivarCompetidor(competidorId) {
+    if (!puedeAdministrarCompetencia()) {
+        alert('No tiene permisos para configurar competencia');
+        return;
+    }
+
+    const competidor = window.competencia.find(c => c.id === competidorId);
+    if (!competidor) {
+        alert('Error: Competidor no encontrado');
+        return;
+    }
+
+    competidor.activa = true;
+    competidor.personalizado = true;
+    const eliminados = obtenerCompetidoresEliminados().filter(eliminadoId => eliminadoId !== competidorId);
+    guardarCompetidoresEliminados(eliminados);
+    guardarCompetidoresEnStorage();
+    renderCompetencia();
+}
+
+function eliminarCompetidorInactivo(competidorId) {
+    if (!puedeAdministrarCompetencia()) {
+        alert('No tiene permisos para configurar competencia');
+        return;
+    }
+
+    const competidor = window.competencia.find(c => c.id === competidorId);
+    if (!competidor) {
+        alert('Error: Competidor no encontrado');
+        return;
+    }
+
+    if (competidor.activa) {
+        alert('Solo se pueden eliminar competidores inactivos desde esta lista');
+        return;
+    }
+
+    const confirmar = confirm(`¿Eliminar definitivamente a "${competidor.nombre}" de competidores antiguos/inactivos?`);
+    if (!confirmar) return;
+
+    window.competencia = window.competencia.filter(c => c.id !== competidorId);
+    const eliminados = obtenerCompetidoresEliminados();
+    if (!eliminados.includes(competidorId)) {
+        eliminados.push(competidorId);
+        guardarCompetidoresEliminados(eliminados);
+    }
+    if (window.competenciaConfig && window.competenciaConfig[competidorId]) {
+        delete window.competenciaConfig[competidorId];
+        guardarCompetenciaConfigEnStorage();
+    }
+    if (window.parametrosExcluidosPorCompetencia && window.parametrosExcluidosPorCompetencia[competidorId]) {
+        delete window.parametrosExcluidosPorCompetencia[competidorId];
+    }
+    if (window.evaluaciones && window.evaluaciones.competencia && window.evaluaciones.competencia[competidorId]) {
+        delete window.evaluaciones.competencia[competidorId];
+    }
+
+    guardarCompetidoresEnStorage();
     renderCompetencia();
 }
 
@@ -530,6 +762,15 @@ function abrirModalEvaluacionCompetencia(competidorId = null) {
         modalTitle.textContent = `Evaluar Competencia - ${competidor.nombre}`;
     }
     
+    if (puedeAdministrarCompetencia()) {
+        parametrosContainer.innerHTML = `
+            <div style="margin-bottom: 15px; padding: 10px; background: #fff5f5; border: 1px solid rgba(220,53,69,0.25); border-radius: 6px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <span style="font-size: 13px; color: #475569; font-weight: 600;">Video de la empresa:</span>
+                ${renderBotonYoutubeCompetencia(competidorId)}
+            </div>
+        `;
+    }
+
     // Cargar parámetros usando el formato de cafeterías
     cargarParametrosParaCompetencia(competidorId);
     
@@ -539,6 +780,10 @@ function abrirModalEvaluacionCompetencia(competidorId = null) {
 
 // Función para cargar parámetros usando el formato de cafeterías
 function cargarParametrosParaCompetencia(competidorId) {
+    return cargarParametrosParaCompetenciaConOpciones(competidorId);
+}
+
+function cargarParametrosParaCompetenciaConOpciones(competidorId, opciones = {}) {
     const parametrosContainer = document.getElementById('parametros-evaluacion-container');
     const totalPuntosDiv = document.getElementById('total-puntos-evaluacion');
     const btnGuardar = document.getElementById('btn-guardar-evaluacion');
@@ -587,21 +832,26 @@ function cargarParametrosParaCompetencia(competidorId) {
     console.log(`Parámetros aplicables para competencia: ${parametrosAplicables.length}`);
     
     // Usar exactamente el mismo formato que el sistema de cafeterías
-    let html = '<div style="max-height: 400px; overflow-y: auto; margin: 10px 0;">';
+    const readOnly = !!opciones.readOnly;
+    const valores = (opciones && opciones.valores && typeof opciones.valores === 'object') ? opciones.valores : null;
+    let html = parametrosContainer.innerHTML || '';
+    html += '<div style="max-height: 400px; overflow-y: auto; margin: 10px 0;">';
     
-    // Agregar botón "Seleccionar Todo" igual que en cafeterías
-    html += `
-        <div style="margin-bottom: 15px; padding: 10px; background: #f0f8ff; border: 1px solid #0077cc; border-radius: 5px; text-align: center; position: relative; cursor: help;" 
-               title="Marcar/desmarcar todos los parámetros">
-            <button id="btn-seleccionar-todo" onclick="toggleSeleccionarTodo()" 
-                    style="background: #0077cc; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                ✓ Seleccionar Todo
-            </button>
-            <span style="margin-left: 10px; font-size: 12px; color: #666;">
-                Marca/desmarca todos los parámetros
-            </span>
-        </div>
-    `;
+    if (!readOnly) {
+        // Agregar botón "Seleccionar Todo" igual que en cafeterías
+        html += `
+            <div style="margin-bottom: 15px; padding: 10px; background: #f0f8ff; border: 1px solid #0077cc; border-radius: 5px; text-align: center; position: relative; cursor: help;" 
+                   title="Marcar/desmarcar todos los parámetros">
+                <button id="btn-seleccionar-todo" onclick="toggleSeleccionarTodo()" 
+                        style="background: #0077cc; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    ✓ Seleccionar Todo
+                </button>
+                <span style="margin-left: 10px; font-size: 12px; color: #666;">
+                    Marca/desmarca todos los parámetros
+                </span>
+            </div>
+        `;
+    }
     
     // Agrupar por categoría igual que en cafeterías
     const categorias = {};
@@ -626,6 +876,7 @@ function cargarParametrosParaCompetencia(competidorId) {
         `;
         
         categoria.forEach(param => {
+            const marcado = valores ? !!valores[String(param.id)] : false;
             html += `
                 <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f9f9f9; border-radius: 4px;">
                     <div style="flex: 1; display: flex; align-items: center;">
@@ -642,7 +893,8 @@ function cargarParametrosParaCompetencia(competidorId) {
                                id="param-${param.id}" 
                                data-peso="${param.peso}"
                                style="width: 18px; height: 18px; margin-right: 8px; cursor: pointer;"
-                               onchange="actualizarTotalPuntos()">
+                               ${marcado ? 'checked' : ''}
+                               ${readOnly ? 'disabled' : 'onchange="actualizarTotalPuntos()"'}>
                         <span style="font-size: 14px; color: #0077cc; font-weight: bold;">${param.peso} pts</span>
                     </div>
                 </div>
@@ -657,26 +909,73 @@ function cargarParametrosParaCompetencia(competidorId) {
     
     parametrosContainer.innerHTML = html;
     
-    // Calcular total inicial usando la función del sistema
-    if (typeof actualizarTotalPuntos === 'function') {
-        actualizarTotalPuntos();
+    if (!readOnly) {
+        // Calcular total inicial usando la función del sistema
+        if (typeof actualizarTotalPuntos === 'function') {
+            actualizarTotalPuntos();
+        }
+
+        // Mostrar botón guardar y configurar para competencia
+        btnGuardar.style.display = 'block';
+        btnGuardar.textContent = 'Guardar Evaluación de Competencia';
+        btnGuardar.onclick = () => guardarEvaluacionCompetencia(competidorId);
+    } else {
+        btnGuardar.style.display = 'none';
+        if (totalPuntosDiv) totalPuntosDiv.textContent = '';
     }
-    
-    // Mostrar botón guardar y configurar para competencia
-    btnGuardar.style.display = 'block';
-    btnGuardar.textContent = 'Guardar Evaluación de Competencia';
-    btnGuardar.onclick = () => guardarEvaluacionCompetencia(competidorId);
 }
 
 // Función para ver evaluación de competencia
 function verEvaluacionCompetencia(competidorId) {
     console.log('Ver evaluación de competencia:', competidorId);
-    alert('Funcionalidad de visualización en desarrollo');
+
+    if (!competidorId) {
+        alert('Error: ID de competidor no especificado');
+        return;
+    }
+
+    const competidor = window.competencia.find(c => c.id === competidorId);
+    if (!competidor) {
+        alert('Error: Competidor no encontrado');
+        return;
+    }
+
+    const modal = document.getElementById('modal-nueva-evaluacion');
+    const selectEntidad = document.getElementById('select-entidad-evaluacion');
+    const parametrosContainer = document.getElementById('parametros-evaluacion-container');
+    const totalPuntosDiv = document.getElementById('total-puntos-evaluacion');
+    const btnGuardar = document.getElementById('btn-guardar-evaluacion');
+
+    if (!modal || !parametrosContainer || !btnGuardar) {
+        alert('Error: Modal de evaluación no encontrado');
+        return;
+    }
+
+    const labelEntidad = document.querySelector('label[for="select-entidad-evaluacion"]');
+    if (labelEntidad) labelEntidad.style.display = 'none';
+    if (selectEntidad) selectEntidad.style.display = 'none';
+
+    const modalTitle = document.querySelector('#modal-nueva-evaluacion h2');
+    if (modalTitle) {
+        modalTitle.textContent = `Ver Competencia - ${competidor.nombre}`;
+    }
+
+    if (totalPuntosDiv) totalPuntosDiv.textContent = '';
+    btnGuardar.style.display = 'none';
+
+    // Tomar evaluación del mes seleccionado; si no existe, mostrar vacía
+    const evalMes = window.evaluaciones && window.evaluaciones.competencia && window.evaluaciones.competencia[competidorId]
+        ? window.evaluaciones.competencia[competidorId][window.mesSeleccionado]
+        : null;
+    const valores = evalMes && evalMes.parametros ? evalMes.parametros : null;
+
+    cargarParametrosParaCompetenciaConOpciones(competidorId, { readOnly: true, valores });
+    modal.style.display = 'flex';
 }
 
 // Función para editar competidor
 function editarCompetidor(competidorId) {
-    if (!puedeConfigurarCompetencia()) {
+    if (!puedeAdministrarCompetencia()) {
         alert('No tiene permisos para configurar competencia');
         return;
     }
@@ -736,12 +1035,17 @@ function abrirModalConfigCompetencia(competidorId) {
     let html = '<div style="max-height: 420px; overflow-y: auto; margin: 10px 0;">';
     html += `
         <div style="margin-bottom: 15px; padding: 10px; background: #f8fafc; border: 1px solid rgba(0,0,0,0.08); border-radius: 6px;">
+            <div style="margin-bottom: 12px;">
+                <label for="config-direccion-competidor" style="display:block; margin-bottom:6px; font-weight:700; color:#334155;">Ubicación/Dirección:</label>
+                <input type="text" id="config-direccion-competidor" value="${competidor.direccion || ''}" placeholder="Ubicación por definir" style="width:100%; box-sizing:border-box; padding: 9px 10px; border:1px solid #cbd5e1; border-radius:8px;">
+            </div>
             <div style="font-size: 12px; color: #475569; line-height: 1.4;">
                 Usa esta pantalla para <strong>ocultar/mostrar</strong> parámetros en la evaluación de competencia y para <strong>asignar ponderancias</strong>.
             </div>
             <div style="margin-top: 10px; display:flex; gap:10px; flex-wrap:wrap;">
                 <button type="button" class="btn btn-info btn-sm" onclick="configCompetenciaMostrarTodos()">Mostrar todos</button>
                 <button type="button" class="btn btn-warning btn-sm" onclick="configCompetenciaOcultarTodos()">Ocultar todos</button>
+                ${renderBotonYoutubeCompetencia(competidorId)}
             </div>
         </div>
     `;
@@ -805,12 +1109,26 @@ function configCompetenciaOcultarTodos() {
 }
 
 function guardarConfigCompetencia(competidorId) {
-    if (!puedeConfigurarCompetencia()) {
+    if (!puedeAdministrarCompetencia()) {
         alert('No tiene permisos para configurar competencia');
         return;
     }
     try {
-        const cfg = { ocultos: [], pesos: {} };
+        const competidor = window.competencia.find(c => c.id === competidorId);
+        if (!competidor) {
+            alert('Error: Competidor no encontrado');
+            return;
+        }
+
+        const inputDireccion = document.getElementById('config-direccion-competidor');
+        if (inputDireccion) {
+            competidor.direccion = inputDireccion.value.trim() || 'Ubicación por definir';
+            competidor.personalizado = true;
+            guardarCompetidoresEnStorage();
+        }
+
+        const cfgActual = window.competenciaConfig[competidorId] || {};
+        const cfg = { ocultos: [], pesos: {}, youtubeLinks: cfgActual.youtubeLinks || {} };
         const params = window.parametros ? window.parametros.slice() : [];
 
         params.forEach(param => {
@@ -842,6 +1160,10 @@ function guardarConfigCompetencia(competidorId) {
         } else {
             const modal = document.getElementById('modal-nueva-evaluacion');
             if (modal) modal.style.display = 'none';
+        }
+
+        if (window.vistaActual === 'competencia') {
+            renderCompetencia();
         }
     } catch (e) {
         console.error('Error guardando configuración de competencia:', e);

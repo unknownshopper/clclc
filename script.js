@@ -2846,9 +2846,11 @@ function eliminarEvaluacion(entidadId, tipo) {
 function verVideo(entidadId, tipo) {
     console.log(`Ver video: ${entidadId} (${tipo})`);
 
-    const entidad = tipo === 'sucursal' ? 
-        window.sucursales.find(s => s.id === entidadId)
-        : window.franquicias.find(f => f.id === entidadId);
+    const entidad = tipo === 'sucursal'
+        ? window.sucursales.find(s => s.id === entidadId)
+        : tipo === 'competencia'
+            ? window.competencia.find(c => c.id === entidadId)
+            : window.franquicias.find(f => f.id === entidadId);
     const nombreEntidad = entidad ? entidad.nombre : entidadId;
 
     const mes = window.mesSeleccionado;
@@ -2856,7 +2858,8 @@ function verVideo(entidadId, tipo) {
     const urlLocal = evalActual && evalActual.videoUrl ? evalActual.videoUrl : null;
     const linksMes = window.videoLinks?.[mes] || {};
     const urlMapeada = linksMes[entidadId];
-    const urlOriginal = urlLocal || urlMapeada;
+    const urlCompetencia = tipo === 'competencia' && typeof obtenerYoutubeCompetencia === 'function' ? obtenerYoutubeCompetencia(entidadId, mes) : null;
+    const urlOriginal = urlLocal || urlCompetencia || urlMapeada;
 
     // Helper local para construir URL de embed de YouTube sin controles
     const construirYouTubeEmbed = (url) => {

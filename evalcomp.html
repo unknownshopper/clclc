@@ -75,11 +75,17 @@
 
         .reporte-meta {
             display: grid;
-            grid-template-columns: repeat(2, minmax(180px, 1fr));
+            grid-template-columns: repeat(4, minmax(160px, 1fr));
             gap: 10px 14px;
             align-items: start;
             justify-content: end;
             min-width: 320px;
+        }
+
+        @media (max-width: 980px) {
+            .reporte-meta {
+                grid-template-columns: repeat(2, minmax(180px, 1fr));
+            }
         }
 
         .reporte-meta-item {
@@ -250,21 +256,16 @@
         <div class="card">
             <div class="card-body">
                 <div style="color:#2d3e50; line-height: 1.65; margin-bottom: 12px;">
-                    Este documento funciona como guía de referencia para el reporte de competencia: detalla los puntos de evaluación, su peso (ponderancia) y el porqué de cada uno. La intención es asegurar que las visitas a competidores se midan con un criterio homogéneo, comparable y accionable, enfocándose en ejecución comercial, tiempos y experiencia del cliente. Con base en este documento se autoriza el levantamiento de visitas a las marcas listadas.
+                    Guía de referencia para el reporte de competencia: parámetros, ponderancias y justificación. Con base en este documento se autoriza el levantamiento de visitas a las marcas listadas.
                 </div>
 
                 <div style="display:grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px;">
                     <div style="border: 1px solid rgba(0,0,0,0.08); background: #ffffff; border-radius: 12px; padding: 12px 14px;">
                         <div style="font-weight: 900; color:#2d3e50; margin-bottom: 6px;">Marcas propuestas (competencia)</div>
                         <div style="color:#2d3e50; line-height: 1.7;">
-                            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top: 4px;">
-                                <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; background:#f1f5f9; border:1px solid #e2e8f0; color:#334155; font-size:12px; font-weight:800;">CACEP</span>
-                                <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; background:#f1f5f9; border:1px solid #e2e8f0; color:#334155; font-size:12px; font-weight:800;">Gloria Jeans</span>
-                                <span style="display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; background:#f1f5f9; border:1px solid #e2e8f0; color:#334155; font-size:12px; font-weight:800;">LAUT COMMUNAL</span>
-                            </div>
-                            <div style="margin-top: 10px; color:#64748b; font-size: 12px;">
-                                <strong>Otras marcas de interés:</strong>
-                                <span style="display:inline-block; border-bottom: 1px dashed #cbd5e1; min-width: 320px; height: 14px; vertical-align: baseline; margin-left: 8px;"></span>
+                            <div style="color:#475569; font-size: 12px; line-height: 1.55;">
+                                <div><strong>Marcas:</strong> CACEP, LAUT COMMUNAL, Gloria Jeans</div>
+                                <div style="margin-top: 6px;"><strong>Sucursales a visitar:</strong> CACEP (Plaza Altabrisa) · LAUT COMMUNAL (Plaza Usuma) · Gloria Jeans (Altabrisa)</div>
                             </div>
                         </div>
                     </div>
@@ -275,8 +276,22 @@
                         <div style="font-weight: 900; color:#2d3e50; margin-bottom: 6px;">Propuesta económica</div>
                         <div style="color:#2d3e50; line-height: 1.7;">
                             <div><strong>Costo por sucursal:</strong> $1,200 + IVA</div>
+                            <div><strong>Total (3 sucursales) sin IVA:</strong> $3,600</div>
+                            <div><strong>Total (3 sucursales) con IVA (16%):</strong> $4,176</div>
                             <div><strong>Consumo:</strong> incluido</div>
                             <div><strong>Tiempo de entrega:</strong> 1 semana a partir de la autorización</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px;">
+                    <div style="border: 1px solid rgba(0,0,0,0.08); background: #ffffff; border-radius: 12px; padding: 12px 14px;">
+                        <div style="font-weight: 900; color:#2d3e50; margin-bottom: 6px;">Total de evaluación (3 competidores autorizados)</div>
+                        <div id="totalesCompetencia" style="color:#2d3e50; line-height: 1.7;">
+                            —
+                        </div>
+                        <div style="margin-top: 6px; color:#64748b; font-size: 12px;">
+                            Nota: el total se calcula como la suma de los pesos (ponderancias) definidos en esta tabla.
                         </div>
                     </div>
                 </div>
@@ -472,6 +487,15 @@
 
             const totalFiltrado = filtrados.reduce((sum, p) => sum + (Number(p.peso) || 0), 0);
             const totalAll = params.reduce((sum, p) => sum + (Number(p.peso) || 0), 0);
+
+            const totales = document.getElementById('totalesCompetencia');
+            if (totales) {
+                const totalPrograma = totalAll * 3;
+                totales.innerHTML = (
+                    '<div><strong>Total por competidor (100%):</strong> ' + totalAll + ' puntos</div>' +
+                    '<div><strong>Total del programa (3 competidores):</strong> ' + totalPrograma + ' puntos</div>'
+                );
+            }
 
             const resumen = document.getElementById('ponderanciaResumen');
             if (resumen) {
