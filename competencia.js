@@ -403,13 +403,13 @@ function renderCompetencia() {
                     ${puedeAdministrarCompetencia() ? `
                         <button onclick="editarCompetidor('${competidor.id}')" 
                                 class="btn btn-warning btn-sm">
-                            <i class="fas fa-edit"></i> Editar
+                            <i class="fas fa-sliders-h"></i> Configurar
                         </button>
                         ${renderBotonYoutubeCompetencia(competidor.id)}
                         ${evaluacion ? `
-                            <button onclick="editarEvaluacionCompetencia('${competidor.id}')" 
+                            <button onclick="editarCalificacionCompetencia('${competidor.id}')" 
                                     class="btn btn-primary btn-sm">
-                                <i class="fas fa-chart-line"></i> Evaluar
+                                <i class="fas fa-pen-to-square"></i> Editar calificación
                             </button>
                         ` : `
                             <button onclick="crearEvaluacionCompetencia('${competidor.id}')" 
@@ -771,7 +771,7 @@ function crearEvaluacionCompetencia(competidorId) {
 }
 
 // Función para abrir modal de evaluación de competencia
-function abrirModalEvaluacionCompetencia(competidorId = null) {
+function abrirModalEvaluacionCompetencia(competidorId = null, opciones = {}) {
     console.log('Abriendo modal de evaluación para competencia:', competidorId);
     
     if (!competidorId) {
@@ -813,7 +813,7 @@ function abrirModalEvaluacionCompetencia(competidorId = null) {
     // Cambiar el título del modal
     const modalTitle = document.querySelector('#modal-nueva-evaluacion h2');
     if (modalTitle) {
-        modalTitle.textContent = `Evaluar Competencia - ${competidor.nombre}`;
+        modalTitle.textContent = `${opciones.modoEdicion ? 'Editar Calificación' : 'Evaluar Competencia'} - ${competidor.nombre}`;
     }
     
     if (puedeAdministrarCompetencia()) {
@@ -826,10 +826,33 @@ function abrirModalEvaluacionCompetencia(competidorId = null) {
     }
 
     // Cargar parámetros usando el formato de cafeterías
-    cargarParametrosParaCompetencia(competidorId);
+    cargarParametrosParaCompetenciaConOpciones(competidorId, opciones);
     
     // Mostrar modal
     modal.style.display = 'flex';
+}
+
+function editarCalificacionCompetencia(competidorId) {
+    if (!puedeAdministrarCompetencia()) {
+        alert('No tiene permisos para editar calificaciones de competencia');
+        return;
+    }
+
+    const evaluacion = window.evaluaciones
+        && window.evaluaciones.competencia
+        && window.evaluaciones.competencia[competidorId]
+        ? window.evaluaciones.competencia[competidorId][window.mesSeleccionado]
+        : null;
+
+    if (!evaluacion) {
+        crearEvaluacionCompetencia(competidorId);
+        return;
+    }
+
+    abrirModalEvaluacionCompetencia(competidorId, {
+        modoEdicion: true,
+        valores: evaluacion.parametros || {}
+    });
 }
 
 // Función para cargar parámetros usando el formato de cafeterías
@@ -971,7 +994,7 @@ function cargarParametrosParaCompetenciaConOpciones(competidorId, opciones = {})
 
         // Mostrar botón guardar y configurar para competencia
         btnGuardar.style.display = 'block';
-        btnGuardar.textContent = 'Guardar Evaluación de Competencia';
+        btnGuardar.textContent = opciones.modoEdicion ? 'Guardar Cambios de Calificación' : 'Guardar Evaluación de Competencia';
         btnGuardar.onclick = () => guardarEvaluacionCompetencia(competidorId);
     } else {
         btnGuardar.style.display = 'none';
