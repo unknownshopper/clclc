@@ -137,6 +137,53 @@ function guardarCompetenciaConfigEnStorage() {
     }
 }
 
+function aplicarCompetenciaPublicada(payload) {
+    try {
+        if (!payload || typeof payload !== 'object') return false;
+        if (Array.isArray(payload.competidores)) {
+            window.competencia = payload.competidores.filter(c => c && c.id);
+        }
+        if (payload.competenciaConfig && typeof payload.competenciaConfig === 'object') {
+            window.competenciaConfig = payload.competenciaConfig;
+            guardarCompetenciaConfigEnStorage();
+        }
+        return true;
+    } catch (e) {
+        console.warn('No se pudo aplicar competencia publicada:', e);
+        return false;
+    }
+}
+
+async function cargarCompetenciaPublicada() {
+    try {
+        if (!window.firebaseDB || typeof window.firebaseDB.cargarCompetenciaPublicada !== 'function') return false;
+        const payload = await window.firebaseDB.cargarCompetenciaPublicada();
+        const aplicada = aplicarCompetenciaPublicada(payload);
+        if (aplicada && window.vistaActual === 'competencia') {
+            renderCompetencia();
+        }
+        return aplicada;
+    } catch (e) {
+        console.warn('No se pudo cargar competencia publicada:', e);
+        return false;
+    }
+}
+
+async function publicarCompetenciaActual() {
+    try {
+        if (!puedeAdministrarCompetencia()) return false;
+        if (!window.firebaseDB || typeof window.firebaseDB.guardarCompetenciaPublicada !== 'function') return false;
+        await window.firebaseDB.guardarCompetenciaPublicada({
+            competidores: Array.isArray(window.competencia) ? window.competencia : [],
+            competenciaConfig: window.competenciaConfig || {}
+        });
+        return true;
+    } catch (e) {
+        console.warn('No se pudo publicar competencia:', e);
+        return false;
+    }
+}
+
 function puedeConfigurarCompetencia() {
     try {
         const rol = (window.usuarioActual && window.usuarioActual.rol) ? String(window.usuarioActual.rol).toLowerCase() : '';
@@ -186,6 +233,7 @@ function agregarEnlaceYoutubeCompetencia(competidorId) {
     window.competenciaConfig[competidorId].youtubeLinks = window.competenciaConfig[competidorId].youtubeLinks || {};
     window.competenciaConfig[competidorId].youtubeLinks[mes] = videoUrl;
     guardarCompetenciaConfigEnStorage();
+    publicarCompetenciaActual();
 
     alert('Enlace de YouTube guardado correctamente.');
     if (window.vistaActual === 'competencia') {
@@ -213,6 +261,7 @@ if (typeof window !== 'undefined') {
     try {
         cargarCompetidoresDesdeStorage();
         cargarCompetenciaConfigDesdeStorage();
+        setTimeout(() => cargarCompetenciaPublicada(), 800);
     } catch (e) {
         console.warn('Init competenciaConfig error:', e);
     }
@@ -610,6 +659,7 @@ function guardarNuevoCompetidor() {
         alert(`Competidor "${existente.nombre}" reactivado exitosamente`);
         cerrarModalNuevoCompetidor();
         renderCompetencia();
+        publicarCompetenciaActual();
         return;
     }
     
@@ -635,11 +685,7 @@ function guardarNuevoCompetidor() {
         window.evaluaciones.competencia[id] = {};
     }
     
-    // Guardar en Firebase si está disponible
-    if (window.firebaseDB) {
-        // Aquí se podría agregar lógica para guardar competidores en Firebase
-        console.log('Guardando competidor en Firebase:', nuevoCompetidor);
-    }
+    publicarCompetenciaActual();
     
     alert(`Competidor "${nombre}" agregado exitosamente`);
     cerrarModalNuevoCompetidor();
@@ -664,6 +710,7 @@ function reactivarCompetidor(competidorId) {
     guardarCompetidoresEliminados(eliminados);
     guardarCompetidoresEnStorage();
     renderCompetencia();
+    publicarCompetenciaActual();
 }
 
 function eliminarCompetidorInactivo(competidorId) {
@@ -705,6 +752,7 @@ function eliminarCompetidorInactivo(competidorId) {
 
     guardarCompetidoresEnStorage();
     renderCompetencia();
+    publicarCompetenciaActual();
 }
 
 // ===== FUNCIONES PARA EVALUACIONES DE COMPETENCIA =====
@@ -1147,6 +1195,7 @@ function guardarConfigCompetencia(competidorId) {
 
         window.competenciaConfig[competidorId] = cfg;
         guardarCompetenciaConfigEnStorage();
+        publicarCompetenciaActual();
 
         // Mantener objeto legacy por compatibilidad (almacena ids ocultos)
         window.parametrosExcluidosPorCompetencia = window.parametrosExcluidosPorCompetencia || {};

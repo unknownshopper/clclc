@@ -65,7 +65,7 @@
     <script type="module">
       // Import the functions you need from the SDKs you need
       import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-      import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+      import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, updateDoc, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
       import { getAuth, signInWithEmailAndPassword, signOut as fbSignOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
       
       // Import Firebase configuration from separate file
@@ -351,6 +351,31 @@
           }
         },
 
+        async cargarCompetenciaPublicada() {
+          try {
+            const snap = await getDoc(doc(db, 'configuracion', 'competencia'));
+            return snap.exists() ? snap.data() : null;
+          } catch (error) {
+            console.error('Error cargando configuración de competencia:', error);
+            return null;
+          }
+        },
+
+        async guardarCompetenciaPublicada(payload) {
+          try {
+            await setDoc(doc(db, 'configuracion', 'competencia'), {
+              ...(payload || {}),
+              fechaActualizacion: new Date(),
+              timestampActualizacion: Date.now()
+            }, { merge: true });
+            console.log('Configuración de competencia publicada en Firebase');
+            return true;
+          } catch (error) {
+            console.error('Error publicando configuración de competencia:', error);
+            throw error;
+          }
+        },
+
         // Verificar conexión a Firebase
         async verificarConexion() {
           try {
@@ -432,15 +457,15 @@
     <script src="data/franquicias.js"></script>
     <script src="data/parametros.js"></script>
     <script src="data/parametros_excluidos.js"></script>
-    <script src="data/competencia.js"></script>
+    <script src="data/competencia.js?v=competencia-sync-1"></script>
     <script src="data/usuarios.js"></script>
     <script src="matriz.js"></script>
     <script src="auth.js"></script>
     <script src="utils.js"></script>
     <script src="dashboard.js"></script>
     <script src="data/historico.js"></script>
-    <script src="competencia.js"></script>
-    <script src="script.js?v=dffba1e"></script>
+    <script src="competencia.js?v=competencia-sync-1"></script>
+    <script src="script.js?v=competencia-sync-1"></script>
     <style>
         /* Estilos para la tabla de evaluaciones */
         .evaluaciones-table {

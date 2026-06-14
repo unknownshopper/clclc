@@ -72,6 +72,9 @@ function cambiarVista(vista) {
             break;
         case 'competencia':
             renderCompetencia();
+            if (typeof cargarCompetenciaPublicada === 'function') {
+                cargarCompetenciaPublicada();
+            }
             break;
     }
 }

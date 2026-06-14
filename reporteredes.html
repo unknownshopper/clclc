@@ -3,10 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ponderancia de Parámetros - Café La Cabaña</title>
+    <title>Reporte de Redes</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+
+        .hallazgos{
+        background:#fff8e1;
+        border-left:6px solid #f39c12;
+        padding:20px;
+        border-radius:12px;
+        margin-bottom:20px;
+    }
+
+    .hallazgos h2{
+        margin-top:0;
+    }
+
+        .confidence-bar{
+            height:32px;
+            background:#e9ecef;
+            border-radius:30px;
+            overflow:hidden;
+        }
+
+        .confidence-fill{
+            height:100%;
+            background:#f39c12;
+            color:white;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:900;
+        }
+
+        .audit-table{
+            width:100%;
+            border-collapse:collapse;
+        }
+
+        .audit-table th{
+            background:#2d3e50;
+            color:white;
+            padding:12px;
+        }
+
+        .audit-table td{
+            padding:12px;
+            border-bottom:1px solid #eee;
+        }
+
+        .badge{
+            padding:5px 12px;
+            border-radius:20px;
+            font-size:12px;
+            font-weight:700;
+        }
+
+        .ok{
+            background:#d4edda;
+            color:#155724;
+        }
+
+        .fail{
+            background:#f8d7da;
+            color:#721c24;
+        }
+
+        .dashboard-resumen{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+            gap:15px;
+            margin-bottom:20px;
+        }
+
+        .kpi-card{
+            background:#fff;
+            border-radius:14px;
+            padding:20px;
+            display:flex;
+            align-items:center;
+            gap:15px;
+            box-shadow:0 4px 20px rgba(0,0,0,.08);
+        }
+
+        .kpi-icon{
+            width:55px;
+            height:55px;
+            border-radius:12px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:22px;
+        }
+
+        .kpi-value{
+            font-size:26px;
+            font-weight:900;
+        }
+
+        .kpi-label{
+            font-size:12px;
+            color:#6c757d;
+        }
         .reporte-wrap {
             max-width: 1180px;
             margin: 0 auto;
@@ -113,16 +212,7 @@
             color: #6c757d;
         }
 
-        .tabla-ponderancia {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 860px;
-            table-layout: fixed;
-        }
-
-        .tabla-ponderancia td {
-            vertical-align: top;
-        }
+   
 
         .td-id {
             word-break: break-word;
@@ -149,14 +239,266 @@
             color: #2d3e50;
         }
 
+        .metodologia-editorial {
+            position: relative;
+            overflow: hidden;
+            padding: 0;
+            border: none;
+            background: #f6f8fb;
+            box-shadow: 0 10px 30px rgba(27, 39, 54, 0.10);
+        }
+
+        .metodologia-hero {
+            background: linear-gradient(135deg, #243448 0%, #2d3e50 58%, #405a78 100%);
+            color: #fff;
+            padding: 26px 30px;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 22px;
+            align-items: end;
+        }
+
+        .metodologia-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: rgba(255,255,255,0.90);
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .metodologia-title {
+            margin: 12px 0 8px 0;
+            font-size: 30px;
+            line-height: 1.05;
+            font-weight: 950;
+        }
+
+        .metodologia-lead {
+            margin: 0;
+            color: rgba(255,255,255,0.82);
+            font-size: 14px;
+            line-height: 1.55;
+            max-width: 760px;
+        }
+
+        .metodologia-veredicto {
+            background: rgba(255,255,255,0.11);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 18px;
+            padding: 16px;
+            backdrop-filter: blur(6px);
+        }
+
+        .metodologia-veredicto-label {
+            margin: 0 0 6px 0;
+            font-size: 11px;
+            font-weight: 900;
+            color: rgba(255,255,255,0.72);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .metodologia-veredicto-value {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 950;
+            color: #fff;
+        }
+
+        .metodologia-body {
+            padding: 24px 26px 28px 26px;
+        }
+
+        .metodologia-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .metodologia-card {
+            background: #fff;
+            border: 1px solid rgba(45, 62, 80, 0.10);
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 6px 18px rgba(27, 39, 54, 0.06);
+        }
+
+        .metodologia-card.full {
+            grid-column: 1 / -1;
+        }
+
+        .metodologia-card.warning {
+            border-left: 6px solid #f39c12;
+            background: linear-gradient(180deg, #fffaf0 0%, #ffffff 100%);
+        }
+
+        .metodologia-card.success {
+            border-left: 6px solid #28a745;
+        }
+
+        .metodologia-card.danger {
+            border-left: 6px solid #dc3545;
+        }
+
+        .metodologia-section-title {
+            margin: 0 0 10px 0;
+            color: #243448;
+            font-size: 17px;
+            font-weight: 950;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .metodologia-section-title i {
+            color: #0077cc;
+        }
+
+        .metodologia-text {
+            color: #536170;
+            font-size: 14px;
+            line-height: 1.65;
+            margin: 0;
+        }
+
+        .metodologia-text + .metodologia-text,
+        .metodologia-list + .metodologia-text {
+            margin-top: 10px;
+        }
+
+        .metodologia-list {
+            margin: 10px 0 0 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 8px;
+        }
+
+        .metodologia-list li {
+            position: relative;
+            padding-left: 24px;
+            color: #536170;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .metodologia-list li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 7px;
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            background: #0077cc;
+            box-shadow: 0 0 0 4px rgba(0,119,204,0.10);
+        }
+
+        .observacion-item {
+            padding: 14px 0;
+            border-top: 1px solid rgba(45, 62, 80, 0.10);
+        }
+
+        .observacion-item:first-child {
+            padding-top: 0;
+            border-top: none;
+        }
+
+        .observacion-title {
+            margin: 0 0 6px 0;
+            color: #243448;
+            font-size: 15px;
+            font-weight: 950;
+        }
+
+        .observacion-numero {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            margin-right: 7px;
+            border-radius: 999px;
+            background: #2d3e50;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 950;
+        }
+
+        .metodologia-callout {
+            margin-top: 16px;
+            padding: 16px 18px;
+            border-radius: 16px;
+            background: #eef4ff;
+            border: 1px solid rgba(0,119,204,0.12);
+            color: #2d3e50;
+            font-size: 14px;
+            line-height: 1.55;
+        }
+
+        .evidencia-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 14px;
+            margin-top: 14px;
+        }
+
+        .evidencia-card {
+            padding: 16px;
+            border: 1px solid rgba(45, 62, 80, 0.10);
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 5px 16px rgba(27, 39, 54, 0.06);
+        }
+
+        .evidencia-card h3 {
+            margin: 0 0 8px 0;
+            color: #243448;
+            font-size: 15px;
+            font-weight: 950;
+        }
+
+        .evidencia-card p,
+        .evidencia-card li {
+            color: #536170;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .evidencia-card ul {
+            margin: 8px 0 0 18px;
+            padding: 0;
+        }
+
+        .evidencia-highlight {
+            border-left: 6px solid #0077cc;
+            background: linear-gradient(180deg, #f4f9ff 0%, #ffffff 100%);
+        }
+
+        @media (max-width: 860px) {
+            .metodologia-hero,
+            .metodologia-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metodologia-title {
+                font-size: 24px;
+            }
+        }
+
         @media print {
             nav {
                 display: none !important;
             }
 
-            #controlesPonderancia {
-                display: none !important;
-            }
+           
 
             body {
                 background: #fff !important;
@@ -176,6 +518,17 @@
                 box-shadow: none !important;
             }
 
+            .metodologia-editorial,
+            .metodologia-card {
+                box-shadow: none !important;
+                break-inside: avoid;
+            }
+
+            .metodologia-hero {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
             .reporte-brand-logo {
                 width: 140px !important;
                 height: 70px !important;
@@ -191,28 +544,15 @@
                 padding: 0 !important;
             }
 
-            #tablaPonderancia {
-                min-width: 0 !important;
-            }
+         
 
-            #tablaContainer {
-                overflow: visible !important;
-                box-shadow: none !important;
-            }
-
-            #tablaPonderancia thead {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            #tablaPonderancia th,
-            #tablaPonderancia td {
-                font-size: 11px !important;
-            }
+      
 
             @page {
                 margin: 18mm;
             }
+
+            
         }
     </style>
 </head>
@@ -250,48 +590,389 @@
                 </div>
             </div>
             <div class="reporte-note">
-                Este documento compara la ponderancia actual contra una propuesta basada en competitividad (atención + venta). Las justificaciones por parámetro explican el criterio.
+
             </div>
         </header>
+        <section class="dashboard-resumen">
 
-        <section class="reporte-header" style="margin-bottom: 14px;">
-            <div style="display:flex; align-items:flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
-                <div style="min-width: 280px;">
-                    <h2 style="margin: 0; font-size: 16px; font-weight: 900; color:#2d3e50;">Respaldo metodológico (alineación ISO)</h2>
-                    <div style="margin-top: 8px; font-size: 12px; line-height: 1.4; color:#6c757d;">
-                        Este documento describe un esquema de medición de las publicaciones y campañas en redes. <br>
-                        
-                        Es importante señalar que la presente revisión se realizó con información parcial proporcionada mediante capturas de pantalla del Administrador de Anuncios.
-                        
-                        
-                    </div>
+            <div class="kpi-card kpi-info">
+                <div class="kpi-icon">
+                    <i class="fas fa-bullhorn"></i>
                 </div>
-                <div style="flex: 1 1 360px;">
-                    <div style="display:grid; grid-template-columns: 1fr; gap: 8px;">
-                        <div style="padding: 10px 12px; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; background: #fff;">
-                            <div style="font-weight: 900; color:#2d3e50; font-size: 12px;">Antecedentes</div>
-                            <div style="margin-top: 2px; color:#6c757d; font-size: 12px; line-height: 1.35;">La información recibida resulta insuficiente para emitir una evaluación concluyente sobre el desempeño integral del departamento de Redes Sociales y Marketing Digital.</div>
-                        </div>
-                        <div style="padding: 10px 12px; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; background: #fff;">
-                            <div style="font-weight: 900; color:#2d3e50; font-size: 12px;">Entre la información pendiente de proporcionar se encuentra:</div>
-                            <div style="margin-top: 2px; color:#6c757d; font-size: 12px; line-height: 1.35;"> <ul>
-                                <li>Calendario editorial del periodo evaluado.</li>
-                                <li>Total de publicaciones orgánicas realizadas.</li>
-                                <li>Alcance orgánico vs alcance pagado.</li>
-                                <li>Métricas de interacción detalladas (comentarios, compartidos, guardados y reproducciones completas).</li>
-                                <li>Reporte de campañas por objetivo.</li>
-                                <li>Resultados de pruebas A/B realizadas durante el periodo.</li>
-                                <li>Reporte de crecimiento de comunidad.</li>
-                                <li>Número de mensajes generados desde campañas.</li>
-                                <li>Indicadores de conversión asociados a ventas, visitas o reservaciones.</li>
-                                <li>Justificación estratégica de cada campaña ejecutada.</li>
-                                <li>Reporte de contenido producido (fotografía, video, diseño gráfico y reels).</li>
-                            </ul></div>
-                        </div>
-                        
-                    </div>
+                <div>
+                    <div class="kpi-label">Campañas Analizadas</div>
+                    <div class="kpi-value">38</div>
                 </div>
             </div>
+
+            <div class="kpi-card kpi-warning">
+                <div class="kpi-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Nivel de Evidencia</div>
+                    <div class="kpi-value">Parcial</div>
+                </div>
+            </div>
+
+            <div class="kpi-card kpi-danger">
+                <div class="kpi-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Datos Pendientes</div>
+                    <div class="kpi-value">11</div>
+                </div>
+            </div>
+
+            <div class="kpi-card kpi-success">
+                <div class="kpi-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <div>
+                    <div class="kpi-label">Estado</div>
+                    <div class="kpi-value">Preliminar</div>
+                </div>
+            </div>
+
+        </section>
+
+        <section class="reporte-header metodologia-editorial">
+            <div class="metodologia-hero">
+                <div>
+                    <span class="metodologia-eyebrow"><i class="fas fa-shield-alt"></i> Respaldo metodológico · alineación ISO</span>
+                    <h2 class="metodologia-title">Evaluación preliminar del desempeño digital</h2>
+                    <p class="metodologia-lead">
+                        Este apartado analiza la ejecución de publicaciones y campañas en redes sociales con base en la evidencia disponible. La revisión se realizó con información parcial proporcionada mediante capturas del Administrador de Anuncios, por lo que el dictamen debe considerarse preliminar.
+                    </p>
+                </div>
+                <div class="metodologia-veredicto">
+                    <p class="metodologia-veredicto-label">Lectura ejecutiva</p>
+                    <p class="metodologia-veredicto-value">Operación activa, evidencia estratégica limitada</p>
+                </div>
+            </div>
+
+            <div class="metodologia-body">
+                <div class="metodologia-grid">
+                    <article class="metodologia-card full success">
+                        <h3 class="metodologia-section-title"><i class="fas fa-chart-line"></i> Hallazgos generales</h3>
+                        <p class="metodologia-text">
+                            Durante el periodo analizado se observa actividad constante en la ejecución de campañas publicitarias, así como inversión sostenida en promoción digital. Se identifican campañas relacionadas con promociones comerciales, contenido institucional, alcance e interacción con la comunidad.
+                        </p>
+                        <p class="metodologia-text">
+                            La estructura de campañas refleja organización operativa y seguimiento continuo por parte del equipo responsable de redes sociales. Sin embargo, los indicadores observados sugieren áreas de oportunidad en estrategia, creatividad y generación de valor para la marca.
+                        </p>
+                    </article>
+
+                    <article class="metodologia-card full">
+                        <h3 class="metodologia-section-title"><i class="fas fa-magnifying-glass-chart"></i> Observaciones relevantes</h3>
+
+                        <div class="observacion-item">
+                            <h4 class="observacion-title"><span class="observacion-numero">1</span>Enfoque predominante en métricas de interacción general</h4>
+                            <p class="metodologia-text">
+                                La mayoría de las campañas analizadas están orientadas a objetivos de interacción y alcance. Si bien estas métricas incrementan la visibilidad de la marca, por sí solas no constituyen evidencia suficiente de impacto comercial ni de fortalecimiento de la relación con los clientes.
+                            </p>
+                            <ul class="metodologia-list">
+                                <li>Interacciones.</li>
+                                <li>Alcance.</li>
+                                <li>Impresiones.</li>
+                            </ul>
+                            <p class="metodologia-text">
+                                No se identificó evidencia visible sobre resultados asociados a generación de clientes potenciales, visitas a sucursales o incremento de ventas.
+                            </p>
+                        </div>
+
+                        <div class="observacion-item">
+                            <h4 class="observacion-title"><span class="observacion-numero">2</span>Inversión constante con resultados creativos limitados</h4>
+                            <p class="metodologia-text">
+                                Las campañas muestran una inversión significativa y continua; sin embargo, la información disponible no permite identificar elementos que demuestren innovación creativa, diferenciación de contenido o evolución estratégica.
+                            </p>
+                            <p class="metodologia-text">
+                                La percepción general es que las campañas siguen una línea repetitiva basada principalmente en promociones y publicaciones impulsadas mediante pauta publicitaria.
+                            </p>
+                        </div>
+
+                        <div class="observacion-item">
+                            <h4 class="observacion-title"><span class="observacion-numero">3</span>Ausencia de evidencia sobre optimización estratégica</h4>
+                            <p class="metodologia-text">No se encontraron elementos que permitan determinar:</p>
+                            <ul class="metodologia-list">
+                                <li>Pruebas A/B de contenido.</li>
+                                <li>Experimentación de formatos.</li>
+                                <li>Optimización basada en aprendizajes.</li>
+                                <li>Evolución de la estrategia creativa durante el periodo analizado.</li>
+                            </ul>
+                            <p class="metodologia-text">
+                                Un departamento de redes sociales con enfoque estratégico normalmente documenta aprendizajes y ajustes derivados del comportamiento de la audiencia, situación que no puede verificarse con la información presentada.
+                            </p>
+                        </div>
+
+                        <div class="observacion-item">
+                            <h4 class="observacion-title"><span class="observacion-numero">4</span>Dependencia de inversión publicitaria</h4>
+                            <p class="metodologia-text">
+                                Los resultados observados parecen estar impulsados principalmente por inversión económica y no necesariamente por la capacidad del contenido para generar conversación orgánica o alto valor para la comunidad.
+                            </p>
+                            <p class="metodologia-text">
+                                Esto representa un riesgo, ya que la visibilidad obtenida podría disminuir considerablemente en caso de reducirse la inversión publicitaria.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="metodologia-card warning">
+                        <h3 class="metodologia-section-title"><i class="fas fa-lightbulb"></i> Conclusiones</h3>
+                        <p class="metodologia-text">
+                            La revisión preliminar permite concluir que existe actividad operativa constante y una correcta ejecución de campañas publicitarias. No obstante, la evidencia disponible no permite afirmar que la estrategia digital esté generando un impacto proporcional al nivel de inversión realizado.
+                        </p>
+                        <ul class="metodologia-list">
+                            <li>Creatividad de contenidos.</li>
+                            <li>Innovación en formatos.</li>
+                            <li>Generación de comunidad.</li>
+                            <li>Optimización estratégica.</li>
+                            <li>Medición de indicadores vinculados al negocio.</li>
+                        </ul>
+                        <p class="metodologia-text">
+                            En términos generales, se observa una operación funcional desde el punto de vista técnico, pero sin evidencia suficiente que demuestre un desempeño sobresaliente en creatividad, diferenciación de marca o generación de valor estratégico para Café La Cabaña.
+                        </p>
+                    </article>
+
+                    <article class="metodologia-card">
+                        <h3 class="metodologia-section-title"><i class="fas fa-list-check"></i> Recomendaciones</h3>
+                        <ul class="metodologia-list">
+                            <li>Solicitar un informe mensual que incluya aprendizajes y acciones correctivas implementadas.</li>
+                            <li>Establecer indicadores vinculados al negocio además de las métricas de interacción.</li>
+                            <li>Incrementar la producción de contenido original en video.</li>
+                            <li>Implementar pruebas A/B permanentes para validar creatividad, formatos y mensajes.</li>
+                            <li>Evaluar periódicamente la relación entre inversión publicitaria y resultados comerciales.</li>
+                            <li>Desarrollar una estrategia de construcción de comunidad que reduzca la dependencia exclusiva de la pauta pagada.</li>
+                        </ul>
+                    </article>
+
+                    <article class="metodologia-card full danger">
+                        <h3 class="metodologia-section-title"><i class="fas fa-file-signature"></i> Dictamen preliminar</h3>
+                        <p class="metodologia-text">
+                            Con base en la información revisada, se considera que el departamento de redes sociales cumple con la ejecución operativa de campañas; sin embargo, existen elementos suficientes para cuestionar si la calidad estratégica y creativa de dichas acciones está generando un retorno acorde con la inversión realizada por la empresa.
+                        </p>
+                        <div class="metodologia-callout">
+                            La información recibida resulta insuficiente para emitir una evaluación concluyente sobre el desempeño integral del departamento de Redes Sociales y Marketing Digital.
+                        </div>
+                    </article>
+
+                    <article class="metodologia-card full">
+                        <h3 class="metodologia-section-title"><i class="fas fa-folder-open"></i> Información pendiente de proporcionar</h3>
+                        <ul class="metodologia-list">
+                            <li>Calendario editorial del periodo evaluado.</li>
+                            <li>Total de publicaciones orgánicas realizadas.</li>
+                            <li>Alcance orgánico vs. alcance pagado.</li>
+                            <li>Métricas de interacción detalladas: comentarios, compartidos, guardados y reproducciones completas.</li>
+                            <li>Reporte de campañas por objetivo.</li>
+                            <li>Resultados de pruebas A/B realizadas durante el periodo.</li>
+                            <li>Reporte de crecimiento de comunidad.</li>
+                            <li>Número de mensajes generados desde campañas.</li>
+                            <li>Indicadores de conversión asociados a ventas, visitas o reservaciones.</li>
+                            <li>Justificación estratégica de cada campaña ejecutada.</li>
+                            <li>Reporte de contenido producido: fotografía, video, diseño gráfico y reels.</li>
+                        </ul>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="reporte-header">
+            <h2 style="margin:0; color:#2d3e50; font-size:22px; font-weight:950;">Análisis de presentación entregada por Redes Sociales</h2>
+            <p style="margin:8px 0 0 0; color:#6c757d; font-size:14px; line-height:1.55;">
+                Se revisó la presentación <strong>CAFÉ LA CABAÑA | Abril 2026</strong> y se cotejó contra las únicas capturas disponibles del Administrador de Anuncios: <strong>clcim1.png</strong> y <strong>clcim2.png</strong>. El análisis confirma actividad publicitaria e inversión operativa, pero mantiene limitantes importantes para validar impacto comercial.
+            </p>
+
+            <div class="evidencia-grid">
+                <div class="evidencia-card evidencia-highlight">
+                    <h3><i class="fas fa-file-powerpoint"></i> Presentación revisada</h3>
+                    <p>
+                        El PDF reporta resultados de abril 2026 en Facebook, Instagram y TikTok, incluyendo alcance, views, interacciones, seguidores, campañas destacadas y desglose de presupuesto.
+                    </p>
+                    <ul>
+                        <li>Inversión total reportada: <strong>$11,477.25 MXN</strong>.</li>
+                        <li>Facebook: <strong>659,982</strong> de alcance y <strong>2,177,779</strong> views.</li>
+                        <li>Instagram: <strong>307,532</strong> de alcance y <strong>863,189</strong> views.</li>
+                        <li>TikTok sin pauta: <strong>9,800</strong> views.</li>
+                    </ul>
+                </div>
+
+                <div class="evidencia-card">
+                    <h3><i class="fas fa-image"></i> Cotejo con capturas</h3>
+                    <p>
+                        Las capturas disponibles muestran campañas activas en Meta Ads durante mayo 2026, con columnas de resultados, costo por resultado, importe gastado, impresiones, alcance y visualizaciones.
+                    </p>
+                    <ul>
+                        <li>Se observan campañas como <strong>Termo Bosch</strong>, <strong>Cabaña Lunch</strong>, <strong>Amazon/ML</strong>, <strong>Jueves 3x2</strong>, <strong>Miércoles 2x1</strong>, <strong>Lunes 2x1</strong> y contenido general.</li>
+                        <li>Las capturas respaldan que existe operación y pauta activa.</li>
+                        <li>No sustituyen un reporte descargable completo ni una exportación auditable de resultados.</li>
+                    </ul>
+                </div>
+
+                <div class="evidencia-card">
+                    <h3><i class="fas fa-chart-pie"></i> Lectura de desempeño</h3>
+                    <p>
+                        La información presentada permite afirmar que hubo volumen de actividad, alcance e interacción. Sin embargo, el reporte se concentra en métricas de visibilidad y no conecta los resultados con indicadores de negocio.
+                    </p>
+                    <ul>
+                        <li>No se reportan ventas atribuibles.</li>
+                        <li>No se reportan visitas a sucursal.</li>
+                        <li>No se reportan reservaciones, leads o conversiones finales.</li>
+                        <li>No se calcula retorno sobre inversión publicitaria.</li>
+                    </ul>
+                </div>
+
+                <div class="evidencia-card">
+                    <h3><i class="fas fa-calculator"></i> Métricas faltantes</h3>
+                    <p>
+                        Aunque existe desglose de gasto por campaña, no se presenta un análisis de eficiencia que permita comparar rentabilidad o desempeño real entre campañas.
+                    </p>
+                    <ul>
+                        <li>Costo por interacción.</li>
+                        <li>Costo por alcance.</li>
+                        <li>Costo por click.</li>
+                        <li>Costo por view.</li>
+                        <li>Costo por conversión.</li>
+                        <li>ROI o ROAS estimado.</li>
+                    </ul>
+                </div>
+
+                <div class="evidencia-card">
+                    <h3><i class="fas fa-triangle-exclamation"></i> Limitantes del cotejo</h3>
+                    <p>
+                        Las capturas <strong>clcim1.png</strong> y <strong>clcim2.png</strong> muestran solamente una vista parcial del Administrador de Anuncios. Por lo tanto, no permiten validar por completo la integridad del reporte ni reconstruir toda la estrategia mensual.
+                    </p>
+                    <ul>
+                        <li>No se cuenta con exportación completa de Meta Ads.</li>
+                        <li>No se cuenta con calendario editorial.</li>
+                        <li>No se cuenta con evidencia de pruebas A/B.</li>
+                        <li>No se cuenta con métricas de conversión o negocio.</li>
+                    </ul>
+                </div>
+
+                <div class="evidencia-card evidencia-highlight">
+                    <h3><i class="fas fa-gavel"></i> Conclusión del cotejo</h3>
+                    <p>
+                        La presentación y las capturas permiten validar ejecución operativa, inversión publicitaria y seguimiento básico de campañas. No obstante, la evidencia disponible no permite concluir que la estrategia digital esté generando un retorno proporcional al gasto realizado.
+                    </p>
+                    <p>
+                        El material funciona como reporte de actividad, pero todavía no como reporte estratégico de desempeño, rentabilidad o contribución comercial.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="reporte-header">
+
+        <h2>Matriz de Evidencia Recibida</h2>
+
+        <table class="audit-table">
+        <tr>
+        <th>Elemento</th>
+        <th>Estado</th>
+        </tr>
+
+        <tr>
+        <td>Presentación mensual de resultados abril 2026</td>
+        <td><span class="badge ok">Recibido</span></td>
+        </tr>
+
+        <tr>
+        <td>Capturas de Meta Ads</td>
+        <td><span class="badge ok">Recibido</span></td>
+        </tr>
+
+        <tr>
+        <td>Exportación completa de Meta Ads</td>
+        <td><span class="badge fail">Pendiente</span></td>
+        </tr>
+
+        <tr>
+        <td>Calendario Editorial</td>
+        <td><span class="badge fail">Pendiente</span></td>
+        </tr>
+
+        <tr>
+        <td>Métricas de Conversión</td>
+        <td><span class="badge fail">Pendiente</span></td>
+        </tr>
+
+        <tr>
+        <td>Reporte de Comunidad</td>
+        <td><span class="badge fail">Pendiente</span></td>
+        </tr>
+
+        <tr>
+        <td>Pruebas A/B</td>
+        <td><span class="badge fail">Pendiente</span></td>
+        </tr>
+
+        <tr>
+        <td>Justificación Estratégica</td>
+        <td><span class="badge fail">Pendiente</span></td>
+        </tr>
+
+        </table>
+
+        </section>
+
+        <section class="reporte-header">
+
+        <h2>Confiabilidad del Reporte</h2>
+
+        <div class="confidence-wrap">
+        <div class="confidence-bar">
+        <div class="confidence-fill" style="width:35%">
+        35%
+        </div>
+        </div>
+
+        <p>
+        La confiabilidad actual del análisis se considera limitada
+        debido a la ausencia de documentación operativa y estratégica.
+        </p>
+
+        </div>
+
+        </section>
+
+        <section class="hallazgos">
+
+            <h2>
+            <i class="fas fa-search"></i>
+            Hallazgos Críticos
+            </h2>
+
+            <ul>
+            <li>La evidencia proporcionada es insuficiente para determinar el retorno de la inversión.</li>
+
+            <li>No se recibieron métricas de conversión o ventas atribuibles a campañas.</li>
+
+            <li>No existe evidencia documental de pruebas A/B.</li>
+
+            <li>No se recibió calendario editorial.</li>
+
+            <li>No fue posible validar la evolución estratégica del contenido.</li>
+
+            </ul>
+
+        </section>
+
+        <section class="dictamen-final">
+
+            <h2>Dictamen Ejecutivo Preliminar</h2>
+
+            <p>
+            La evidencia recibida permite confirmar la existencia de actividad publicitaria
+            y ejecución operativa por parte del área de Redes Sociales.
+
+            Sin embargo, la información proporcionada resulta insuficiente para validar
+            la efectividad estratégica de dichas acciones, así como su contribución a los
+            objetivos comerciales de Café La Cabaña.
+
+            Se recomienda solicitar la documentación complementaria descrita en este informe
+            antes de emitir una conclusión definitiva.
+            </p>
+
         </section>
 
        
@@ -301,7 +982,7 @@
 
             <footer class="reporte-footer">
                 <div>
-                    <strong>The Unknown Shopper</strong> · Evaluación y auditoría de experiencia del cliente
+                    <strong>The Unknown Shopper</strong> · Reporte de Redes Sociales
                 </div>
                 <div id="footerStamp">Generado: —</div>
             </footer>
@@ -322,293 +1003,9 @@
             }
         }
 
-        const PONDERA_IA = {
-            bienvenida_contacto_visual: {
-                peso: 8,
-                justificacion: 'Primer impacto del servicio: saludar y establecer contacto visual define la percepción inmediata y la disposición a comprar.'
-            },
-            bienvenida_agradecimiento: {
-                peso: 4,
-                justificacion: 'Cierra la experiencia con cortesía y refuerza recompra; si no hay despedida, el servicio se percibe frío aunque lo demás esté bien.'
-            },
-            conocimiento_productos: {
-                peso: 5,
-                justificacion: 'Sin dominio del producto no hay recomendación efectiva; impacta conversión y ticket promedio.'
-            },
-            producto_mes: {
-                peso: 4,
-                justificacion: 'Impulsa campañas y rotación; es señal de ejecución comercial en piso.'
-            },
-            venta_cruzada: {
-                peso: 10,
-                justificacion: 'Indicador principal de esfuerzo de venta; sin sugerencia activa, el KPI no debería verse “excelente”.'
-            },
-            app_cabana: {
-                peso: 6,
-                justificacion: 'Fidelización y captura de cliente; impacta recurrencia y valor de vida.'
-            },
-            pin_personalizador: {
-                peso: 3,
-                justificacion: 'Estandariza personalización y reduce fricción; aporta a experiencia y consistencia en atención.'
-            },
-            atencion_mesa: {
-                peso: 4,
-                justificacion: 'En servicio a mesa, la atención proactiva es un diferenciador competitivo.'
-            },
-            entrega_ticket: {
-                peso: 3,
-                justificacion: 'Transparencia y cierre del cobro; importante, pero no debe pesar más que venta y trato.'
-            },
-            tiempo_espera_atencion: {
-                peso: 4,
-                justificacion: 'Tiempo afecta satisfacción; se mantiene relevante pero no debe compensar falta de venta/servicio.'
-            },
-            tiempo_fila: {
-                peso: 3,
-                justificacion: 'Refleja operación; útil para detectar saturación, sin dominar el KPI.'
-            },
-            tiempo_espera_cafe: {
-                peso: 4,
-                justificacion: 'Impacta percepción de eficiencia; se mantiene estable como parte de operación.'
-            },
-            cantidad_colaboradores: {
-                peso: 1,
-                justificacion: 'Dato contextual; no mide calidad de atención ni venta por sí mismo.'
-            },
-            apariencia_personal: {
-                peso: 2,
-                justificacion: 'Higiene y presentación importan, pero la competitividad se gana en interacción y venta.'
-            },
-            tableta: {
-                peso: 1,
-                justificacion: 'Herramienta operativa; ayuda, pero no reemplaza el trato ni el esfuerzo comercial.'
-            },
-            presentacion_vaso: {
-                peso: 2,
-                justificacion: 'Calidad percibida; se baja para priorizar servicio/venta.'
-            },
-            presentacion_cafe: {
-                peso: 3,
-                justificacion: 'Producto es clave, pero si el servicio falla no debe “rescatar” el resultado total.'
-            },
-            presentacion_alimento: {
-                peso: 3,
-                justificacion: 'Producto influye en recompra; se mantiene alto pero por debajo de venta cruzada y bienvenida.'
-            },
-            existencia: {
-                peso: 5,
-                justificacion: 'Condición base para la experiencia y la venta: sin existencia no hay entrega de producto ni posibilidad real de conversión. Se pondera alto desde marzo 2026.'
-            },
-            panera_estado: {
-                peso: 1,
-                justificacion: 'Orden/higiene; importante pero no decisivo para competitividad comercial.'
-            },
-            fachada_limpieza: {
-                peso: 1,
-                justificacion: 'Afecta imagen, pero se recomienda mantener bajo para que no infle el KPI.'
-            },
-            letrero_anuncio: {
-                peso: 1,
-                justificacion: 'Branding/estado; bajo impacto directo en venta asistida.'
-            },
-            jardineras_macetas: {
-                peso: 1,
-                justificacion: 'Estético pero visible: se asigna peso mínimo para que cuente sin inflar el KPI.'
-            },
-            iluminacion: {
-                peso: 1,
-                justificacion: 'Ambiente; bajo peso recomendado.'
-            },
-            puertas_vidrios: {
-                peso: 1,
-                justificacion: 'Limpieza/imagen; bajo peso para evitar KPI inflado sin buen servicio.'
-            },
-            musica_volumen: {
-                peso: 1,
-                justificacion: 'Ambiente audible y percepción: se asigna peso mínimo para contar sin distorsionar el KPI.'
-            },
-            area_mostrador: {
-                peso: 1,
-                justificacion: 'Orden operativo; bajo peso.'
-            },
-            mesas_sillas_limpieza: {
-                peso: 1,
-                justificacion: 'Higiene visible; mantener bajo para priorizar servicio/venta.'
-            },
-            piso_limpieza: {
-                peso: 1,
-                justificacion: 'Higiene; importante pero no debe dominar el score.'
-            },
-            banos_estado: {
-                peso: 2,
-                justificacion: 'Puede afectar fuertemente experiencia, pero se sugiere no permitir que compense mala atención.'
-            },
-            basura_estado: {
-                peso: 1,
-                justificacion: 'Orden/higiene; bajo peso.'
-            },
-            barra_limpieza: {
-                peso: 1,
-                justificacion: 'Backbar ordenado ayuda, pero no es interacción directa con el cliente.'
-            },
-            clima_funcionando: {
-                peso: 2,
-                justificacion: 'Confort influye en permanencia, sin reemplazar el servicio.'
-            },
-            mencion_promociones: {
-                peso: 3,
-                justificacion: 'Venta asistida/impulso comercial: mencionar promociones vigentes aumenta conversión. Solo KPI2 (sucursales) desde abril 2026; se mantiene en 3 para alinear con KPI legacy.'
-            },
-            mesas_sillas_estado: {
-                peso: 1,
-                justificacion: 'Mantenimiento; impacto indirecto. Bajo peso recomendado.'
-            }
-        };
+       
 
-        function getPonderaIA(param) {
-            const propuesta = PONDERA_IA[param.id];
-            if (propuesta) return propuesta;
-            return {
-                peso: Number(param.peso) || 0,
-                justificacion: 'Sin cambio propuesto (pendiente de ajuste por competitividad).'
-            };
-        }
-
-        function normalizarTexto(valor) {
-            return (valor || '').toString().toLowerCase().trim();
-        }
-
-        function getNombreCategoria(categoriaId) {
-            try {
-                if (typeof categorias !== 'undefined' && Array.isArray(categorias)) {
-                    const cat = categorias.find(c => c.id === categoriaId);
-                    return (cat && cat.nombre) ? cat.nombre : (categoriaId || '');
-                }
-            } catch (e) {}
-            return categoriaId || '';
-        }
-
-        function esParametroInfladorKPI(param) {
-            try {
-                const id = (param && param.id) ? String(param.id) : '';
-                if (!id) return false;
-
-                const infladores = new Set([
-                    'presentacion_alimento',
-                    'pin_personalizador',
-                    'clima_funcionando'
-                ]);
-
-                return infladores.has(id);
-            } catch (e) {
-                return false;
-            }
-        }
-
-        function renderTablaPonderancia(filtro) {
-            const tabla = document.getElementById('tablaPonderancia');
-            const tbody = tabla ? tabla.querySelector('tbody') : null;
-            if (!tbody) return;
-
-            const params = Array.isArray(window.parametros) ? window.parametros.slice() : [];
-            params.sort((a, b) => {
-                const catA = getNombreCategoria(a.categoriaId);
-                const catB = getNombreCategoria(b.categoriaId);
-                if (catA !== catB) return catA.localeCompare(catB);
-                return (a.nombre || '').localeCompare(b.nombre || '');
-            });
-
-            const f = normalizarTexto(filtro);
-            const filtrados = f
-                ? params.filter(p => {
-                    const cat = getNombreCategoria(p.categoriaId);
-                    const propuesta = getPonderaIA(p);
-                    return (
-                        normalizarTexto(p.nombre).includes(f) ||
-                        normalizarTexto(p.id).includes(f) ||
-                        normalizarTexto(cat).includes(f) ||
-                        normalizarTexto(propuesta.justificacion).includes(f)
-                    );
-                })
-                : params;
-
-            tbody.innerHTML = '';
-
-            const totalFiltrado = filtrados.reduce((sum, p) => sum + (Number(p.peso) || 0), 0);
-            const totalAll = params.reduce((sum, p) => sum + (Number(p.peso) || 0), 0);
-            const totalIAFiltrado = filtrados.reduce((sum, p) => sum + (Number(getPonderaIA(p).peso) || 0), 0);
-            const totalIAAll = params.reduce((sum, p) => sum + (Number(getPonderaIA(p).peso) || 0), 0);
-
-            const resumen = document.getElementById('ponderanciaResumen');
-            if (resumen) {
-                const countText = filtrados.length + ' / ' + params.length + ' parámetros';
-                const pesoText = f
-                    ? ('Actual (filtrado): ' + totalFiltrado + ' | IA (filtrado): ' + totalIAFiltrado + ' · Actual total: ' + totalAll + ' | IA total: ' + totalIAAll)
-                    : ('Actual total: ' + totalAll + ' | IA total: ' + totalIAAll);
-                resumen.textContent = countText + ' · ' + pesoText;
-            }
-
-            filtrados.forEach((p, idx) => {
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid #f0f0f0';
-                tr.style.background = idx % 2 === 0 ? '#ffffff' : '#f8f9fa';
-
-                const categoriaNombre = getNombreCategoria(p.categoriaId);
-                const peso = p && p.soloKPI2 ? 0 : (Number(p.peso) || 0);
-                const propuesta = getPonderaIA(p);
-                const pesoIA = Number(propuesta.peso) || 0;
-                const esInflador = esParametroInfladorKPI(p);
-                const badgeInflador = esInflador
-                    ? '<span title="Inflador KPI: se prioriza Atención/Venta en KPI actual" style="display:inline-flex; align-items:center; padding:2px 8px; border-radius:999px; background:#fff3cd; color:#856404; border:1px solid #ffeeba; font-size:11px; font-weight:800;">INFLA KPI</span>'
-                    : '';
-
-                tr.innerHTML = (
-                    '<td style="padding: 12px 14px; font-weight: 700; color:#2d3e50;">' + (idx + 1) + '</td>' +
-                    '<td style="padding: 12px 14px; color:#495057;">' +
-                        '<span style="display:inline-flex; align-items:center; gap:8px;">' +
-                            '<span style="width:10px; height:10px; border-radius:999px; background:#0077cc;"></span>' +
-                            categoriaNombre +
-                        '</span>' +
-                    '</td>' +
-                    '<td style="padding: 12px 14px; color:#1a2533;">' +
-                        '<div style="font-weight: 700; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' + (p.nombre || '') + badgeInflador + '</div>' +
-                        '<div style="margin-top: 4px; color:#6c757d; font-size: 12px; line-height: 1.3;">' + (propuesta.justificacion || '') + '</div>' +
-                    '</td>' +
-                    '<td style="padding: 12px 14px; text-align: right; font-weight: 800; color:#0077cc;">' + peso + '</td>'
-                    + '<td style="padding: 12px 14px; text-align: right; font-weight: 900; color:#28a745;">' + pesoIA + '</td>'
-                );
-
-                tbody.appendChild(tr);
-            });
-
-            const trTotal = document.createElement('tr');
-            trTotal.style.borderTop = '2px solid #dee2e6';
-            trTotal.style.background = '#eef4ff';
-            trTotal.innerHTML = (
-                '<td style="padding: 12px 14px; font-weight: 900; color:#2d3e50;">' + (filtrados.length + 1) + '</td>' +
-                '<td style="padding: 12px 14px; font-weight: 900; color:#2d3e50;">TOTAL</td>' +
-                '<td style="padding: 12px 14px; font-weight: 800; color:#2d3e50;">Suma total de puntuaciones</td>' +
-                '<td style="padding: 12px 14px; text-align: right; font-weight: 900; color:#0077cc;">' + totalAll + '</td>' +
-                '<td style="padding: 12px 14px; text-align: right; font-weight: 900; color:#28a745;">' + totalIAAll + '</td>'
-            );
-            tbody.appendChild(trTotal);
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const hoy = new Date();
-            const fecha = document.getElementById('fechaEmision');
-            if (fecha) fecha.textContent = formatearFecha(hoy);
-            const stamp = document.getElementById('footerStamp');
-            if (stamp) stamp.textContent = 'Generado: ' + hoy.toLocaleString();
-
-            const input = document.getElementById('buscarParametro');
-            if (input) {
-                input.addEventListener('input', function() {
-                    renderTablaPonderancia(input.value);
-                });
-            }
-            renderTablaPonderancia('');
-        });
+       
     </script>
 </body>
 </html>

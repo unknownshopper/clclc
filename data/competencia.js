@@ -4,7 +4,7 @@ window.competencia = [
   { id: 'gloria-jeans', nombre: 'Gloria Jeans', activa: true, direccion: 'Ubicación por definir', modelo: 'Cafetería', fechaCreacion: new Date().toISOString() },
   { id: 'laut-communal', nombre: 'LAUT COMMUNAL', activa: true, direccion: 'Ubicación por definir', modelo: 'Cafetería', fechaCreacion: new Date().toISOString() },
 
-  { id: 'starbucks', nombre: 'Starbucks', activa: false, direccion: 'Ubicación por definir', modelo: 'Cafetería', fechaCreacion: new Date().toISOString() },
+  { id: 'starbucks', nombre: 'Starbucks', activa: true, direccion: 'Ubicación por definir', modelo: 'Cafetería', fechaCreacion: new Date().toISOString() },
   { id: 'cafeloco', nombre: 'Cafeloco', activa: false, direccion: 'Ubicación por definir', modelo: 'Cafetería', fechaCreacion: new Date().toISOString() },
   { id: 'cafeteria', nombre: 'Cafetería', activa: false, direccion: 'Ubicación por definir', modelo: 'Cafetería', fechaCreacion: new Date().toISOString() },
   { id: 'cafe-laut', nombre: 'Café Laut', activa: false, direccion: 'Ubicación por definir', modelo: 'Cafetería', fechaCreacion: new Date().toISOString() },

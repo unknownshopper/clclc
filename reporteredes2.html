@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Ejecutivo de Redes Sociales</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --azul: #243448;
+            --azul2: #2d3e50;
+            --gris: #667085;
+            --fondo: #f3f6fa;
+            --verde: #28a745;
+            --amarillo: #f39c12;
+            --rojo: #dc3545;
+            --borde: rgba(36, 52, 72, 0.12);
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: var(--fondo); color: var(--azul); }
+        .wrap { max-width: 1120px; margin: 0 auto; padding: 22px 18px 30px; }
+        .hero { background: linear-gradient(135deg, #1f2d3d 0%, #2d3e50 58%, #496987 100%); color: #fff; border-radius: 24px; padding: 30px; box-shadow: 0 14px 40px rgba(31, 45, 61, 0.20); display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 24px; align-items: center; }
+        .brand { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; }
+        .brand img { width: 140px; height: 70px; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25)); }
+        .eyebrow { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 7px 12px; font-size: 12px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
+        h1 { margin: 14px 0 10px; font-size: 38px; line-height: 1.05; }
+        .hero p { margin: 0; color: rgba(255,255,255,0.82); font-size: 16px; line-height: 1.55; }
+        .dictamen-box { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); border-radius: 20px; padding: 20px; }
+        .dictamen-label { margin: 0 0 8px; color: rgba(255,255,255,0.72); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.6px; }
+        .dictamen-value { margin: 0; color: #fff; font-size: 25px; font-weight: 950; line-height: 1.12; }
+        .section { margin-top: 18px; background: #fff; border: 1px solid var(--borde); border-radius: 22px; padding: 22px; box-shadow: 0 8px 24px rgba(31, 45, 61, 0.08); }
+        .headline { border-left: 7px solid var(--amarillo); background: #fff8e8; padding: 18px 20px; border-radius: 18px; font-size: 22px; line-height: 1.35; font-weight: 950; color: #3d2b00; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+        .kpi { border: 1px solid var(--borde); border-radius: 18px; padding: 18px; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
+        .kpi i { width: 42px; height: 42px; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; background: #eaf3ff; color: #0077cc; margin-bottom: 12px; }
+        .kpi-value { font-size: 27px; font-weight: 950; color: var(--azul); }
+        .kpi-label { margin-top: 4px; color: var(--gris); font-size: 13px; line-height: 1.35; }
+        .section-title { margin: 0 0 14px; font-size: 22px; font-weight: 950; color: var(--azul); display: flex; align-items: center; gap: 10px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+        .traffic-card { border-radius: 18px; padding: 18px; min-height: 250px; border: 1px solid var(--borde); }
+        .traffic-card.green { border-top: 7px solid var(--verde); background: #f2fbf5; }
+        .traffic-card.yellow { border-top: 7px solid var(--amarillo); background: #fffaf0; }
+        .traffic-card.red { border-top: 7px solid var(--rojo); background: #fff5f5; }
+        .traffic-card h3 { margin: 0 0 12px; font-size: 18px; }
+        ul { margin: 0; padding-left: 18px; }
+        li { margin-bottom: 8px; color: #4d5b6a; line-height: 1.38; font-size: 14px; }
+        .risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .risk-box { border-radius: 18px; padding: 18px; background: #f8fafc; border: 1px solid var(--borde); }
+        .risk-box.strong { background: #fff5f5; border-left: 7px solid var(--rojo); }
+        .risk-box h3 { margin: 0 0 10px; font-size: 17px; color: var(--azul); }
+        .decision-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+        .decision { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 16px; background: #f8fafc; border: 1px solid var(--borde); }
+        .decision i { color: #0077cc; margin-top: 2px; }
+        .decision strong { display: block; color: var(--azul); margin-bottom: 3px; }
+        .decision span { color: var(--gris); font-size: 13px; line-height: 1.35; }
+        .footer { margin-top: 18px; color: var(--gris); font-size: 12px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        @media (max-width: 820px) { .hero, .grid-3, .risk-grid { grid-template-columns: 1fr; } h1 { font-size: 30px; } }
+        @media print { body { background: #fff; } .wrap { max-width: none; padding: 0; } .section, .hero { box-shadow: none; break-inside: avoid; } .hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; } @page { margin: 14mm; } }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header class="hero">
+            <div>
+                <div class="brand">
+                    <img src="./logch.png" alt="The Unknown Shopper">
+                    <div><div class="eyebrow"><i class="fas fa-chart-line"></i> Reporte ejecutivo · Redes Sociales</div></div>
+                </div>
+                <h1>Actividad comprobada, estrategia no comprobada</h1>
+                <p>La evidencia revisada confirma producción, publicación y pauta constante. Sin embargo, no demuestra una estrategia de comunicación clara, documentada y conectada con resultados de negocio.</p>
+            </div>
+            <div class="dictamen-box">
+                <p class="dictamen-label">Dictamen ejecutivo preliminar</p>
+                <p class="dictamen-value">Se está pagando por actividad, pero no hay evidencia suficiente de estrategia ni retorno medible.</p>
+            </div>
+        </header>
+
+        <section class="section"><div class="headline">La principal observación no es la falta de publicaciones, sino la falta de evidencia de una estrategia de comunicación que justifique la producción, la pauta y el gasto realizado.</div></section>
+
+        <section class="section">
+            <h2 class="section-title"><i class="fas fa-gauge-high"></i> Datos clave revisados</h2>
+            <div class="kpi-grid">
+                <div class="kpi"><i class="fas fa-money-bill-wave"></i><div class="kpi-value">$11,477.25</div><div class="kpi-label">Inversión publicitaria reportada en abril 2026.</div></div>
+                <div class="kpi"><i class="fab fa-facebook-f"></i><div class="kpi-value">659,982</div><div class="kpi-label">Alcance reportado en Facebook.</div></div>
+                <div class="kpi"><i class="fas fa-eye"></i><div class="kpi-value">2.17 M</div><div class="kpi-label">Views reportadas en Facebook.</div></div>
+                <div class="kpi"><i class="fab fa-instagram"></i><div class="kpi-value">307,532</div><div class="kpi-label">Alcance reportado en Instagram.</div></div>
+                <div class="kpi"><i class="fas fa-comments"></i><div class="kpi-value">10,329</div><div class="kpi-label">Interacciones reportadas en Instagram.</div></div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title"><i class="fas fa-traffic-light"></i> Semáforo ejecutivo</h2>
+            <div class="grid-3">
+                <div class="traffic-card green"><h3>Verde · Sí se valida</h3><ul><li>Hay campañas activas.</li><li>Hay inversión publicitaria.</li><li>Hay producción y publicación de contenido.</li><li>Hay métricas básicas de alcance, views e interacción.</li><li>Hay evidencia parcial en PDF y capturas de Meta Ads.</li></ul></div>
+                <div class="traffic-card yellow"><h3>Amarillo · Validación parcial</h3><ul><li>Calidad de la creatividad.</li><li>Consistencia de línea editorial.</li><li>Eficiencia por campaña.</li><li>Construcción real de comunidad.</li><li>Aprendizajes aplicados mes a mes.</li></ul></div>
+                <div class="traffic-card red"><h3>Rojo · No se evidencia</h3><ul><li>Estrategia de comunicación documentada.</li><li>Objetivo específico por campaña.</li><li>Ventas, visitas o conversiones atribuibles.</li><li>ROI / ROAS.</li><li>Calendario editorial y pruebas A/B.</li></ul></div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title"><i class="fas fa-triangle-exclamation"></i> Riesgo principal para Dirección</h2>
+            <div class="risk-grid">
+                <div class="risk-box strong"><h3>Riesgo estratégico</h3><ul><li>La operación puede estar generando visibilidad sin construir marca.</li><li>El gasto puede estar sosteniendo alcance, no necesariamente conversión.</li><li>La pauta puede estar compensando la falta de contenido orgánico fuerte.</li><li>No hay evidencia suficiente de aprendizaje estratégico mensual.</li></ul></div>
+                <div class="risk-box"><h3>Lectura ejecutiva</h3><ul><li>Se reportan views, pero no intención de compra.</li><li>Se reportan interacciones, pero no valor comercial.</li><li>Se reporta presupuesto, pero no retorno.</li><li>Se reportan campañas, pero no una narrativa de comunicación clara.</li></ul></div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title"><i class="fas fa-clipboard-check"></i> Decisiones recomendadas</h2>
+            <div class="decision-list">
+                <div class="decision"><i class="fas fa-file-export"></i><div><strong>Solicitar exportación completa de Meta Ads</strong><span>No sólo capturas; se requiere información auditable por campaña.</span></div></div>
+                <div class="decision"><i class="fas fa-calendar-days"></i><div><strong>Exigir calendario editorial mensual</strong><span>Debe mostrar tema, objetivo, audiencia, formato y justificación.</span></div></div>
+                <div class="decision"><i class="fas fa-bullseye"></i><div><strong>Definir objetivo de comunicación por campaña</strong><span>Cada pieza debe responder qué busca mover: venta, visita, comunidad o marca.</span></div></div>
+                <div class="decision"><i class="fas fa-chart-column"></i><div><strong>Medir resultados de negocio</strong><span>Incluir conversiones, mensajes útiles, cupones, visitas, ventas o ROAS.</span></div></div>
+                <div class="decision"><i class="fas fa-flask"></i><div><strong>Implementar pruebas A/B</strong><span>Validar creatividad, formatos, copys, promociones y audiencias.</span></div></div>
+                <div class="decision"><i class="fas fa-lightbulb"></i><div><strong>Solicitar aprendizajes y acciones correctivas</strong><span>El reporte mensual debe explicar qué se aprendió y qué se cambiará.</span></div></div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title"><i class="fas fa-gavel"></i> Conclusión ejecutiva</h2>
+            <p style="margin:0; color:#4d5b6a; font-size:17px; line-height:1.65;">El área de redes sociales cumple con funciones operativas de producción, publicación y pauta. No obstante, con la evidencia disponible, no es posible confirmar que exista una estrategia de comunicación concisa, medible y orientada a resultados de negocio. La recomendación es pasar de reportar actividad a reportar estrategia, aprendizaje y retorno.</p>
+        </section>
+
+        <footer class="footer"><div><strong>The Unknown Shopper</strong> · Reporte Ejecutivo de Redes Sociales</div><div id="footerStamp">Generado: —</div></footer>
+    </div>
+
+    <script>
+        function formatearFecha(d) { try { return new Intl.DateTimeFormat('es-MX', { year: 'numeric', month: 'long', day: '2-digit' }).format(d); } catch (e) { return d.toLocaleDateString(); } }
+        document.addEventListener('DOMContentLoaded', function() { const stamp = document.getElementById('footerStamp'); if (stamp) stamp.textContent = 'Generado: ' + formatearFecha(new Date()); });
+    </script>
+</body>
+</html>
