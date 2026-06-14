@@ -137,6 +137,23 @@ function guardarCompetenciaConfigEnStorage() {
     }
 }
 
+function aplicarComentariosCompetitivosBase() {
+    const mes = '2026-06';
+    const comentarios = {
+        'laut-communal': 'Modelo operativo con dotación reducida. El mesero no utiliza tablet; levanta el pedido desde la mesa del cliente usando radio y diadema, conectando directamente con operación/caja.',
+        'gloria-jeans': 'Operación observada con una sola persona atendiendo pedido y entrega desde caja, reduciendo personal en piso y concentrando el flujo de servicio.',
+        'cacep': 'Modelo de servicio concentrado en caja: pedido y entrega se realizan desde el mostrador, con menor dependencia de meseros en piso.'
+    };
+
+    Object.keys(comentarios).forEach(competidorId => {
+        window.competenciaConfig[competidorId] = window.competenciaConfig[competidorId] || { ocultos: [], pesos: {} };
+        window.competenciaConfig[competidorId].comentariosCompetitivos = window.competenciaConfig[competidorId].comentariosCompetitivos || {};
+        if (!window.competenciaConfig[competidorId].comentariosCompetitivos[mes]) {
+            window.competenciaConfig[competidorId].comentariosCompetitivos[mes] = comentarios[competidorId];
+        }
+    });
+}
+
 function aplicarCompetenciaPublicada(payload) {
     try {
         if (!payload || typeof payload !== 'object') return false;
@@ -145,6 +162,7 @@ function aplicarCompetenciaPublicada(payload) {
         }
         if (payload.competenciaConfig && typeof payload.competenciaConfig === 'object') {
             window.competenciaConfig = payload.competenciaConfig;
+            aplicarComentariosCompetitivosBase();
             guardarCompetenciaConfigEnStorage();
         }
         return true;
@@ -173,6 +191,7 @@ async function publicarCompetenciaActual() {
     try {
         if (!puedeAdministrarCompetencia()) return false;
         if (!window.firebaseDB || typeof window.firebaseDB.guardarCompetenciaPublicada !== 'function') return false;
+        aplicarComentariosCompetitivosBase();
         await window.firebaseDB.guardarCompetenciaPublicada({
             competidores: Array.isArray(window.competencia) ? window.competencia : [],
             competenciaConfig: window.competenciaConfig || {}
@@ -212,6 +231,31 @@ function obtenerYoutubeCompetencia(competidorId, mes = window.mesSeleccionado) {
 
     const competidor = Array.isArray(window.competencia) ? window.competencia.find(c => c.id === competidorId) : null;
     return competidor && competidor.youtubeLinks && mes ? (competidor.youtubeLinks[mes] || '') : '';
+}
+
+function obtenerComentarioCompetitivo(competidorId, mes = window.mesSeleccionado) {
+    const cfg = window.competenciaConfig && window.competenciaConfig[competidorId] ? window.competenciaConfig[competidorId] : null;
+    if (!cfg || !cfg.comentariosCompetitivos || !mes) return '';
+    return cfg.comentariosCompetitivos[mes] || '';
+}
+
+function guardarComentarioCompetitivo(competidorId) {
+    if (!puedeAdministrarCompetencia()) {
+        alert('No tiene permisos para editar comentarios de competencia');
+        return;
+    }
+
+    const textarea = document.getElementById(`comentario-competitivo-${competidorId}`);
+    if (!textarea) return;
+
+    const mes = window.mesSeleccionado;
+    window.competenciaConfig[competidorId] = window.competenciaConfig[competidorId] || { ocultos: [], pesos: {} };
+    window.competenciaConfig[competidorId].comentariosCompetitivos = window.competenciaConfig[competidorId].comentariosCompetitivos || {};
+    window.competenciaConfig[competidorId].comentariosCompetitivos[mes] = textarea.value.trim();
+    guardarCompetenciaConfigEnStorage();
+    publicarCompetenciaActual();
+    alert('Comentario competitivo guardado correctamente.');
+    renderCompetencia();
 }
 
 function agregarEnlaceYoutubeCompetencia(competidorId) {
@@ -267,6 +311,7 @@ if (typeof window !== 'undefined') {
     try {
         cargarCompetidoresDesdeStorage();
         cargarCompetenciaConfigDesdeStorage();
+        aplicarComentariosCompetitivosBase();
         setTimeout(() => cargarCompetenciaPublicada(), 800);
     } catch (e) {
         console.warn('Init competenciaConfig error:', e);
@@ -435,6 +480,13 @@ function renderCompetencia() {
             </div>
         `;
     });
+
+    const comentariosCompetitivos = competidoresActivos
+        .map(competidor => {
+            const comentario = obtenerComentarioCompetitivo(competidor.id);
+            return { competidor, comentario };
+        })
+        .filter(item => puedeAdministrarCompetencia() || item.comentario);
     
     html += `
         </div>
@@ -461,6 +513,32 @@ function renderCompetencia() {
                 </div>
             </div>
         ` : ''}
+
+        <div style="margin-top: 18px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 4px solid #0f766e;">
+            <h3 style="text-align: center; margin: 0 0 8px 0; color: #0f766e;">Observaciones competitivas</h3>
+            <p style="text-align: center; color: #64748b; margin: 0 0 18px 0; font-size: 13px;">
+                Hallazgos operativos y de modelo de negocio observados durante las evaluaciones.
+            </p>
+            ${comentariosCompetitivos.length ? `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+                    ${comentariosCompetitivos.map(({ competidor, comentario }) => `
+                        <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; background: #f8fafc;">
+                            <div style="font-weight: 800; color: #1e293b; margin-bottom: 8px;">${competidor.nombre}</div>
+                            ${puedeAdministrarCompetencia() ? `
+                                <textarea id="comentario-competitivo-${competidor.id}" rows="5" style="width: 100%; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; resize: vertical; font-family: inherit; font-size: 13px;" placeholder="Agregar comentario competitivo de ${formatearMesLegible(window.mesSeleccionado)}...">${comentario}</textarea>
+                                <button type="button" onclick="guardarComentarioCompetitivo('${competidor.id}')" class="btn btn-primary btn-sm" style="margin-top: 8px;">
+                                    <i class="fas fa-save"></i> Guardar comentario
+                                </button>
+                            ` : `
+                                <div style="color: #334155; line-height: 1.5; white-space: pre-wrap; font-size: 13px;">${comentario}</div>
+                            `}
+                        </div>
+                    `).join('')}
+                </div>
+            ` : `
+                <div style="text-align: center; color: #64748b; padding: 12px;">No hay observaciones competitivas registradas para este mes.</div>
+            `}
+        </div>
         
         <!-- Estadísticas de competencia -->
         <div style="margin-top: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
