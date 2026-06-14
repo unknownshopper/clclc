@@ -1270,6 +1270,9 @@ async function guardarEvaluacionCompetencia(competidorId) {
         totalMaximo: totalMaximo,
         kpi: kpi,
         estado: kpi >= 95 ? 'Excelente' : kpi >= 90 ? 'Bueno' : 'Necesita mejora',
+        estadoPublicacion: 'publicado',
+        fechaPublicacion: new Date().toISOString(),
+        timestampPublicacion: Date.now(),
         fechaCreacion: new Date().toISOString(),
         timestamp: Date.now()
     };
@@ -1293,6 +1296,8 @@ async function guardarEvaluacionCompetencia(competidorId) {
             totalMaximo: totalMaximo,
             kpi: kpi / 100, // Guardar como decimal para consistencia
             estado: evaluacionData.estado,
+            estadoPublicacion: evaluacionData.estadoPublicacion,
+            fechaPublicacion: evaluacionData.fechaPublicacion,
             fechaCreacion: evaluacionData.fechaCreacion,
             timestamp: evaluacionData.timestamp
         };

@@ -75,6 +75,18 @@ function cambiarVista(vista) {
             if (typeof cargarCompetenciaPublicada === 'function') {
                 cargarCompetenciaPublicada();
             }
+            if (window.firebaseDB && typeof window.firebaseDB.cargarEvaluaciones === 'function') {
+                window.firebaseDB.cargarEvaluaciones(window.mesSeleccionado)
+                    .then(evaluacionesFirebase => {
+                        if (typeof integrarDatosFirebase === 'function') {
+                            integrarDatosFirebase(evaluacionesFirebase);
+                        }
+                        if (typeof renderCompetencia === 'function') {
+                            renderCompetencia();
+                        }
+                    })
+                    .catch(e => console.warn('No se pudieron recargar evaluaciones de competencia:', e));
+            }
             break;
     }
 }
