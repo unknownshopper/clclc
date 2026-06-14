@@ -207,8 +207,11 @@ function puedeAdministrarCompetencia() {
 
 function obtenerYoutubeCompetencia(competidorId, mes = window.mesSeleccionado) {
     const cfg = window.competenciaConfig && window.competenciaConfig[competidorId] ? window.competenciaConfig[competidorId] : null;
-    if (!cfg || !cfg.youtubeLinks || !mes) return '';
-    return cfg.youtubeLinks[mes] || '';
+    const urlConfig = cfg && cfg.youtubeLinks && mes ? cfg.youtubeLinks[mes] : '';
+    if (urlConfig) return urlConfig;
+
+    const competidor = Array.isArray(window.competencia) ? window.competencia.find(c => c.id === competidorId) : null;
+    return competidor && competidor.youtubeLinks && mes ? (competidor.youtubeLinks[mes] || '') : '';
 }
 
 function agregarEnlaceYoutubeCompetencia(competidorId) {
@@ -232,7 +235,10 @@ function agregarEnlaceYoutubeCompetencia(competidorId) {
     window.competenciaConfig[competidorId] = window.competenciaConfig[competidorId] || { ocultos: [], pesos: {} };
     window.competenciaConfig[competidorId].youtubeLinks = window.competenciaConfig[competidorId].youtubeLinks || {};
     window.competenciaConfig[competidorId].youtubeLinks[mes] = videoUrl;
+    competidor.youtubeLinks = competidor.youtubeLinks || {};
+    competidor.youtubeLinks[mes] = videoUrl;
     guardarCompetenciaConfigEnStorage();
+    guardarCompetidoresEnStorage();
     publicarCompetenciaActual();
 
     alert('Enlace de YouTube guardado correctamente.');
