@@ -3234,6 +3234,16 @@ function integrarDatosFirebase(evaluacionesFirebase) {
     if (!evaluacionesFirebase || !Array.isArray(evaluacionesFirebase)) return;
     
     console.log(`Integrando ${evaluacionesFirebase.length} evaluaciones de Firebase...`);
+
+    const obtenerTiempoEvaluacion = (ev) => {
+        if (!ev) return 0;
+        const valor = ev.timestamp || ev.timestampPublicacion || ev.fechaPublicacion || ev.fechaCreacion || ev.created_at || 0;
+        if (typeof valor === 'number') return valor;
+        if (valor && typeof valor.toMillis === 'function') return valor.toMillis();
+        if (valor && typeof valor.toDate === 'function') return valor.toDate().getTime();
+        const parsed = Date.parse(valor);
+        return Number.isFinite(parsed) ? parsed : 0;
+    };
     
     evaluacionesFirebase.forEach(evaluacion => {
         const { tipo, entidadId, mes } = evaluacion;
@@ -3273,6 +3283,12 @@ function integrarDatosFirebase(evaluacionesFirebase) {
         };
 
         const actual = window.evaluaciones[tipoEntidad][entidadId][mes] || null;
+        const tiempoConvertido = obtenerTiempoEvaluacion(convertido);
+        const tiempoActual = obtenerTiempoEvaluacion(actual);
+
+        if (actual && modalidad === 'kpi' && tiempoActual > tiempoConvertido) {
+            return;
+        }
 
         // Mantener compatibilidad: el registro principal por mes sigue siendo el KPI legacy.
         // Para modalidades nuevas, anexamos bajo .modalidades sin pisar lo existente.

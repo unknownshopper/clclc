@@ -1303,6 +1303,9 @@ async function guardarEvaluacionCompetencia(competidorId) {
     try {
         // Guardar en Firebase si está disponible
         if (window.firebaseDB && typeof window.firebaseDB.guardarEvaluacion === 'function') {
+            if (typeof window.firebaseDB.eliminarEvaluacion === 'function') {
+                await window.firebaseDB.eliminarEvaluacion(competidorId, 'competencia', window.mesSeleccionado, 'kpi');
+            }
             const firebaseId = await window.firebaseDB.guardarEvaluacion(evaluacionData);
             evaluacionData.firebaseId = firebaseId;
             console.log('Evaluación de competencia guardada en Firebase exitosamente');
