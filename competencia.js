@@ -52,7 +52,86 @@ window.competencia = window.competencia || [
         activa: false,
         fechaCreacion: new Date().toISOString()
     }
+
 ];
+
+function obtenerReporteOperativoCompetencia(mes = window.mesSeleccionado) {
+    try {
+        const global = window.competenciaConfig && window.competenciaConfig.__global ? window.competenciaConfig.__global : null;
+        const reportes = global && global.reporteOperativo ? global.reporteOperativo : null;
+        if (!reportes || !mes) return null;
+        return reportes[mes] || null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function guardarReporteOperativoCompetencia(parcial) {
+    if (!puedeAdministrarCompetencia()) {
+        alert('No tiene permisos para editar este reporte');
+        return;
+    }
+    const mes = window.mesSeleccionado;
+    if (!mes) return;
+
+    window.competenciaConfig = window.competenciaConfig || {};
+    window.competenciaConfig.__global = window.competenciaConfig.__global || {};
+    window.competenciaConfig.__global.reporteOperativo = window.competenciaConfig.__global.reporteOperativo || {};
+
+    const actual = window.competenciaConfig.__global.reporteOperativo[mes] || {};
+    window.competenciaConfig.__global.reporteOperativo[mes] = { ...actual, ...(parcial || {}) };
+
+    guardarCompetenciaConfigEnStorage();
+    publicarCompetenciaActual();
+    alert('Observaciones relevantes guardadas correctamente.');
+    renderCompetencia();
+}
+
+function guardarReporteOperativoCompetenciaDesdeUI() {
+    if (!puedeAdministrarCompetencia()) return;
+    const dictamen = (document.getElementById('reporte-op-competencia-dictamen')?.value || '').trim();
+    const brechasRaw = (document.getElementById('reporte-op-competencia-brechas')?.value || '').trim();
+    const top5Raw = (document.getElementById('reporte-op-competencia-top5')?.value || '').trim();
+
+    const normalizarLineas = (raw) => {
+        if (!raw) return [];
+        return raw
+            .split('\n')
+            .map(l => String(l || '').trim())
+            .map(l => l.replace(/^[-*\u2022\d.)\s]+/, '').trim())
+            .filter(Boolean);
+    };
+
+    guardarReporteOperativoCompetencia({
+        dictamen,
+        brechas: normalizarLineas(brechasRaw),
+        top5: normalizarLineas(top5Raw)
+    });
+}
+
+function aplicarReporteOperativoBase() {
+    const mes = '2026-06';
+    window.competenciaConfig = window.competenciaConfig || {};
+    window.competenciaConfig.__global = window.competenciaConfig.__global || {};
+    window.competenciaConfig.__global.reporteOperativo = window.competenciaConfig.__global.reporteOperativo || {};
+    if (window.competenciaConfig.__global.reporteOperativo[mes]) return;
+
+    window.competenciaConfig.__global.reporteOperativo[mes] = {
+        dictamen: 'Los competidores están ganando por simplificación del flujo y operación con poco personal. Mientras CLC (en su modelo cafetería) acostumbró al cliente al servicio con mesero, los competidores empujan modelos donde caja/barra concentra el proceso (pedido + cobro + entrega) o lo optimiza con herramientas (radio/diadema). El resultado típico: menos pasos, menos gente, menos fricción.\n\nRiesgo para CLC: mantener un flujo de “mesero obligatorio” como estándar operativo eleva costo, alarga tiempos y vuelve más difícil sostener calidad consistente en horas pico.\n\nNota: CLC mantendrá sus 3 modelos de negocio (Cafetería / Express / Móvil). La brecha principal no está en Express ni en Móvil (ya operan con personal indispensable), sino en Cafetería, donde el flujo depende más del mesero y por eso es más vulnerable cuando hay pico o dotación corta.',
+        brechas: [
+            'Brecha 1: Cafetería (modelo más vulnerable). Competidores con un solo centro de operación (caja/barra/ventanilla) vs CLC cafetería con servicio de mesero como expectativa histórica. Conclusión: más pasos por servicio = más vulnerabilidad en pico y dotación corta. La oportunidad es hacer cafetería “resistente” con simplificación parcial (no eliminarla).',
+            'Brecha 2: Operación con poco personal. Competidores diseñan el proceso para operar “ligero”. CLC tiene 3 modelos (cafetería/express/móvil), lo que aumenta complejidad y riesgo de inconsistencias si no se estandariza por modelo.',
+            'Brecha 3: Venta y ejecución comercial. En CLC existe protocolo (producto del mes/promos) pero la ejecución es inconsistente. Starbucks es fuerte en producto pero débil en conexión/upselling. Conclusión: CLC puede ganar por hospitalidad + recomendación + ejecución constante.'
+        ],
+        top5: [
+            'Hacer cafetería resistente a pico/dotación corta: simplificación parcial del flujo sin perder experiencia (sin replicar el cambio en Express/Móvil).',
+            'Estandarizar el flujo por cada modelo (cafetería / express / móvil).',
+            'Convertir la promo/producto del mes en ejecución consistente (guion básico).',
+            'Mejorar velocidad operativa copiando lo mejor del modelo caja/barra/ventanilla.',
+            'Diferenciarse donde Starbucks es débil: conexión humana + recomendación.'
+        ]
+    };
+}
 
 // Parámetros excluidos por competidor (similar a sucursales)
 window.parametrosExcluidosPorCompetencia = {
@@ -142,7 +221,8 @@ function aplicarComentariosCompetitivosBase() {
     const comentarios = {
         'laut-communal': 'Modelo operativo con dotación reducida. El mesero no utiliza tablet; levanta el pedido desde la mesa del cliente usando radio y diadema, conectando directamente con operación/caja.',
         'gloria-jeans': 'Operación observada con una sola persona atendiendo pedido y entrega desde caja, reduciendo personal en piso y concentrando el flujo de servicio.',
-        'cacep': 'Modelo de servicio concentrado en caja: pedido y entrega se realizan desde el mostrador, con menor dependencia de meseros en piso.'
+        'cacep': 'Modelo de servicio concentrado en caja: pedido y entrega se realizan desde el mostrador, con menor dependencia de meseros en piso.',
+        'starbucks': 'Alta variedad y consistencia en calidad/presentación. Sin embargo, la atención es transaccional y el esfuerzo de venta es bajo: no hay recomendaciones ni upselling (tamaño, extras o acompañamientos), lo que reduce ticket promedio y conexión con el cliente. El precio se percibe alto cuando la experiencia de servicio no acompaña.'
     };
 
     Object.keys(comentarios).forEach(competidorId => {
@@ -163,6 +243,7 @@ function aplicarCompetenciaPublicada(payload) {
         if (payload.competenciaConfig && typeof payload.competenciaConfig === 'object') {
             window.competenciaConfig = payload.competenciaConfig;
             aplicarComentariosCompetitivosBase();
+            aplicarReporteOperativoBase();
             guardarCompetenciaConfigEnStorage();
         }
         return true;
@@ -192,6 +273,7 @@ async function publicarCompetenciaActual() {
         if (!puedeAdministrarCompetencia()) return false;
         if (!window.firebaseDB || typeof window.firebaseDB.guardarCompetenciaPublicada !== 'function') return false;
         aplicarComentariosCompetitivosBase();
+        aplicarReporteOperativoBase();
         await window.firebaseDB.guardarCompetenciaPublicada({
             competidores: Array.isArray(window.competencia) ? window.competencia : [],
             competenciaConfig: window.competenciaConfig || {}
@@ -312,6 +394,7 @@ if (typeof window !== 'undefined') {
         cargarCompetidoresDesdeStorage();
         cargarCompetenciaConfigDesdeStorage();
         aplicarComentariosCompetitivosBase();
+        aplicarReporteOperativoBase();
         setTimeout(() => cargarCompetenciaPublicada(), 800);
     } catch (e) {
         console.warn('Init competenciaConfig error:', e);
@@ -539,6 +622,82 @@ function renderCompetencia() {
                 <div style="text-align: center; color: #64748b; padding: 12px;">No hay observaciones competitivas registradas para este mes.</div>
             `}
         </div>
+
+        ${(() => {
+            const reporte = obtenerReporteOperativoCompetencia() || {};
+            const dictamen = reporte.dictamen || '';
+            const brechas = Array.isArray(reporte.brechas) ? reporte.brechas : [];
+            const top5 = Array.isArray(reporte.top5) ? reporte.top5 : [];
+
+            if (puedeAdministrarCompetencia()) {
+                const brechasText = brechas.join('\n');
+                const top5Text = top5.join('\n');
+                return `
+                    <div style="margin-top: 18px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 4px solid #b45309;">
+                        <h3 style="text-align:center; margin: 0 0 8px 0; color:#b45309;">Observaciones relevantes (Diagnóstico operativo)</h3>
+                        <p style="text-align:center; color:#64748b; margin: 0 0 18px 0; font-size: 13px;">Conclusiones comparativas vs Café La Cabaña (CLC) para el mes seleccionado.</p>
+
+                        <div style="display:grid; grid-template-columns: 1fr; gap: 12px;">
+                            <div style="border:1px solid #e2e8f0; background:#fff7ed; border-radius: 8px; padding: 14px;">
+                                <div style="font-weight:900; color:#7c2d12; margin-bottom: 8px;">Dictamen operativo</div>
+                                <textarea id="reporte-op-competencia-dictamen" rows="6" style="width:100%; box-sizing:border-box; border:1px solid #cbd5e1; border-radius:6px; padding: 10px; resize: vertical; font-family: inherit; font-size: 13px;">${dictamen}</textarea>
+                            </div>
+
+                            <div style="border:1px solid #e2e8f0; background:#fff; border-radius: 8px; padding: 14px;">
+                                <div style="font-weight:900; color:#1f2937; margin-bottom: 6px;">Brechas vs CLC (una por línea)</div>
+                                <textarea id="reporte-op-competencia-brechas" rows="6" style="width:100%; box-sizing:border-box; border:1px solid #cbd5e1; border-radius:6px; padding: 10px; resize: vertical; font-family: inherit; font-size: 13px;" placeholder="Ej: Brecha 1: ...">${brechasText}</textarea>
+                            </div>
+
+                            <div style="border:1px solid #e2e8f0; background:#fff; border-radius: 8px; padding: 14px;">
+                                <div style="font-weight:900; color:#1f2937; margin-bottom: 6px;">Top 5 áreas de oportunidad (una por línea)</div>
+                                <textarea id="reporte-op-competencia-top5" rows="6" style="width:100%; box-sizing:border-box; border:1px solid #cbd5e1; border-radius:6px; padding: 10px; resize: vertical; font-family: inherit; font-size: 13px;" placeholder="Ej: 1) ...">${top5Text}</textarea>
+                            </div>
+
+                            <div style="display:flex; justify-content:flex-end;">
+                                <button type="button" onclick="guardarReporteOperativoCompetenciaDesdeUI()" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-save"></i> Guardar observaciones relevantes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const tieneContenido = !!(dictamen || brechas.length || top5.length);
+            if (!tieneContenido) return '';
+
+            return `
+                <div style="margin-top: 18px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 4px solid #b45309;">
+                    <h3 style="text-align:center; margin: 0 0 8px 0; color:#b45309;">Observaciones relevantes (Diagnóstico operativo)</h3>
+                    <p style="text-align:center; color:#64748b; margin: 0 0 18px 0; font-size: 13px;">Conclusiones comparativas vs Café La Cabaña (CLC) para el mes seleccionado.</p>
+
+                    <div style="display:grid; grid-template-columns: 1fr; gap: 12px;">
+                        ${dictamen ? `
+                            <div style="border:1px solid #e2e8f0; background:#fff7ed; border-radius: 8px; padding: 14px;">
+                                <div style="font-weight:900; color:#7c2d12; margin-bottom: 8px;">Dictamen operativo</div>
+                                <div style="color:#334155; line-height: 1.6; white-space: pre-wrap; font-size: 13px;">${dictamen}</div>
+                            </div>
+                        ` : ''}
+
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px;">
+                            ${brechas.length ? `
+                                <div style="border:1px solid #e2e8f0; background:#fff; border-radius: 8px; padding: 14px;">
+                                    <div style="font-weight:900; color:#1f2937; margin-bottom: 8px;">Brechas vs CLC</div>
+                                    <ul style="margin:0; padding-left: 18px; color:#334155; font-size: 13px; line-height: 1.55;">${brechas.map(b => `<li style=\"margin-bottom: 8px;\">${b}</li>`).join('')}</ul>
+                                </div>
+                            ` : ''}
+
+                            ${top5.length ? `
+                                <div style="border:1px solid #e2e8f0; background:#fff; border-radius: 8px; padding: 14px;">
+                                    <div style="font-weight:900; color:#1f2937; margin-bottom: 8px;">Top 5 áreas de oportunidad</div>
+                                    <ol style="margin:0; padding-left: 18px; color:#334155; font-size: 13px; line-height: 1.55;">${top5.map(t => `<li style=\"margin-bottom: 8px;\">${t}</li>`).join('')}</ol>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        })()}
         
         <!-- Estadísticas de competencia -->
         <div style="margin-top: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
