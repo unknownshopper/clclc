@@ -263,16 +263,20 @@ function renderHistorico() {
   });
 
   const labelsC = resultados.map(r => r.label);
-  const datosC1 = resultados.map(r => (typeof r.res.kpi === 'number' ? r.res.kpi : null));
-  const datosC2 = resultados.map(r => (typeof r.res2.kpi === 'number' ? r.res2.kpi : null));
-  const countsC1 = resultados.map(r => r.res.count || 0);
-  const countsC2 = resultados.map(r => r.res2.count || 0);
+  const datosC1 = resultados.map(r => {
+    if (!r || !r.mes) return null;
+    if (r.mes > corteFinKPI) return null;
+    return (r.res && r.res.count > 0 && typeof r.res.kpi === 'number') ? r.res.kpi : null;
+  });
+  const datosC2 = resultados.map(r => (r.res2 && r.res2.count > 0 && typeof r.res2.kpi === 'number' ? r.res2.kpi : null));
+  const countsC1 = resultados.map(r => (r.res && r.res.count > 0) ? r.res.count : 0);
+  const countsC2 = resultados.map(r => (r.res2 && r.res2.count > 0) ? r.res2.count : 0);
 
   const labelsAV = resultadosAV.map(r => r.label);
-  const datosAV1 = resultadosAV.map(r => (typeof r.res.kpi === 'number' ? r.res.kpi : null));
-  const datosAV2 = resultadosAV.map(r => (typeof r.res2.kpi === 'number' ? r.res2.kpi : null));
-  const countsAV1 = resultadosAV.map(r => r.res.count || 0);
-  const countsAV2 = resultadosAV.map(r => r.res2.count || 0);
+  const datosAV1 = resultadosAV.map(r => (r.res && r.res.count > 0 && typeof r.res.kpi === 'number' ? r.res.kpi : null));
+  const datosAV2 = resultadosAV.map(r => (r.res2 && r.res2.count > 0 && typeof r.res2.kpi === 'number' ? r.res2.kpi : null));
+  const countsAV1 = resultadosAV.map(r => (r.res && r.res.count > 0) ? r.res.count : 0);
+  const countsAV2 = resultadosAV.map(r => (r.res2 && r.res2.count > 0) ? r.res2.count : 0);
 
   const paramsAV = listarParametrosEvaluadosAtencionVentaMes(meses[meses.length - 1] || null);
   const chipsAV = (paramsAV || []).map(n => `<span style="display:inline-block; padding:4px 10px; border-radius:999px; background:#f1f5f9; border:1px solid #e2e8f0; color:#334155; font-size:12px; margin:3px 6px 0 0;">${n}</span>`).join('');
@@ -292,7 +296,7 @@ function renderHistorico() {
       <canvas id="graficoHistoricoComparacion" width="800" height="420" style="max-width:100%;"></canvas>
     </div>
 
-    <div style="margin-top: 18px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-height: 420px; position: relative;">
+    <div style="margin-top: 18px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 420px; position: relative;">
       <div style="text-align:center; font-weight: 800; color:#2d3e50; margin-bottom: 6px;">Atención + Venta</div>
       <div style="text-align:center; color:#6c757d; font-size: 12px; margin-bottom: 10px;">(Bienvenida + Producto/Ventas + Atención en mesa + Tiempos de espera)</div>
       ${bloqueParamsAV}
@@ -355,6 +359,7 @@ function renderHistorico() {
               cubicInterpolationMode: 'monotone',
               tension: 0.35,
               fill: '+1',
+              spanGaps: false,
             },
             {
               label: 'KPI2 Global (%)',
@@ -370,6 +375,7 @@ function renderHistorico() {
               cubicInterpolationMode: 'monotone',
               tension: 0.35,
               fill: false,
+              spanGaps: false,
             },
             {
               label: 'Meta 95%',
@@ -469,6 +475,7 @@ function renderHistorico() {
               cubicInterpolationMode: 'monotone',
               tension: 0.35,
               fill: '+1',
+              spanGaps: false,
             },
             {
               label: 'KPI2 Atención+Venta (%)',
@@ -484,6 +491,7 @@ function renderHistorico() {
               cubicInterpolationMode: 'monotone',
               tension: 0.35,
               fill: false,
+              spanGaps: false,
             },
             {
               label: 'Meta 95%',

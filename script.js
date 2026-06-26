@@ -230,6 +230,8 @@ function renderHistoricoFallback() {
     const container = document.getElementById('historico');
     if (!container) return;
 
+    const corteFinKPI = (window.kpiCorte && window.kpiCorte.MES_KPI_FIN) ? window.kpiCorte.MES_KPI_FIN : '2026-05';
+
     const obtenerMesesUltimos = (n = 12) => {
         const meses = [];
         const ahora = new Date();
@@ -278,20 +280,29 @@ function renderHistoricoFallback() {
         return { kpi: Math.round(sum / count), count };
     };
 
-    const meses = obtenerMesesUltimos(12);
-    const resultados = meses.map(m => ({
-        mes: m,
-        label: (typeof formatearMesLegible === 'function' ? formatearMesLegible(m) : m),
-        res: calcularKPIGlobalMesConFiltros(m),
-        res2: calcularKPI2GlobalMesConFiltros(m)
-    }));
+    const debeMostrarKPI = (mes) => {
+        if (typeof window.debeMostrarKPI === 'function') return window.debeMostrarKPI(mes);
+        const m = (mes || '').toString().trim();
+        return !!m && m <= corteFinKPI;
+    };
 
-    const comparables = resultados.filter(r => r.res.count > 0 && r.res2.count > 0);
-    const labelsC = comparables.map(r => r.label);
-    const datosC1 = comparables.map(r => r.res.kpi);
-    const datosC2 = comparables.map(r => r.res2.kpi);
-    const countsC1 = comparables.map(r => r.res.count);
-    const countsC2 = comparables.map(r => r.res2.count);
+    const meses = obtenerMesesUltimos(12);
+    const resultados = meses.map(m => {
+        const r1 = debeMostrarKPI(m) ? calcularKPIGlobalMesConFiltros(m) : { kpi: null, count: 0 };
+        const r2 = calcularKPI2GlobalMesConFiltros(m);
+        return {
+            mes: m,
+            label: (typeof formatearMesLegible === 'function' ? formatearMesLegible(m) : m),
+            res: r1,
+            res2: r2
+        };
+    });
+
+    const labelsC = resultados.map(r => r.label);
+    const datosC1 = resultados.map(r => (r.res && r.res.count > 0 && typeof r.res.kpi === 'number' ? r.res.kpi : null));
+    const datosC2 = resultados.map(r => (r.res2 && r.res2.count > 0 && typeof r.res2.kpi === 'number' ? r.res2.kpi : null));
+    const countsC1 = resultados.map(r => (r.res && r.res.count > 0) ? r.res.count : 0);
+    const countsC2 = resultados.map(r => (r.res2 && r.res2.count > 0) ? r.res2.count : 0);
 
     container.innerHTML = `
         <div style="margin-bottom: 20px;">
@@ -306,19 +317,14 @@ function renderHistoricoFallback() {
     const canvasC = document.getElementById('graficoHistoricoComparacion');
     if (!canvasC) return;
 
-    if (!labelsC.length) {
-        container.innerHTML += `
-            <div style="margin-top:16px; padding:16px; background:#f8f9fa; border-radius:8px; color:#666; text-align:center;">
-                No hay meses con datos simultáneos (KPI y KPI2) para mostrar la comparación.
-            </div>`;
-        return;
-    }
+    if (!labelsC.length) return;
 
     if (!window.Chart) return;
 
     const ctxC = canvasC.getContext('2d');
-    const minC = Math.min(...datosC1, ...datosC2);
-    const maxC = Math.max(...datosC1, ...datosC2);
+    const valoresC = [...datosC1, ...datosC2].filter(v => typeof v === 'number' && Number.isFinite(v));
+    const minC = valoresC.length ? Math.min(...valoresC) : 0;
+    const maxC = valoresC.length ? Math.max(...valoresC) : 100;
     const paddingC = 5;
     const yMinC = Math.max(0, Math.floor((minC - paddingC) / 5) * 5);
     const yMaxC = Math.min(100, Math.ceil((maxC + paddingC) / 5) * 5);
