@@ -71,25 +71,28 @@ function renderDashboard() {
     let kpis2 = [];
     
     evaluacionesFiltradas.forEach(ev => {
-        if (ev.kpi !== undefined) {
+        const soloKPI2 = (typeof window.debeUsarSoloKPI2 === 'function') ? window.debeUsarSoloKPI2(window.mesSeleccionado) : false;
+        const kpiPermitido = (typeof window.debeMostrarKPI === 'function') ? window.debeMostrarKPI(window.mesSeleccionado) : true;
+
+        if (!soloKPI2 && kpiPermitido && ev.kpi !== undefined) {
             const kpiPorcentaje = ev.kpi * 100;
             kpis.push(kpiPorcentaje);
+        }
 
-            if (debeMostrarKPI2(window.mesSeleccionado)) {
-                const kpi2 = calcularKPI2Dashboard(ev.entidadId, ev.tipo, ev.evaluacion || null);
-                if (typeof kpi2 === 'number') {
-                    kpis2.push(kpi2 * 100);
-                }
+        if (debeMostrarKPI2(window.mesSeleccionado)) {
+            const kpi2 = calcularKPI2Dashboard(ev.entidadId, ev.tipo, ev.evaluacion || null);
+            if (typeof kpi2 === 'number') {
+                kpis2.push(kpi2 * 100);
             }
+        }
             
             // DEBUG: Mostrar datos detallados de cada evaluación
             console.log(`DEBUG - ${ev.entidad} (${ev.tipo}):`, {
-                kpi: kpiPorcentaje,
+                kpi: ev.kpi !== undefined ? (ev.kpi * 100) : null,
                 totalObtenido: ev.evaluacion?.totalObtenido,
                 totalMaximo: ev.evaluacion?.totalMaximo,
                 estado: ev.estado
             });
-        }
     });
     
     // DEBUG: Mostrar resumen de KPIs
@@ -116,13 +119,15 @@ function renderDashboard() {
                 <small style="opacity: 0.8;">${sucursalesCount} sucursales + ${franquiciasCount} franquicias</small>
                 <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;">📊</div>
             </div>
+            ${((typeof window.debeMostrarKPI === 'function') ? window.debeMostrarKPI(window.mesSeleccionado) : true) ? `
             <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 12px; color: white; text-align: center; position: relative; cursor: help;"
-                 title="Promedio de KPI de todas las evaluaciones del mes. Meta: 100% para excelencia">
+                 title="Promedio de KPI (legacy) de todas las evaluaciones del mes. Histórico hasta ${window.kpiCorte?.MES_KPI_FIN || '2026-05'}">
                 <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">KPI Promedio</h3>
                 <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">${promedioKPI}%</div>
-                <small style="opacity: 0.8;">Meta: 100%</small>
+                <small style="opacity: 0.8;">Histórico</small>
                 <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;">🎯</div>
             </div>
+            ` : ''}
 
             ${debeMostrarKPI2(window.mesSeleccionado) ? `
             <div style="background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%); padding: 20px; border-radius: 12px; color: white; text-align: center; position: relative; cursor: help;"
@@ -170,10 +175,19 @@ function renderDashboard() {
         `;
     
     // Agregar lista de entidades que necesitan atención
-    const entidadesAtencion = evaluacionesFiltradas.filter(evaluacion => {
-        const kpiPorcentaje = (evaluacion.kpi * 100);
-        return kpiPorcentaje < 95;
-    }).sort((a, b) => (a.kpi * 100) - (b.kpi * 100));
+    const soloKPI2 = (typeof window.debeUsarSoloKPI2 === 'function') ? window.debeUsarSoloKPI2(window.mesSeleccionado) : false;
+    const entidadesAtencion = evaluacionesFiltradas
+        .map(evaluacion => {
+            const kpi2 = debeMostrarKPI2(window.mesSeleccionado)
+                ? calcularKPI2Dashboard(evaluacion.entidadId, evaluacion.tipo, evaluacion.evaluacion || null)
+                : null;
+            const kpi2Pct = (typeof kpi2 === 'number') ? (kpi2 * 100) : null;
+            const kpiPct = (evaluacion.kpi !== undefined && evaluacion.kpi !== null) ? (evaluacion.kpi * 100) : null;
+            const valor = soloKPI2 ? kpi2Pct : kpiPct;
+            return { ...evaluacion, __kpiAtencion: valor };
+        })
+        .filter(e => typeof e.__kpiAtencion === 'number' && e.__kpiAtencion < 95)
+        .sort((a, b) => (a.__kpiAtencion) - (b.__kpiAtencion));
 
     if (entidadesAtencion.length > 0) {
         html += `
@@ -189,7 +203,7 @@ function renderDashboard() {
         `;
         
         entidadesAtencion.forEach((entidad) => {
-            const kpiPorcentaje = (entidad.kpi * 100);
+            const kpiPorcentaje = entidad.__kpiAtencion;
             const prioridad = kpiPorcentaje < 90 ? 'alta' : 'media';
             const colorFondo = prioridad === 'alta' ? '#ffebee' : '#fff8e1';
             const colorBorde = prioridad === 'alta' ? '#f44336' : '#ff9800';
@@ -207,7 +221,7 @@ function renderDashboard() {
                             </span>
                         </div>
                         <div style="font-size: 12px; color: #666;">
-                            ${textoPrioridad} • KPI: <strong style="color: ${colorBorde};">${kpiPorcentaje.toFixed(1)}%</strong>
+                            ${textoPrioridad} • ${soloKPI2 ? 'KPI2' : 'KPI'}: <strong style="color: ${colorBorde};">${kpiPorcentaje.toFixed(1)}%</strong>
                         </div>
                     </div>
                     <div style="text-align: right;">

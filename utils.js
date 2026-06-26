@@ -9,6 +9,25 @@ window.evaluaciones = {
     competencia: {}
 };
 
+// Corte: KPI legacy muere en 2026-05; desde 2026-06 todo el sistema usa KPI2 como motor único
+window.kpiCorte = window.kpiCorte || {
+    MES_KPI_FIN: '2026-05',
+    MES_KPI2_UNICO: '2026-06'
+};
+
+function debeMostrarKPI(mes) {
+    const m = (mes || '').toString().trim();
+    return !!m && m <= (window.kpiCorte?.MES_KPI_FIN || '2026-05');
+}
+
+function debeUsarSoloKPI2(mes) {
+    const m = (mes || '').toString().trim();
+    return !!m && m >= (window.kpiCorte?.MES_KPI2_UNICO || '2026-06');
+}
+
+window.debeMostrarKPI = debeMostrarKPI;
+window.debeUsarSoloKPI2 = debeUsarSoloKPI2;
+
 // Función para obtener el mes anterior
 function obtenerMesAnterior() {
     const ahora = new Date();

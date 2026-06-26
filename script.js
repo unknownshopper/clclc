@@ -587,11 +587,15 @@ async function renderEvaluaciones() {
 
         const orden = window.evaluacionesOrden || { campo: null, dir: 'asc' };
         const debeKPI2 = debeMostrarKPI2(window.mesSeleccionado);
-        const campoActivo = (orden.campo === 'kpi2')
+        const soloKPI2 = (typeof window.debeUsarSoloKPI2 === 'function') ? window.debeUsarSoloKPI2(window.mesSeleccionado) : false;
+        const kpiPermitido = (typeof window.debeMostrarKPI === 'function') ? window.debeMostrarKPI(window.mesSeleccionado) : true;
+        const campoActivo = soloKPI2
             ? 'kpi2'
-            : (orden.campo === 'kpi')
-                ? 'kpi'
-                : (debeKPI2 ? 'kpi2' : 'kpi');
+            : (orden.campo === 'kpi2')
+                ? 'kpi2'
+                : (orden.campo === 'kpi')
+                    ? 'kpi'
+                    : (debeKPI2 ? 'kpi2' : 'kpi');
         const arrow = (campo) => {
             if (!orden || orden.campo !== campo) return '';
             return orden.dir === 'asc' ? ' ▲' : ' ▼';
@@ -606,7 +610,7 @@ async function renderEvaluaciones() {
                     const bn = String(b.entidad || '').toLowerCase();
                     return an.localeCompare(bn, 'es', { sensitivity: 'base' }) * dir;
                 });
-        } else if (orden.campo === 'kpi' || (orden.campo === 'kpi2' && debeKPI2)) {
+        } else if ((orden.campo === 'kpi' && !soloKPI2) || (orden.campo === 'kpi2' && debeKPI2) || (soloKPI2 && debeKPI2)) {
             evaluacionesFiltradas = evaluacionesFiltradas
                 .map((e) => {
                     let kpi2v = null;
@@ -624,10 +628,10 @@ async function renderEvaluaciones() {
                 })
                 .sort((a, b) => {
                     const dir = (orden.dir === 'desc') ? -1 : 1;
-                    const av = (orden.campo === 'kpi')
+                    const av = (!soloKPI2 && orden.campo === 'kpi')
                         ? (((a.kpi || 0) * 100))
                         : (typeof a.__kpi2v === 'number' ? a.__kpi2v : Number.POSITIVE_INFINITY);
-                    const bv = (orden.campo === 'kpi')
+                    const bv = (!soloKPI2 && orden.campo === 'kpi')
                         ? (((b.kpi || 0) * 100))
                         : (typeof b.__kpi2v === 'number' ? b.__kpi2v : Number.POSITIVE_INFINITY);
                     if (av < bv) return -1 * dir;
@@ -646,7 +650,7 @@ async function renderEvaluaciones() {
                         <tr style="background: #0077cc; color: white;">
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Tipo</th>
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none;" onclick="ordenarEvaluacionesPor('entidad')" title="Ordenar por Entidad">Entidad${arrow('entidad')}</th>
-                            <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none; opacity:${opKPI};" onclick="ordenarEvaluacionesPor('kpi')" title="Ordenar por KPI">KPI${arrow('kpi')}</th>
+                            ${(!soloKPI2 && kpiPermitido) ? `<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none; opacity:${opKPI};" onclick="ordenarEvaluacionesPor('kpi')" title="Ordenar por KPI">KPI${arrow('kpi')}</th>` : ''}
                             ${debeMostrarKPI2(window.mesSeleccionado) ? `<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none; opacity:${opKPI2};" onclick="ordenarEvaluacionesPor('kpi2')" title="Ordenar por KPI2">KPI2${arrow('kpi2')}</th>` : ''}
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Estado</th>
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Publicación</th>
@@ -659,6 +663,8 @@ async function renderEvaluaciones() {
         
         evaluacionesFiltradas.forEach((evaluacion, index) => {
             const kpiPorcentaje = ((evaluacion.kpi || 0) * 100).toFixed(1);
+            const soloKPI2 = (typeof window.debeUsarSoloKPI2 === 'function') ? window.debeUsarSoloKPI2(window.mesSeleccionado) : false;
+            const kpiPermitido = (typeof window.debeMostrarKPI === 'function') ? window.debeMostrarKPI(window.mesSeleccionado) : true;
             const bgColor = index % 2 === 0 ? '#f8f9fa' : 'white';
             
             // Formatear tipo para mostrar
@@ -707,9 +713,11 @@ async function renderEvaluaciones() {
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; font-weight: 500;">
                         ${evaluacion.entidad}
                     </td>
+                    ${(!soloKPI2 && kpiPermitido) ? `
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; font-weight: bold; color: ${estadoColor}; font-size: 16px; opacity:${opKPI};">
                         ${kpiPorcentaje}%
                     </td>
+                    ` : ''}
                     ${debeMostrarKPI2(window.mesSeleccionado) ? `
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; font-weight: bold; color: ${kpi2Porcentaje !== null ? (parseFloat(kpi2Porcentaje) >= 95 ? '#28a745' : parseFloat(kpi2Porcentaje) >= 90 ? '#ffc107' : '#dc3545') : '#2d3e50'}; font-size: 16px; opacity:${opKPI2};" title="KPI2 usa ponderación competitividad (PONDERA IA).">
                         ${kpi2Porcentaje !== null ? (kpi2Porcentaje + '%') : '—'}
@@ -731,12 +739,14 @@ async function renderEvaluaciones() {
                     ${tienePermiso('ver') || tienePermiso('editar') || tienePermiso('eliminar') || tienePermiso('publicar') ? `
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">
                         <div class="action-buttons" style="display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;">
+                            ${(!soloKPI2 && kpiPermitido) ? `
                             <button onclick="verEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi')" 
                                     class="btn-action btn-view" 
                                     title="KPI"
                                     style="background:#0a84ff;color:#fff;">
                                 <i class="fas fa-eye"></i>
                             </button>
+                            ` : ''}
                             ${mostrarOjoKPI2 ? `
                             <button onclick="verEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi2')" 
                                     class="btn-action btn-view" 
@@ -1654,6 +1664,9 @@ function generarGraficosKPI() {
     // Obtener datos filtrados por rol usando la función existente
     const evaluacionesFiltradas = filtrarDatosPorRol(obtenerEvaluacionesDelMes(window.mesSeleccionado));
     
+    const soloKPI2 = (typeof window.debeUsarSoloKPI2 === 'function') ? window.debeUsarSoloKPI2(window.mesSeleccionado) : false;
+    const kpiPermitido = (typeof window.debeMostrarKPI === 'function') ? window.debeMostrarKPI(window.mesSeleccionado) : true;
+
     // Obtener datos de KPIs de las evaluaciones filtradas
     let datosKPI = [];
     let datosKPI2 = [];
@@ -1668,42 +1681,63 @@ function generarGraficosKPI() {
             ? evLocal.modalidades.kpi2
             : (evLocal && evLocal._kpi2 ? evLocal._kpi2 : evLocal);
 
-        // KPI: recalcular desde parámetros para no depender de totales/kpi históricos (p.ej. cambios soloKPI2 como existencia)
+        const kpi2 = calcularKPI2ParaGrafica(entidadId, tipo, evParaKPI2);
+        const kpi2Porcentaje = (typeof kpi2 === 'number') ? Math.round(kpi2 * 100) : null;
+
         let kpiPorcentaje = null;
-        if (typeof calcularPorcentajeEvaluacion === 'function' && entidadId && tipo && evLocal) {
-            try {
-                kpiPorcentaje = calcularPorcentajeEvaluacion(entidadId, tipo, evLocal);
-            } catch (e) {
-                kpiPorcentaje = null;
+        if (!soloKPI2 && kpiPermitido) {
+            // KPI: recalcular desde parámetros para no depender de totales/kpi históricos (p.ej. cambios soloKPI2 como existencia)
+            if (typeof calcularPorcentajeEvaluacion === 'function' && entidadId && tipo && evLocal) {
+                try {
+                    kpiPorcentaje = calcularPorcentajeEvaluacion(entidadId, tipo, evLocal);
+                } catch (e) {
+                    kpiPorcentaje = null;
+                }
             }
-        }
-        if (typeof kpiPorcentaje !== 'number' || !Number.isFinite(kpiPorcentaje)) {
-            if (evaluacion.kpi !== undefined && evaluacion.kpi !== null) {
-                kpiPorcentaje = Math.round(evaluacion.kpi * 100);
+            if (typeof kpiPorcentaje !== 'number' || !Number.isFinite(kpiPorcentaje)) {
+                if (evaluacion.kpi !== undefined && evaluacion.kpi !== null) {
+                    kpiPorcentaje = Math.round(evaluacion.kpi * 100);
+                }
             }
         }
 
-        if (kpiPorcentaje !== null && kpiPorcentaje !== undefined) {
-            datosKPI.push(kpiPorcentaje);
-            const kpi2 = calcularKPI2ParaGrafica(entidadId, tipo, evParaKPI2);
-            datosKPI2.push(typeof kpi2 === 'number' ? Math.round(kpi2 * 100) : null);
-            entidades.push(evaluacion.entidad);
-            metas.push({
-                entidad: evaluacion.entidad,
-                entidadId,
-                tipo, // 'sucursal' | 'franquicia' | 'competencia'
-                evaluacion: evParaKPI2
-            });
+        if (soloKPI2) {
+            if (kpi2Porcentaje !== null) {
+                datosKPI2.push(kpi2Porcentaje);
+                entidades.push(evaluacion.entidad);
+                metas.push({ entidad: evaluacion.entidad, entidadId, tipo, evaluacion: evParaKPI2 });
+            }
+        } else {
+            if (kpiPorcentaje !== null && kpiPorcentaje !== undefined) {
+                datosKPI.push(kpiPorcentaje);
+                datosKPI2.push(kpi2Porcentaje);
+                entidades.push(evaluacion.entidad);
+                metas.push({ entidad: evaluacion.entidad, entidadId, tipo, evaluacion: evParaKPI2 });
+            }
         }
     });
     
     // Dibujar gráfico de distribución
     if (canvas2) {
-        dibujarGraficoDistribucion(canvas2, datosKPI);
+        dibujarGraficoDistribucion(canvas2, soloKPI2 ? datosKPI2 : datosKPI);
     }
 
     // Dibujar gráfico comparativo KPI vs KPI2 (un solo chart)
     if (canvasC) {
+        if (soloKPI2) {
+            const ctxC = canvasC.getContext('2d');
+            try {
+                window._chartGraficasComparacion?.destroy?.();
+            } catch (e) {}
+            window._chartGraficasComparacion = null;
+            ctxC.clearRect(0, 0, canvasC.width, canvasC.height);
+            ctxC.fillStyle = '#666';
+            ctxC.font = '16px Arial';
+            ctxC.textAlign = 'center';
+            ctxC.fillText('KPI2 activo desde junio 2026. Comparación KPI vs KPI2 deshabilitada.', canvasC.width / 2, canvasC.height / 2);
+            return;
+        }
+
         const idxs = [];
         for (let i = 0; i < entidades.length; i++) {
             if (datosKPI[i] !== null && datosKPI[i] !== undefined && datosKPI2[i] !== null && datosKPI2[i] !== undefined) {

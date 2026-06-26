@@ -235,35 +235,46 @@ function renderHistorico() {
   if (!container) return;
 
   const meses = obtenerMesesUltimos(12);
-  const resultados = meses.map(m => ({
-    mes: m,
-    label: (typeof formatearMesLegible === 'function' ? formatearMesLegible(m) : m),
-    res: calcularKPIGlobalMesConFiltros(m),
-    res2: calcularKPI2GlobalMesConFiltros(m)
-  }));
+  const corteFinKPI = (window.kpiCorte && window.kpiCorte.MES_KPI_FIN) ? window.kpiCorte.MES_KPI_FIN : '2026-05';
+  const resultados = meses.map(m => {
+    const resKPI = (typeof window.debeMostrarKPI === 'function' ? window.debeMostrarKPI(m) : (m <= corteFinKPI))
+      ? calcularKPIGlobalMesConFiltros(m)
+      : { kpi: null, count: 0 };
+    const resKPI2 = calcularKPI2GlobalMesConFiltros(m);
+    return {
+      mes: m,
+      label: (typeof formatearMesLegible === 'function' ? formatearMesLegible(m) : m),
+      res: resKPI,
+      res2: resKPI2
+    };
+  });
 
-  const resultadosAV = meses.map(m => ({
-    mes: m,
-    label: (typeof formatearMesLegible === 'function' ? formatearMesLegible(m) : m),
-    res: calcularKPIAtencionVentaGlobalMesConFiltros(m),
-    res2: calcularKPI2AtencionVentaGlobalMesConFiltros(m)
-  }));
+  const resultadosAV = meses.map(m => {
+    const resKPI = (typeof window.debeMostrarKPI === 'function' ? window.debeMostrarKPI(m) : (m <= corteFinKPI))
+      ? calcularKPIAtencionVentaGlobalMesConFiltros(m)
+      : { kpi: null, count: 0 };
+    const resKPI2 = calcularKPI2AtencionVentaGlobalMesConFiltros(m);
+    return {
+      mes: m,
+      label: (typeof formatearMesLegible === 'function' ? formatearMesLegible(m) : m),
+      res: resKPI,
+      res2: resKPI2
+    };
+  });
 
-  const comparables = resultados.filter(r => r.res.count > 0 && r.res2.count > 0);
-  const labelsC = comparables.map(r => r.label);
-  const datosC1 = comparables.map(r => r.res.kpi);
-  const datosC2 = comparables.map(r => r.res2.kpi);
-  const countsC1 = comparables.map(r => r.res.count);
-  const countsC2 = comparables.map(r => r.res2.count);
+  const labelsC = resultados.map(r => r.label);
+  const datosC1 = resultados.map(r => (typeof r.res.kpi === 'number' ? r.res.kpi : null));
+  const datosC2 = resultados.map(r => (typeof r.res2.kpi === 'number' ? r.res2.kpi : null));
+  const countsC1 = resultados.map(r => r.res.count || 0);
+  const countsC2 = resultados.map(r => r.res2.count || 0);
 
-  const comparablesAV = resultadosAV.filter(r => r.res.count > 0 && r.res2.count > 0);
-  const labelsAV = comparablesAV.map(r => r.label);
-  const datosAV1 = comparablesAV.map(r => r.res.kpi);
-  const datosAV2 = comparablesAV.map(r => r.res2.kpi);
-  const countsAV1 = comparablesAV.map(r => r.res.count);
-  const countsAV2 = comparablesAV.map(r => r.res2.count);
+  const labelsAV = resultadosAV.map(r => r.label);
+  const datosAV1 = resultadosAV.map(r => (typeof r.res.kpi === 'number' ? r.res.kpi : null));
+  const datosAV2 = resultadosAV.map(r => (typeof r.res2.kpi === 'number' ? r.res2.kpi : null));
+  const countsAV1 = resultadosAV.map(r => r.res.count || 0);
+  const countsAV2 = resultadosAV.map(r => r.res2.count || 0);
 
-  const paramsAV = listarParametrosEvaluadosAtencionVentaMes(comparablesAV.length ? comparablesAV[comparablesAV.length - 1].mes : (meses[meses.length - 1] || null));
+  const paramsAV = listarParametrosEvaluadosAtencionVentaMes(meses[meses.length - 1] || null);
   const chipsAV = (paramsAV || []).map(n => `<span style="display:inline-block; padding:4px 10px; border-radius:999px; background:#f1f5f9; border:1px solid #e2e8f0; color:#334155; font-size:12px; margin:3px 6px 0 0;">${n}</span>`).join('');
   const bloqueParamsAV = chipsAV
     ? `<div style="text-align:center; margin-bottom: 10px;">
@@ -294,13 +305,7 @@ function renderHistorico() {
   const canvasC = document.getElementById('graficoHistoricoComparacion');
   if (!canvasC) return;
 
-  if (!labelsC.length) {
-    container.innerHTML += `
-      <div style="margin-top:16px; padding:16px; background:#f8f9fa; border-radius:8px; color:#666; text-align:center;">
-        No hay meses con datos simultáneos (KPI y KPI2) para mostrar la comparación.
-      </div>`;
-    return;
-  }
+  if (!labelsC.length) return;
 
   if (window.Chart) {
     const shadowLine = {
@@ -320,8 +325,9 @@ function renderHistorico() {
 
     const ctxC = canvasC.getContext('2d');
 
-      const minC = Math.min(...datosC1, ...datosC2);
-      const maxC = Math.max(...datosC1, ...datosC2);
+      const valoresC = [...datosC1, ...datosC2].filter(v => typeof v === 'number' && Number.isFinite(v));
+      const minC = valoresC.length ? Math.min(...valoresC) : 0;
+      const maxC = valoresC.length ? Math.max(...valoresC) : 100;
       const paddingC = 5;
       const yMinC = Math.max(0, Math.floor((minC - paddingC) / 5) * 5);
       const yMaxC = Math.min(100, Math.ceil((maxC + paddingC) / 5) * 5);
@@ -433,8 +439,9 @@ function renderHistorico() {
     const canvasAV = document.getElementById('graficoHistoricoComparacionAtencionVenta');
     if (canvasAV && labelsAV.length) {
       const ctxAV = canvasAV.getContext('2d');
-      const minAV = Math.min(...datosAV1, ...datosAV2);
-      const maxAV = Math.max(...datosAV1, ...datosAV2);
+      const valoresAV = [...datosAV1, ...datosAV2].filter(v => typeof v === 'number' && Number.isFinite(v));
+      const minAV = valoresAV.length ? Math.min(...valoresAV) : 0;
+      const maxAV = valoresAV.length ? Math.max(...valoresAV) : 100;
       const paddingAV = 5;
       const yMinAV = Math.max(0, Math.floor((minAV - paddingAV) / 5) * 5);
       const yMaxAV = Math.min(100, Math.ceil((maxAV + paddingAV) / 5) * 5);

@@ -119,6 +119,10 @@ function renderMatrizCompleta() {
     const paramsKPI = (window.parametros || []).filter(p => p && !p.soloKPI2);
     const paramsKPI2 = (window.parametros || []).slice();
 
+    const soloKPI2 = (typeof window.debeUsarSoloKPI2 === 'function')
+        ? window.debeUsarSoloKPI2(window.mesSeleccionado)
+        : false;
+
     const renderTabla = (modo, paramsTabla) => {
         const esKPI2 = modo === 'kpi2';
         const suf = esKPI2 ? 'KPI2' : 'KPI';
@@ -200,18 +204,23 @@ function renderMatrizCompleta() {
             let kpiColor = '#999';
             if (evaluacion) {
                 let porcentaje = null;
-                try {
-                    if (typeof calcularPorcentajeEvaluacion === 'function' && evalParaTabla) {
-                        porcentaje = calcularPorcentajeEvaluacion(entidad.id, tipoLower, evalParaTabla);
+                if (soloKPI2 && esKPI2) {
+                    const k2 = calcularKPI2Matriz(entidad.id, tipoLower, evalParaTabla || null);
+                    if (typeof k2 === 'number') porcentaje = Math.round(k2 * 100);
+                } else {
+                    try {
+                        if (typeof calcularPorcentajeEvaluacion === 'function' && evalParaTabla) {
+                            porcentaje = calcularPorcentajeEvaluacion(entidad.id, tipoLower, evalParaTabla);
+                        }
+                    } catch (e) {
+                        porcentaje = null;
                     }
-                } catch (e) {
-                    porcentaje = null;
-                }
-                if (typeof porcentaje !== 'number' || !Number.isFinite(porcentaje)) {
-                    if (evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
-                        porcentaje = evaluacion.totalMaximo > 0
-                            ? Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100)
-                            : 0;
+                    if (typeof porcentaje !== 'number' || !Number.isFinite(porcentaje)) {
+                        if (evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
+                            porcentaje = evaluacion.totalMaximo > 0
+                                ? Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100)
+                                : 0;
+                        }
                     }
                 }
                 if (typeof porcentaje === 'number' && Number.isFinite(porcentaje)) {
