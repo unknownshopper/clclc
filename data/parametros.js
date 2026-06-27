@@ -226,7 +226,17 @@ const definirParametros = [
     descripcion: 'Estado y uso de la tableta',
     tipo: 'booleano',
     peso: 3,
-    aplicaATodas: false
+    aplicaATodas: false,
+    aplicaASucursales: [
+      'galerias',
+      'altabrisa',
+      'crystal',
+      'olmeca',
+      'deportiva',
+      'usuma',
+      'centro',
+      'angeles'
+    ]
   },
   {
     id: 'pin_personalizador',
