@@ -553,8 +553,23 @@
         <button id="btn-guardar-evaluacion" style="margin-top:16px;display:none;">Guardar evaluación</button>
       </div>
     </div>
-    <footer>
-      
-      <p>Powered by <a href="https://unknownshoppers.com"><img src="logch.png" alt="The Unknown Shopper" class="logo-TUS"></a> &​copy; <span id="footerYear">2025</span> | Todos los derechos reservados.</p>    </footer>
+    <<footer>
+  <p>
+    Powered by
+    <a href="https://unknownshoppers.com">
+      <img src="logch.png" alt="The Unknown Shopper" class="logo-TUS">
+    </a>
+    &​copy; <span id="footerYear">2025</span> | Todos los derechos reservados.
+  </p>
+</footer>
+
+<script>
+  (function () {
+    try {
+      var el = document.getElementById('footerYear');
+      if (el) el.textContent = String(new Date().getFullYear());
+    } catch (e) {}
+  })();
+</script>
 </body>
 </html>
