@@ -1441,13 +1441,13 @@ function renderGraficas() {
         
         <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 30px;">
             <h3 style="text-align: center; margin-bottom: 25px; color: #2c3e50; font-size: 1.4rem; font-weight: 600;">
-                📈 Comparación KPI vs KPI2
+                📈 KPI2 por entidad
             </h3>
             <div style="display: flex; justify-content: center; margin-bottom: 15px;">
                 <canvas id="graficoKPIsComparacion" width="900" height="440" style="max-width: 100%; border-radius: 8px;"></canvas>
             </div>
             <p style="text-align: center; color: #7f8c8d; font-size: 0.9rem; margin-top: 15px;">
-                KPI (ponderación actual) vs KPI2 (PONDERA IA) por entidad
+                KPI2 (PONDERA IA) por entidad
             </p>
         </div>
 
@@ -1736,11 +1736,76 @@ function generarGraficosKPI() {
                 window._chartGraficasComparacion?.destroy?.();
             } catch (e) {}
             window._chartGraficasComparacion = null;
-            ctxC.clearRect(0, 0, canvasC.width, canvasC.height);
-            ctxC.fillStyle = '#666';
-            ctxC.font = '16px Arial';
-            ctxC.textAlign = 'center';
-            ctxC.fillText('KPI2 activo desde junio 2026. Comparación KPI vs KPI2 deshabilitada.', canvasC.width / 2, canvasC.height / 2);
+
+            const labelsC = entidades.slice();
+            const dataC = datosKPI2.slice();
+
+            if (!labelsC.length || !window.Chart) {
+                ctxC.clearRect(0, 0, canvasC.width, canvasC.height);
+                ctxC.fillStyle = '#666';
+                ctxC.font = '16px Arial';
+                ctxC.textAlign = 'center';
+                ctxC.fillText('No hay datos suficientes para graficar KPI2', canvasC.width / 2, canvasC.height / 2);
+                return;
+            }
+
+            window._chartGraficasComparacion = new Chart(ctxC, {
+                type: 'bar',
+                data: {
+                    labels: labelsC,
+                    datasets: [
+                        {
+                            label: 'KPI2 (%)',
+                            data: dataC,
+                            backgroundColor: 'rgba(168,85,247,0.22)',
+                            borderColor: '#a855f7',
+                            borderWidth: 2,
+                            borderRadius: 6,
+                        },
+                        {
+                            label: 'Meta 95%',
+                            data: new Array(labelsC.length).fill(95),
+                            type: 'line',
+                            borderColor: '#22c55e',
+                            borderDash: [6, 6],
+                            pointRadius: 0,
+                            borderWidth: 2,
+                            fill: false,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { color: '#2c3e50' }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: (c) => ` ${c.dataset.label}: ${c.parsed.y}%`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#6b7280', maxRotation: 45, minRotation: 45 },
+                            grid: { display: false }
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            ticks: { color: '#6b7280', callback: (v) => v + '%' },
+                            grid: { color: 'rgba(0,0,0,0.06)' }
+                        }
+                    },
+                    interaction: { mode: 'nearest', intersect: false },
+                    animation: { duration: 800, easing: 'easeOutQuart' }
+                }
+            });
             return;
         }
 

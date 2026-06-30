@@ -67,6 +67,61 @@ function calcularKPI2GlobalMesConFiltros(mes) {
   return { kpi: Math.round(sum / count), count };
 }
 
+function debugKPI2Mes(mes) {
+  try {
+    if (typeof obtenerEvaluacionesDelMes !== 'function') return { mes, error: 'obtenerEvaluacionesDelMes no disponible' };
+    if (typeof filtrarDatosPorRol !== 'function') return { mes, error: 'filtrarDatosPorRol no disponible' };
+
+    const todas = obtenerEvaluacionesDelMes(mes) || [];
+    const filtradas = filtrarDatosPorRol(todas) || [];
+
+    const kpi2Utils = window.kpi2Utils || null;
+    if (!kpi2Utils || typeof kpi2Utils.calcularKPI2 !== 'function') return { mes, error: 'kpi2Utils.calcularKPI2 no disponible' };
+
+    const rows = filtradas.map(ev => {
+      const base = ev.evaluacion || null;
+      const evParaKPI2 = (base && base.modalidades && base.modalidades.kpi2)
+        ? base.modalidades.kpi2
+        : (base && base._kpi2 ? base._kpi2 : base);
+
+      const kpi2 = kpi2Utils.calcularKPI2(ev.entidadId, ev.tipo, evParaKPI2);
+      const parametros = (evParaKPI2 && evParaKPI2.parametros) ? evParaKPI2.parametros : {};
+      const keys = Object.keys(parametros || {});
+
+      return {
+        entidadId: ev.entidadId,
+        tipo: ev.tipo,
+        entidad: ev.entidad || ev.entidadId,
+        kpi2: (typeof kpi2 === 'number' ? Math.round(kpi2 * 1000) / 10 : null),
+        keys: keys.length,
+        estadoPublicacion: ev.estadoPublicacion || null,
+      };
+    });
+
+    const conKPI2 = rows.filter(r => typeof r.kpi2 === 'number');
+    const avg = conKPI2.length ? Math.round((conKPI2.reduce((a, r) => a + r.kpi2, 0) / conKPI2.length) * 10) / 10 : null;
+    const min = conKPI2.length ? Math.min(...conKPI2.map(r => r.kpi2)) : null;
+    const max = conKPI2.length ? Math.max(...conKPI2.map(r => r.kpi2)) : null;
+
+    const ordenadas = conKPI2.slice().sort((a, b) => a.kpi2 - b.kpi2);
+    return {
+      mes,
+      total: rows.length,
+      conKPI2: conKPI2.length,
+      avg,
+      min,
+      max,
+      peores: ordenadas.slice(0, 5),
+      mejores: ordenadas.slice(-5).reverse(),
+      rows
+    };
+  } catch (e) {
+    return { mes, error: String(e && e.message ? e.message : e) };
+  }
+}
+
+window.debugKPI2Mes = debugKPI2Mes;
+
 function listarParametrosEvaluadosAtencionVentaMes(mes) {
   try {
     if (typeof obtenerEvaluacionesDelMes !== 'function') return [];
