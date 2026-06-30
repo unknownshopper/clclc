@@ -136,6 +136,19 @@ function verificarAutenticacion() {
 
 // ===== FUNCIONES DE CONTROL DE ACCESO POR ROL =====
 
+function puedeVerCompetencia() {
+    try {
+        const rol = (window.usuarioActual && window.usuarioActual.rol) ? String(window.usuarioActual.rol).toLowerCase() : '';
+        const email = (window.usuarioActual && window.usuarioActual.email) ? String(window.usuarioActual.email).toLowerCase() : '';
+        const esAdmin = rol === 'admin';
+        const esDg = rol === 'dg' || email === 'dg@cafelacabana.com';
+        const esDirGral = rol === 'dirgral' || email === 'dirgral@cafelacabana.com';
+        return !!(esAdmin || esDg || esDirGral);
+    } catch (e) {
+        return false;
+    }
+}
+
 // Función para aplicar restricciones basadas en el rol del usuario
 function aplicarRestriccionesPorRol() {
     if (!usuarioActual) return;
@@ -146,6 +159,7 @@ function aplicarRestriccionesPorRol() {
     const btnNuevaEvaluacion = document.querySelector('[onclick="abrirModalNuevaEvaluacion()"]');
     const botonesEditar = document.querySelectorAll('.btn-edit, .btn-editar');
     const botonesEliminar = document.querySelectorAll('.btn-delete, .btn-eliminar');
+    const tabCompetencia = document.querySelector('.tab-btn[data-section="competencia"]');
     
     if (rol === 'admin') {
         // Admin puede hacer todo
@@ -158,6 +172,10 @@ function aplicarRestriccionesPorRol() {
         if (btnNuevaEvaluacion) btnNuevaEvaluacion.style.display = 'none';
         botonesEditar.forEach(btn => btn.style.display = 'none');
         botonesEliminar.forEach(btn => btn.style.display = 'none');
+    }
+
+    if (tabCompetencia) {
+        tabCompetencia.style.display = puedeVerCompetencia() ? '' : 'none';
     }
     
     console.log(`Restricciones aplicadas para rol: ${rol}`);
@@ -204,14 +222,22 @@ function filtrarDatosPorRol(evaluaciones) {
             return evaluacionesFranquiciasPublicadas;
             
         case 'dg':
-        case 'capacitacion':
-            // DG y Capacitación pueden ver sucursales, franquicias y competencia (solo publicadas)
+            // DG puede ver sucursales, franquicias y competencia (solo publicadas)
             const evaluacionesDg = evaluaciones.filter(ev => 
                 ev.tipo === 'sucursal' || ev.tipo === 'franquicia' || ev.tipo === 'competencia'
             );
             const evaluacionesDgPublicadas = filtrarPorPublicacion(evaluacionesDg);
-            console.log(`DG/Capacitación: filtrando ${evaluacionesDgPublicadas.length} evaluaciones publicadas (sucursales + franquicias + competencia) de ${evaluacionesDg.length} total`);
+            console.log(`DG: filtrando ${evaluacionesDgPublicadas.length} evaluaciones publicadas (sucursales + franquicias + competencia) de ${evaluacionesDg.length} total`);
             return evaluacionesDgPublicadas;
+
+        case 'capacitacion':
+            // Capacitación NO debe ver competencia: solo sucursales + franquicias (solo publicadas)
+            const evaluacionesCap = evaluaciones.filter(ev => 
+                ev.tipo === 'sucursal' || ev.tipo === 'franquicia'
+            );
+            const evaluacionesCapPublicadas = filtrarPorPublicacion(evaluacionesCap);
+            console.log(`Capacitación: filtrando ${evaluacionesCapPublicadas.length} evaluaciones publicadas (sucursales + franquicias) de ${evaluacionesCap.length} total`);
+            return evaluacionesCapPublicadas;
             
         default:
             console.log(`Rol desconocido: ${rol}, no se muestran datos`);
@@ -240,6 +266,37 @@ function tienePermiso(accion) {
             return false;
     }
 }
+
+// Blindaje: aunque el tab esté oculto por rol, impedir acceso directo a la vista
+(function protegerVistaCompetencia() {
+    try {
+        if (window.__wrapCambiarVistaCompetencia) return;
+
+        const intentarWrap = () => {
+            if (typeof window.cambiarVista !== 'function') return false;
+            const __origCambiarVista = window.cambiarVista;
+            window.cambiarVista = function (vista) {
+                if (vista === 'competencia' && !puedeVerCompetencia()) {
+                    alert('No tiene permisos para ver Competencia.');
+                    return __origCambiarVista.call(this, 'dashboard');
+                }
+                return __origCambiarVista.apply(this, arguments);
+            };
+            window.__wrapCambiarVistaCompetencia = true;
+            return true;
+        };
+
+        if (intentarWrap()) return;
+
+        let intentos = 0;
+        const t = setInterval(() => {
+            intentos++;
+            if (intentarWrap() || intentos >= 80) {
+                clearInterval(t);
+            }
+        }, 50);
+    } catch (e) {}
+})();
 
 // Event listener para Enter en el formulario de login
 document.addEventListener('DOMContentLoaded', function() {
