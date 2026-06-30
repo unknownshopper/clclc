@@ -58,6 +58,14 @@ function renderDashboard() {
         if (kpi2Utils && typeof kpi2Utils.calcularKPI2 === 'function') return kpi2Utils.calcularKPI2(entidadId, tipo, evaluacionLocal);
         return null;
     };
+
+    const getEvaluacionParaKPI2 = (ev) => {
+        const base = ev && ev.evaluacion ? ev.evaluacion : null;
+        if (!base) return null;
+        if (base.modalidades && base.modalidades.kpi2) return base.modalidades.kpi2;
+        if (base._kpi2) return base._kpi2;
+        return base;
+    };
     
     console.log(`Dashboard - Evaluaciones totales: ${todasLasEvaluaciones.length}, Filtradas: ${evaluacionesFiltradas.length}`);
     
@@ -80,7 +88,7 @@ function renderDashboard() {
         }
 
         if (debeMostrarKPI2(window.mesSeleccionado)) {
-            const kpi2 = calcularKPI2Dashboard(ev.entidadId, ev.tipo, ev.evaluacion || null);
+            const kpi2 = calcularKPI2Dashboard(ev.entidadId, ev.tipo, getEvaluacionParaKPI2(ev));
             if (typeof kpi2 === 'number') {
                 kpis2.push(kpi2 * 100);
             }
@@ -97,18 +105,21 @@ function renderDashboard() {
     
     // DEBUG: Mostrar resumen de KPIs
     console.log('DEBUG - KPIs recopilados:', kpis);
+
+    const soloKPI2Dashboard = (typeof window.debeUsarSoloKPI2 === 'function') ? window.debeUsarSoloKPI2(window.mesSeleccionado) : false;
+    const metricos = soloKPI2Dashboard ? kpis2 : kpis;
     console.log('DEBUG - Distribución:', {
-        alto: kpis.filter(k => k >= 95).length,
-        medio: kpis.filter(k => k >= 90 && k < 95).length,
-        bajo: kpis.filter(k => k < 90).length
+        alto: metricos.filter(k => k >= 95).length,
+        medio: metricos.filter(k => k >= 90 && k < 95).length,
+        bajo: metricos.filter(k => k < 90).length
     });
     
     // Calcular estadísticas
     const promedioKPI = kpis.length > 0 ? Math.round(kpis.reduce((a, b) => a + b, 0) / kpis.length) : 0;
     const promedioKPI2 = kpis2.length > 0 ? Math.round(kpis2.reduce((a, b) => a + b, 0) / kpis2.length) : 0;
-    const alto = kpis.filter(k => k >= 95).length;
-    const medio = kpis.filter(k => k >= 90 && k < 95).length;
-    const bajo = kpis.filter(k => k < 90).length;
+    const alto = metricos.filter(k => k >= 95).length;
+    const medio = metricos.filter(k => k >= 90 && k < 95).length;
+    const bajo = metricos.filter(k => k < 90).length;
     
     html += `
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
@@ -179,7 +190,7 @@ function renderDashboard() {
     const entidadesAtencion = evaluacionesFiltradas
         .map(evaluacion => {
             const kpi2 = debeMostrarKPI2(window.mesSeleccionado)
-                ? calcularKPI2Dashboard(evaluacion.entidadId, evaluacion.tipo, evaluacion.evaluacion || null)
+                ? calcularKPI2Dashboard(evaluacion.entidadId, evaluacion.tipo, getEvaluacionParaKPI2(evaluacion))
                 : null;
             const kpi2Pct = (typeof kpi2 === 'number') ? (kpi2 * 100) : null;
             const kpiPct = (evaluacion.kpi !== undefined && evaluacion.kpi !== null) ? (evaluacion.kpi * 100) : null;
