@@ -565,6 +565,75 @@ async function renderEvaluaciones() {
         if (kpi2Utils && typeof kpi2Utils.calcularKPI2 === 'function') return kpi2Utils.calcularKPI2(entidadId, tipo, evaluacionLocal);
         return null;
     };
+
+    const listarPuntosAMejorarKPI2 = (entidadId, tipo, evaluacionLocal) => {
+        try {
+            if (!evaluacionLocal || !evaluacionLocal.parametros || !Array.isArray(window.parametros)) return [];
+
+            const mesEval = evaluacionLocal.mes || window.mesSeleccionado || null;
+
+            let parametrosExcluidos = [];
+            if (tipo === 'sucursal' && window.parametrosExcluidosPorSucursal && window.parametrosExcluidosPorSucursal[entidadId]) {
+                parametrosExcluidos = window.parametrosExcluidosPorSucursal[entidadId]
+                    .map(nombre => {
+                        const param = window.parametros.find(p =>
+                            p.nombre.trim().toLowerCase() === String(nombre || '').trim().toLowerCase()
+                        );
+                        return param ? param.id.toLowerCase().replace(/[-_]/g, '') : null;
+                    })
+                    .filter(id => id !== null);
+            } else if (tipo === 'franquicia' && window.parametrosExcluidosPorFranquicia && window.parametrosExcluidosPorFranquicia[entidadId]) {
+                parametrosExcluidos = window.parametrosExcluidosPorFranquicia[entidadId]
+                    .map(nombre => {
+                        const param = window.parametros.find(p =>
+                            p.nombre.trim().toLowerCase() === String(nombre || '').trim().toLowerCase()
+                        );
+                        return param ? param.id.toLowerCase().replace(/[-_]/g, '') : null;
+                    })
+                    .filter(id => id !== null);
+            }
+
+            let parametrosAplicables = window.parametros.filter(param =>
+                !parametrosExcluidos.includes(String(param.id || '').toLowerCase().replace(/[-_]/g, ''))
+            );
+
+            if (mesEval) {
+                parametrosAplicables = parametrosAplicables.filter(p => {
+                    if (!p || !p.vigenteDesde) return true;
+                    return mesEval >= p.vigenteDesde;
+                });
+            }
+
+            if (tipo === 'sucursal') {
+                parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaASucursales && p.aplicaASucursales.includes(entidadId)));
+            } else if (tipo === 'franquicia') {
+                parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaAFranquicias && p.aplicaAFranquicias.includes(entidadId)));
+            }
+
+            const malos = [];
+            parametrosAplicables.forEach(param => {
+                const id = param.id;
+                const pesoOriginal = Number(param.peso) || 0;
+                if (pesoOriginal <= 0) return;
+
+                const valorExiste = evaluacionLocal.parametros[id] !== undefined;
+                if (!valorExiste) return;
+
+                const valor = Number(evaluacionLocal.parametros[id] ?? 0) || 0;
+                const ratio = (param && param.tipo === 'booleano')
+                    ? (valor > 0 ? 1 : 0)
+                    : Math.max(0, Math.min(1, valor / pesoOriginal));
+
+                if (ratio < 1) {
+                    malos.push(param.nombre || id);
+                }
+            });
+
+            return malos;
+        } catch (e) {
+            return [];
+        }
+    };
     
     // Cargar evaluaciones desde Firebase si está disponible
     if (window.firebaseDB) {
@@ -693,7 +762,10 @@ async function renderEvaluaciones() {
                             ${(!soloKPI2 && kpiPermitido) ? `<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none; opacity:${opKPI};" onclick="ordenarEvaluacionesPor('kpi')" title="Ordenar por KPI">KPI${arrow('kpi')}</th>` : ''}
                             ${debeMostrarKPI2(window.mesSeleccionado) ? `<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; cursor:pointer; user-select:none; opacity:${opKPI2};" onclick="ordenarEvaluacionesPor('kpi2')" title="Ordenar por KPI2">KPI2${arrow('kpi2')}</th>` : ''}
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Estado</th>
-                            <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Publicación</th>
+                            ${(tienePermiso('admin'))
+                                ? `<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Publicación</th>`
+                                : `<th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Puntos a mejorar</th>`
+                            }
                             <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Fecha</th>
                             ${tienePermiso('ver') || tienePermiso('editar') || tienePermiso('eliminar') || tienePermiso('publicar') ? '<th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Acciones</th>' : ''}
                         </tr>
@@ -735,6 +807,13 @@ async function renderEvaluaciones() {
             const kpi2 = debeMostrarKPI2(window.mesSeleccionado) ? calcularKPI2(evaluacion.entidadId, evaluacion.tipo, evalParaKPI2) : null;
             const kpi2Porcentaje = (typeof kpi2 === 'number') ? (kpi2 * 100).toFixed(1) : null;
 
+            const puntosMalos = (!tienePermiso('admin') && debeMostrarKPI2(window.mesSeleccionado))
+                ? listarPuntosAMejorarKPI2(evaluacion.entidadId, evaluacion.tipo, evalParaKPI2)
+                : [];
+            const puntosMalosTexto = (puntosMalos && puntosMalos.length)
+                ? (puntosMalos.map(p => String(p)).join('<br>'))
+                : '—';
+
             const kpiNum = parseFloat(kpiPorcentaje);
             const kpi2Num = (kpi2Porcentaje !== null) ? parseFloat(kpi2Porcentaje) : null;
 
@@ -769,11 +848,17 @@ async function renderEvaluaciones() {
                             ${estadoActivo}
                         </span>
                     </td>
+                    ${(tienePermiso('admin')) ? `
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">
                         <span class="estado-publicacion ${esBorrador ? 'estado-borrador' : 'estado-publicado'}">
                             ${esBorrador ? 'Borrador' : 'Publicado'}
                         </span>
                     </td>
+                    ` : `
+                    <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: left; font-size: 12px; color:#2d3e50; line-height: 1.25;">
+                        ${puntosMalosTexto}
+                    </td>
+                    `}
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; color: #666;">
                         ${evaluacion.fecha}
                     </td>
