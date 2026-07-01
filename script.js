@@ -2650,6 +2650,11 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
         return;
     }
 
+    try {
+        const existente = document.getElementById('modalVerEvaluacion');
+        if (existente) existente.remove();
+    } catch (e) {}
+
     const mod = modalidad ? String(modalidad).toLowerCase().trim() : 'kpi';
     const evaluacion = (mod === 'kpi')
         ? (base.modalidades && base.modalidades.kpi ? base.modalidades.kpi : base)
@@ -2673,9 +2678,11 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
         videoUrl: base?.videoUrl || null
     };
     
-    const entidad = tipo === 'sucursal' ? 
-        window.sucursales.find(s => s.id === entidadId)
-        : window.franquicias.find(f => f.id === entidadId);
+    const entidad = (tipo === 'sucursal')
+        ? window.sucursales.find(s => s.id === entidadId)
+        : (tipo === 'franquicia')
+            ? window.franquicias.find(f => f.id === entidadId)
+            : null;
     
     const nombreEntidad = entidad ? entidad.nombre : entidadId;
     
@@ -2769,8 +2776,8 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                         <div>
                             <h3 style="color: #555; margin-bottom: 15px;">Información General</h3>
-                            <p><strong>Entidad:</strong> ${entidad.nombre}</p>
-                            <p><strong>Tipo:</strong> ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}</p>
+                            <p><strong>Entidad:</strong> ${nombreEntidad}</p>
+                            <p><strong>Tipo:</strong> ${tipo ? (String(tipo).charAt(0).toUpperCase() + String(tipo).slice(1)) : ''}</p>
                             <p><strong>Mes:</strong> ${formatearMesLegible(window.mesSeleccionado)}</p>
                             <p><strong>Fecha:</strong> ${fechaCorta}</p>
                         </div>
