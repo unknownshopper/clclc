@@ -469,6 +469,40 @@ async function manejarVideo(entidadId, tipo) {
         const existe = !!(urlLocal || urlMapeada);
 
         if (existe) {
+            // Si es admin autenticado, permitir editar el link con el mismo botón (sin botón extra)
+            if (tienePermiso('admin') && window.firebaseAdminAuthenticated) {
+                const editar = confirm('¿Deseas editar el enlace de video?\n\nAceptar: editar\nCancelar: ver');
+                if (editar) {
+                    const entidad = tipo === 'sucursal' ? 
+                        window.sucursales.find(s => s.id === entidadId)
+                        : window.franquicias.find(f => f.id === entidadId);
+                    const nombreEntidad = entidad ? entidad.nombre : entidadId;
+                    let videoUrl = prompt(`Editar enlace de YouTube para ${nombreEntidad} (${formatearMesLegible(mes)}):`, String(urlLocal || urlMapeada || '')) || '';
+                    videoUrl = videoUrl.trim();
+                    if (!videoUrl) return;
+
+                    const estadoActual = (evalActual && evalActual.estadoPublicacion) ? evalActual.estadoPublicacion : 'borrador';
+                    if (window.firebaseDB && typeof window.firebaseDB.actualizarEstadoPublicacion === 'function') {
+                        const ok = await window.firebaseDB.actualizarEstadoPublicacion(entidadId, tipo, mes, estadoActual, videoUrl);
+                        if (!ok) throw new Error('No se pudo guardar el enlace de video en Firebase');
+                    }
+
+                    let tipoEntidad = 'franquicias';
+                    if (tipo === 'sucursal') tipoEntidad = 'sucursales';
+                    else if (tipo === 'franquicia') tipoEntidad = 'franquicias';
+                    else if (tipo === 'competencia') tipoEntidad = 'competencia';
+                    if (window.evaluaciones?.[tipoEntidad]?.[entidadId]?.[mes]) {
+                        window.evaluaciones[tipoEntidad][entidadId][mes].videoUrl = videoUrl;
+                    }
+
+                    alert('Enlace de video actualizado correctamente.');
+                    if (window.vistaActual === 'evaluaciones') {
+                        renderEvaluaciones();
+                    }
+                    return;
+                }
+            }
+
             return verVideo(entidadId, tipo);
         }
 
@@ -678,21 +712,22 @@ async function renderEvaluaciones() {
             if (evaluacion.tipo === 'franquicia') tipoMostrar = 'Franquicia';
             else if (evaluacion.tipo === 'competencia') tipoMostrar = 'Competencia';
 
-            // Estado de publicación
-            const estadoPublicacion = evaluacion.estadoPublicacion || 'borrador';
-            const esBorrador = estadoPublicacion === 'borrador';
-            const esPublicado = estadoPublicacion === 'publicado';
-            const adminPuedeEscribir = !!window.firebaseAdminAuthenticated;
-
             // Para video y KPI2 usamos el registro local/actual (si existe)
             const evalLocal = typeof obtenerEvaluacion === 'function'
                 ? obtenerEvaluacion(evaluacion.entidadId, evaluacion.tipo, window.mesSeleccionado)
                 : null;
-            const linksMes = window.videoLinks?.[window.mesSeleccionado] || {};
-            const hasVideo = (evalLocal && evalLocal.videoUrl) || linksMes[evaluacion.entidadId];
 
-            const hasKPI2Modalidad = !!(evalLocal && evalLocal.modalidades && evalLocal.modalidades.kpi2);
-            const mostrarOjoKPI2 = true;
+            // Estado de publicación
+            const estadoPublicacion = (evalLocal && evalLocal.estadoPublicacion)
+                ? evalLocal.estadoPublicacion
+                : (evaluacion.estadoPublicacion || 'borrador');
+            const esBorrador = estadoPublicacion === 'borrador';
+            const esPublicado = estadoPublicacion === 'publicado';
+            const adminPuedeEscribir = !!window.firebaseAdminAuthenticated;
+            const linksMes = window.videoLinks?.[window.mesSeleccionado] || {};
+            const hasVideo = !!((evalLocal && evalLocal.videoUrl) || linksMes[evaluacion.entidadId]);
+
+            const mostrarOjoKPI2 = !tienePermiso('admin');
 
             const evalParaKPI2 = (evalLocal && evalLocal.modalidades && evalLocal.modalidades.kpi2)
                 ? evalLocal.modalidades.kpi2
@@ -745,45 +780,19 @@ async function renderEvaluaciones() {
                     ${tienePermiso('ver') || tienePermiso('editar') || tienePermiso('eliminar') || tienePermiso('publicar') ? `
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">
                         <div class="action-buttons" style="display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;">
-                            ${(!soloKPI2 && kpiPermitido) ? `
-                            <button onclick="verEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi')" 
+                            <button onclick="verEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', '${(soloKPI2 || !kpiPermitido) ? 'kpi2' : 'kpi'}')" 
                                     class="btn-action btn-view" 
-                                    title="KPI"
-                                    style="background:#0a84ff;color:#fff;">
+                                    title="Ver evaluación"
+                                    style="background:${(soloKPI2 || !kpiPermitido) ? '#a855f7' : '#0a84ff'};color:#fff;">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            ` : ''}
-                            ${mostrarOjoKPI2 ? `
-                            <button onclick="verEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi2')" 
-                                    class="btn-action btn-view" 
-                                    title="KPI2"
-                                    style="background:#a855f7;color:#fff;">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            ` : ''}
                             <button onclick="manejarVideo('${evaluacion.entidadId}', '${evaluacion.tipo}')"
                                     class="btn-action btn-video" 
                                     title="${hasVideo ? 'Ver video de evaluación' : 'Agregar enlace de video'}"
                                     style="${hasVideo ? 'background:#28a745;color:#fff;' : 'background:#6c757d;color:#fff;'}">
                                 <i class="fas fa-video"></i>
                             </button>
-                            ${tienePermiso('admin') ? `
-                            <button onclick="editarVideo('${evaluacion.entidadId}', '${evaluacion.tipo}')"
-                                    class="btn-action btn-edit-video" 
-                                    title="Editar enlace de video"
-                                    style="background:#17a2b8;color:#fff;">
-                                <i class="fas fa-pen"></i>
-                            </button>
-                            ` : ''}
                             ${(usuarioActual?.rol === 'admin') ? `
-                            <button 
-                                    onclick="${adminPuedeEscribir ? `editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi')` : `alert('Para editar necesitas iniciar sesión como admin con Firebase Auth (email admin).')`}" 
-                                    class="btn-action btn-edit" 
-                                    title="${adminPuedeEscribir ? 'Editar KPI' : 'Requiere autenticación Firebase admin'}"
-                                    style="background:#0a84ff;color:#fff;${adminPuedeEscribir ? '' : 'opacity:0.45;cursor:not-allowed;'}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            ${mostrarOjoKPI2 ? `
                             <button 
                                     onclick="${adminPuedeEscribir ? `editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi2')` : `alert('Para editar necesitas iniciar sesión como admin con Firebase Auth (email admin).')`}" 
                                     class="btn-action btn-edit" 
@@ -791,7 +800,6 @@ async function renderEvaluaciones() {
                                     style="background:#a855f7;color:#fff;${adminPuedeEscribir ? '' : 'opacity:0.45;cursor:not-allowed;'}">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            ` : ''}
                             <button 
                                     onclick="${adminPuedeEscribir ? `eliminarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')` : `alert('Para eliminar necesitas iniciar sesión como admin con Firebase Auth (email admin).')`}" 
                                     class="btn-action btn-delete" 
