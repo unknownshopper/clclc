@@ -189,6 +189,19 @@ function filtrarDatosPorRol(evaluaciones) {
     
     const rol = usuarioActual.rol;
     console.log(`Filtrando datos para rol: ${rol}, evaluaciones totales: ${evaluaciones.length}`);
+
+    const normalizarTipo = (t) => {
+        const s = String(t || '').toLowerCase().trim();
+        if (s === 'sucursal' || s === 'sucursales') return 'sucursal';
+        if (s === 'franquicia' || s === 'franquicias') return 'franquicia';
+        if (s === 'competencia') return 'competencia';
+        return s;
+    };
+
+    const evalsNormalizadas = (evaluaciones || []).map(ev => ({
+        ...ev,
+        tipo: normalizarTipo(ev && ev.tipo)
+    }));
     
     // Función auxiliar para filtrar por estado de publicación
     const filtrarPorPublicacion = (evals) => {
@@ -205,25 +218,25 @@ function filtrarDatosPorRol(evaluaciones) {
         case 'admin':
             // Admin puede ver todo
             console.log('Admin: mostrando todas las evaluaciones');
-            return filtrarPorPublicacion(evaluaciones);
+            return filtrarPorPublicacion(evalsNormalizadas);
             
         case 'gop':
             // GOP puede ver evaluaciones de sucursales (solo publicadas)
-            const evaluacionesGop = evaluaciones.filter(ev => ev.tipo === 'sucursal');
+            const evaluacionesGop = evalsNormalizadas.filter(ev => ev.tipo === 'sucursal');
             const evaluacionesGopPublicadas = filtrarPorPublicacion(evaluacionesGop);
             console.log(`GOP: filtrando ${evaluacionesGopPublicadas.length} sucursales publicadas de ${evaluacionesGop.length} total`);
             return evaluacionesGopPublicadas;
             
         case 'franquicias':
             // Franquicias solo puede ver evaluaciones de franquicias (solo publicadas)
-            const evaluacionesFranquicias = evaluaciones.filter(ev => ev.tipo === 'franquicia');
+            const evaluacionesFranquicias = evalsNormalizadas.filter(ev => ev.tipo === 'franquicia');
             const evaluacionesFranquiciasPublicadas = filtrarPorPublicacion(evaluacionesFranquicias);
             console.log(`Franquicias: filtrando ${evaluacionesFranquiciasPublicadas.length} franquicias publicadas de ${evaluacionesFranquicias.length} total`);
             return evaluacionesFranquiciasPublicadas;
             
         case 'dg':
             // DG puede ver sucursales, franquicias y competencia (solo publicadas)
-            const evaluacionesDg = evaluaciones.filter(ev => 
+            const evaluacionesDg = evalsNormalizadas.filter(ev => 
                 ev.tipo === 'sucursal' || ev.tipo === 'franquicia' || ev.tipo === 'competencia'
             );
             const evaluacionesDgPublicadas = filtrarPorPublicacion(evaluacionesDg);
@@ -232,7 +245,7 @@ function filtrarDatosPorRol(evaluaciones) {
 
         case 'capacitacion':
             // Capacitación NO debe ver competencia: solo sucursales + franquicias (solo publicadas)
-            const evaluacionesCap = evaluaciones.filter(ev => 
+            const evaluacionesCap = evalsNormalizadas.filter(ev => 
                 ev.tipo === 'sucursal' || ev.tipo === 'franquicia'
             );
             const evaluacionesCapPublicadas = filtrarPorPublicacion(evaluacionesCap);
