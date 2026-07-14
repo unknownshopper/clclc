@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación - Franquicias (Propuesta)</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .reporte-wrap {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 18px 16px 26px 16px;
+        }
+
+        .reporte-header {
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 14px;
+            background: #fff;
+            color: #2d3e50;
+            padding: 16px 18px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+            margin-bottom: 14px;
+        }
+
+        .reporte-header-top {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .reporte-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 280px;
+        }
+
+        .reporte-brand-logo {
+            width: 150px;
+            height: 76px;
+            border-radius: 0;
+            background: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            overflow: hidden;
+            flex: 0 0 auto;
+        }
+
+        .reporte-brand-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 0;
+            filter: drop-shadow(0 3px 10px rgba(0,0,0,0.22));
+        }
+
+        .reporte-title {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 900;
+            line-height: 1.15;
+        }
+
+        .reporte-subtitle {
+            margin: 3px 0 0 0;
+            color: #6c757d;
+            font-size: 12px;
+            line-height: 1.25;
+        }
+
+        .reporte-meta {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(160px, 1fr));
+            gap: 10px 14px;
+            align-items: start;
+            justify-content: end;
+            min-width: 320px;
+        }
+
+        @media (max-width: 980px) {
+            .reporte-meta {
+                grid-template-columns: repeat(2, minmax(180px, 1fr));
+            }
+        }
+
+        .reporte-meta-item {
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #2d3e50 0%, #1b2736 100%);
+            border: 1px solid rgba(255,255,255,0.16);
+        }
+
+        .reporte-meta-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.84);
+            font-weight: 800;
+            letter-spacing: 0.2px;
+            margin: 0 0 2px 0;
+        }
+
+        .reporte-meta-value {
+            font-size: 12px;
+            font-weight: 900;
+            margin: 0;
+            color: #fff;
+        }
+
+        .reporte-note {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            font-size: 12px;
+            line-height: 1.35;
+            color: #6c757d;
+        }
+
+        .reporte-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .card-body {
+            padding: 14px 14px 6px 14px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        .tabla-franquicias {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 760px;
+            table-layout: fixed;
+        }
+
+        .tabla-franquicias th,
+        .tabla-franquicias td {
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            vertical-align: top;
+        }
+
+        .tabla-franquicias thead th {
+            background: #0077cc;
+            color: #fff;
+            font-size: 12px;
+            letter-spacing: 0.2px;
+        }
+
+        .tabla-franquicias .col-nombre { width: 320px; }
+        .tabla-franquicias .col-modelo { width: 180px; }
+        .tabla-franquicias .col-estatus { width: 160px; }
+        .tabla-franquicias .col-id { width: 180px; }
+
+        @page { margin: 18mm; }
+        @media print {
+            body { background: #fff !important; }
+            .no-print { display: none !important; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            a { color: inherit !important; text-decoration: none !important; }
+            p { break-inside: avoid; page-break-inside: avoid; }
+            h1, h2, h3 { break-after: avoid; page-break-after: avoid; }
+            p { orphans: 3; widows: 3; }
+        }
+    </style>
+</head>
+<body>
+    <div class="reporte-wrap">
+        <div class="reporte-header">
+            <div class="reporte-header-top">
+                <div class="reporte-brand">
+                    <div class="reporte-brand-logo">
+                        <img src="logch.png" alt="The Unknown Shopper">
+                    </div>
+                    <div>
+                        <h1 class="reporte-title">Parámetros de Evaluación · Franquicias</h1>
+                        <div class="reporte-subtitle">Alcance, propuesta económica y catálogo inicial de franquicias registradas en el sistema</div>
+                    </div>
+                </div>
+
+                <div class="reporte-meta">
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Empresa</div>
+                        <div class="reporte-meta-value">Café La Cabaña</div>
+                    </div>
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Emisión</div>
+                        <div class="reporte-meta-value" id="fechaEmision">—</div>
+                    </div>
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Alcance</div>
+                        <div class="reporte-meta-value">Franquicias (Benchmark interno)</div>
+                    </div>
+                    <div class="reporte-meta-item">
+                        <div class="reporte-meta-label">Fuente</div>
+                        <div class="reporte-meta-value">Sistema Unknown Shopper</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reporte-actions no-print">
+                <button
+                    class="tab-btn" onclick="window.print()" style="border-radius: 10px; margin: 0;">
+                    Descargar PDF
+                </button>            
+            </div>
+
+            <div class="reporte-note">
+                Este documento sirve como propuesta inicial para incorporar evaluaciones de franquicias. La lista se actualiza automáticamente con las franquicias registradas en el sistema.
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 12px;">
+            <div class="card-body">
+                <div style="display:grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px;">
+                    <div style="border: 1px solid rgba(0,0,0,0.08); background: #ffffff; border-radius: 12px; padding: 12px 14px;">
+                        <div style="font-weight: 900; color:#2d3e50; margin-bottom: 6px;">Franquicias registradas (catálogo inicial)</div>
+                        <div style="color:#475569; font-size: 12px; line-height: 1.55;">
+                            Esta lista se obtiene del sistema y puede crecer conforme se agreguen nuevas franquicias.
+                        </div>
+                        <div style="margin-top: 10px;" id="resumenFranquicias">—</div>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table class="tabla-franquicias" id="tablaFranquicias">
+                        <thead>
+                            <tr>
+                                <th class="col-nombre" style="padding: 12px 14px; text-align:left;">Franquicia</th>
+                                <th class="col-modelo" style="padding: 12px 14px; text-align:left;">Modelo</th>
+                                <th class="col-estatus" style="padding: 12px 14px; text-align:left;">Estatus</th>
+                                <th class="col-id" style="padding: 12px 14px; text-align:left;">ID (sistema)</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px;">
+                    <div style="border: 1px solid rgba(0,0,0,0.08); background: #ffffff; border-radius: 12px; padding: 12px 14px;">
+                        <div style="font-weight: 900; color:#2d3e50; margin-bottom: 6px;">Metodología (KPI2)</div>
+                        <div style="color:#2d3e50; line-height: 1.7;">
+                        <div>
+                            Esta evaluación se realiza con <strong>KPI2</strong>, utilizando el mismo esquema de medición implementado para <strong>sucursales</strong>.
+                        </div>
+                        <div style="margin-top: 6px;">
+                            Se evalúa con los <strong>mismos parámetros</strong> del sistema; la aplicación de parámetros y ponderancias se ajusta
+                            automáticamente según el <strong>modelo de negocio</strong> de cada franquicia:
+                            <strong>Cafetería</strong>, <strong>Express</strong> o <strong>Móvil</strong>.
+                        </div>
+                        </div>
+                    </div>
+
+                    <div style="border: 1px solid rgba(0,0,0,0.08); background: #f8fafc; border-radius: 12px; padding: 12px 14px;">
+                        <div style="font-weight: 900; color:#2d3e50; margin-bottom: 6px;">Entregables (dentro del sistema)</div>
+                        <div style="color:#2d3e50; line-height: 1.7;">
+                        <div>Los resultados se consultan directamente en el sistema:</div>
+                        <ul style="margin: 8px 0 0 0; padding-left: 18px; color:#2d3e50; line-height: 1.65;">
+                            <li><strong>Dashboard</strong> (promedios y distribución)</li>
+                            <li><strong>Evaluaciones</strong> (detalle por franquicia)</li>
+                            <li><strong>Matriz</strong> (parámetros, pesos y calificación)</li>
+                            <li><strong>Gráficas</strong> (comportamiento por mes)</li>
+                            <li><strong>Histórico</strong> (tendencia global)</li>
+                            <li><strong>Vistas por rol</strong> (DG / DirGral / Admin)</li>
+                        </ul>
+                        </div>
+                    </div>
+
+                    <div style="border: 1px solid rgba(0,0,0,0.08); background: #ffffff; border-radius: 12px; padding: 12px 14px;">
+                        <div style="font-weight: 900; color:#2d3e50; margin-bottom: 6px;">Criterios de interpretación</div>
+                        <div style="color:#2d3e50; line-height: 1.7;">
+                        <div><strong>≥95%</strong>: Aceptable</div>
+                        <div><strong>90-94%</strong>: Atención</div>
+                        <div><strong>&lt;90%</strong>: No aceptable</div>
+                        </div>
+                    </div>
+                    </div>
+
+                <div style="display:grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px;">
+                    <div style="border: 1px solid rgba(0,0,0,0.08); background: #f8fafc; border-radius: 12px; padding: 12px 14px;">
+                        <div style="font-weight: 900; color:#2d3e50; margin-bottom: 6px;">Propuesta económica</div>
+                        <div style="color:#2d3e50; line-height: 1.7;" id="propuestaEconomica">
+                            <div><strong>Costo por franquicia evaluada:</strong> <span id="costoPorFranquicia">—</span></div>
+                            <div><strong>Total (franquicias activas) sin IVA:</strong> <span id="totalSinIva">—</span></div>
+                            <div><strong>Total (franquicias activas) con IVA (16%):</strong> <span id="totalConIva">—</span></div>
+                            <div><strong>Consumo:</strong> incluido</div>
+                            <div><strong>Tiempo de entrega:</strong> 2 semanas a partir de la autorización (Es importante que se realicen todas las evaluaciones dentro del mismo mes).</div>
+                        </div>
+                        <div style="margin-top: 6px; color:#64748b; font-size: 12px;">
+                            Nota: los totales se calculan con base en el número de franquicias activas registradas en el sistema.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reporte-note" style="margin-top: 12px;">
+                    En una siguiente versión podemos incorporar la tabla de parámetros/ponderancias específica para franquicias, similar al documento de competencia.
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 14px; text-align:center; color:#94a3b8; font-size: 12px;">
+            <a href="https://unknownshoppers.com" target="_blank" rel="noopener noreferrer" style="color:#94a3b8; text-decoration:none;">https://unknownshoppers.com</a>
+            <span id="footerStamp" style="margin-left: 10px;"></span>
+        </div>
+    </div>
+
+    <script src="data/franquicias.js"></script>
+    <script>
+        // Ajusta este monto cuando lo definan (ej: 1200 para $1,200 + IVA)
+        const COSTO_POR_FRANQUICIA_SIN_IVA = 850;
+
+        function formatearFecha(fecha) {
+            try {
+                return new Intl.DateTimeFormat('es-MX', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: '2-digit'
+                }).format(fecha);
+            } catch (e) {
+                return '';
+            }
+        }
+
+        function formatCurrencyMXN(value) {
+            try {
+                if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
+                return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(value);
+            } catch (e) {
+                return '—';
+            }
+        }
+
+        function getFranquicias() {
+            try {
+                return Array.isArray(window.franquicias) ? window.franquicias.slice() : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function renderTablaFranquicias() {
+            const tabla = document.getElementById('tablaFranquicias');
+            const tbody = tabla ? tabla.querySelector('tbody') : null;
+            if (!tbody) return;
+
+            const franquicias = getFranquicias();
+            franquicias.sort((a, b) => (a?.nombre || '').localeCompare((b?.nombre || ''), 'es', { sensitivity: 'base' }));
+
+            tbody.innerHTML = '';
+            franquicias.forEach((f, idx) => {
+                const tr = document.createElement('tr');
+                tr.style.background = idx % 2 === 0 ? '#ffffff' : '#f8f9fa';
+                const estatus = f && f.activa ? 'Activa' : 'Inactiva';
+                const estatusColor = f && f.activa ? '#16a34a' : '#64748b';
+                tr.innerHTML = (
+                    '<td style="padding: 12px 14px; font-weight: 800; color:#2d3e50;">' + (f?.nombre || '') + '</td>' +
+                    '<td style="padding: 12px 14px; color:#475569;">' + (f?.modelo || '') + '</td>' +
+                    '<td style="padding: 12px 14px; color:' + estatusColor + '; font-weight: 800;">' + estatus + '</td>' +
+                    '<td style="padding: 12px 14px; color:#64748b; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \\"Liberation Mono\\", \\"Courier New\\", monospace;">' + (f?.id || '') + '</td>'
+                );
+                tbody.appendChild(tr);
+            });
+
+            const resumen = document.getElementById('resumenFranquicias');
+            const activas = franquicias.filter(f => f && f.activa).length;
+            if (resumen) {
+                resumen.innerHTML = (
+                    '<div style="color:#2d3e50; line-height: 1.7;">' +
+                    '<div><strong>Total registradas:</strong> ' + franquicias.length + '</div>' +
+                    '<div><strong>Activas:</strong> ' + activas + '</div>' +
+                    '</div>'
+                );
+            }
+
+            const costoEl = document.getElementById('costoPorFranquicia');
+            const totalSinEl = document.getElementById('totalSinIva');
+            const totalConEl = document.getElementById('totalConIva');
+
+            const costo = COSTO_POR_FRANQUICIA_SIN_IVA;
+            if (costoEl) costoEl.textContent = formatCurrencyMXN(costo);
+
+            const totalSin = (typeof costo === 'number' && Number.isFinite(costo)) ? (costo * activas) : null;
+            const totalCon = (typeof totalSin === 'number' && Number.isFinite(totalSin)) ? (totalSin * 1.16) : null;
+
+            if (totalSinEl) totalSinEl.textContent = formatCurrencyMXN(totalSin);
+            if (totalConEl) totalConEl.textContent = formatCurrencyMXN(totalCon);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const hoy = new Date();
+            const fecha = document.getElementById('fechaEmision');
+            if (fecha) fecha.textContent = formatearFecha(hoy);
+            const stamp = document.getElementById('footerStamp');
+            if (stamp) stamp.textContent = 'Generado: ' + hoy.toLocaleString();
+
+            renderTablaFranquicias();
+        });
+    </script>
+</body>
+</html>
