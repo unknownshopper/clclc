@@ -438,7 +438,9 @@
         <section id="matriz" class="tab-section" style="display:none">
             <div class="mes-selector-container" data-mes-selector-host="matriz"></div>
             <h2>Matriz de Evaluación (Sucursales y Franquicias)</h2>
-            <div id="tabla-matriz-container"></div>
+            <div id="matrizSucursales"></div>
+            <div id="matrizFranquicias" style="margin-top: 18px;"></div>
+            <div id="tabla-matriz-container" style="display:none"></div>
         </section>
         <section id="graficas" class="tab-section" style="display:none">
             <div class="mes-selector-container" data-mes-selector-host="graficas"></div>
@@ -557,15 +559,15 @@
         <button id="btn-guardar-evaluacion" style="margin-top:16px;display:none;">Guardar evaluación</button>
       </div>
     </div>
-    <<footer>
-  <p>
-    Powered by
-    <a href="https://unknownshoppers.com">
-      <img src="logch.png" alt="The Unknown Shopper" class="logo-TUS">
-    </a>
-    &​copy; <span id="footerYear">2025</span> | Todos los derechos reservados.
-  </p>
-</footer>
+    <footer>
+      <p>
+        Powered by
+        <a href="https://unknownshoppers.com">
+          <img src="logch.png" alt="The Unknown Shopper" class="logo-TUS">
+        </a>
+        &copy; <span id="footerYear">2025</span> | Todos los derechos reservados.
+      </p>
+    </footer>
 
 <script>
   (function () {

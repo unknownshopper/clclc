@@ -175,6 +175,7 @@ function aplicarRestriccionesPorRol() {
     const botonesEliminar = document.querySelectorAll('.btn-delete, .btn-eliminar');
     const tabCompetencia = document.querySelector('.tab-btn[data-section="competencia"]');
     const tabFranquicias = document.querySelector('.tab-btn[data-section="franquicias"]');
+    const tabEvaluaciones = document.querySelector('.tab-btn[data-section="evaluaciones"]');
     
     if (rol === 'admin') {
         // Admin puede hacer todo
@@ -195,6 +196,16 @@ function aplicarRestriccionesPorRol() {
 
     if (tabFranquicias) {
         tabFranquicias.style.display = puedeVerFranquicias() ? '' : 'none';
+    }
+
+    if (tabEvaluaciones) {
+        tabEvaluaciones.style.display = (String(rol || '').toLowerCase() === 'franquicias') ? 'none' : '';
+    }
+
+    if (String(rol || '').toLowerCase() === 'franquicias' && window.vistaActual === 'evaluaciones') {
+        try {
+            if (typeof cambiarVista === 'function') cambiarVista('franquicias');
+        } catch (e) {}
     }
     
     console.log(`Restricciones aplicadas para rol: ${rol}`);

@@ -9,6 +9,15 @@
 function renderMatrizCompleta() {
     console.log('Renderizando matriz completa para mes:', window.mesSeleccionado);
 
+    const opts = arguments && arguments.length ? (arguments[0] || {}) : {};
+    const containerId = opts.containerId || 'matriz';
+    const soloTipo = opts.soloTipo || null;
+    const soloModelo = opts.soloModelo || null;
+    const titulo = opts.titulo || 'Matriz de Evaluación';
+    const mostrarTodasEntidades = !!opts.mostrarTodasEntidades;
+    const containerEl = document.getElementById(containerId);
+    if (!containerEl) return;
+
     const kpi2Utils = window.kpi2Utils || null;
     const debeMostrarKPI2 = (mes) => {
         if (kpi2Utils && typeof kpi2Utils.debeMostrarKPI2 === 'function') return kpi2Utils.debeMostrarKPI2(mes);
@@ -31,11 +40,11 @@ function renderMatrizCompleta() {
     }
 
     // Si no hay evaluaciones visibles para el rol actual (y no es admin), ocultar matriz
-    if (usuarioActual && usuarioActual.rol !== 'admin' && evaluacionesVisibles.length === 0) {
+    if (!mostrarTodasEntidades && usuarioActual && usuarioActual.rol !== 'admin' && evaluacionesVisibles.length === 0) {
         const html = `
             <div style="margin-bottom: 20px; text-align: center; padding: 40px;">
                 <h2 style="color: #0077cc; margin-bottom: 20px;">
-                    Matriz de Evaluación - ${formatearMesLegible(window.mesSeleccionado)}
+                    ${titulo} - ${formatearMesLegible(window.mesSeleccionado)}
                 </h2>
                 <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 30px; max-width: 520px; margin: 0 auto;">
                     <i class="fas fa-eye-slash" style="font-size: 48px; color: #6c757d; margin-bottom: 20px;"></i>
@@ -46,14 +55,14 @@ function renderMatrizCompleta() {
                 </div>
             </div>
         `;
-        document.getElementById('matriz').innerHTML = html;
+        containerEl.innerHTML = html;
         return;
     }
     
     let html = `
         <div style="margin-bottom: 20px;">
             <h2 style="color: #0077cc; margin-bottom: 10px; text-align: center;">
-                Matriz de Evaluación - ${formatearMesLegible(window.mesSeleccionado)}
+                ${titulo} - ${formatearMesLegible(window.mesSeleccionado)}
             </h2>
             <p style="text-align: center; color: #666; margin-bottom: 20px;">
                 Vista detallada de parámetros por sucursal/franquicia
@@ -77,9 +86,9 @@ function renderMatrizCompleta() {
         console.log('Entidades visibles - Franquicias:', Array.from(visiblesFra));
     }
     
-    if (window.sucursales) {
+    if ((!soloTipo || soloTipo === 'sucursal') && window.sucursales) {
         window.sucursales.filter(s => s.activa).forEach(sucursal => {
-            if (esAdmin || visiblesSuc.has(sucursal.id)) {
+            if (esAdmin || mostrarTodasEntidades || visiblesSuc.has(sucursal.id)) {
                 entidades.push({
                     id: sucursal.id,
                     nombre: sucursal.nombre,
@@ -89,28 +98,41 @@ function renderMatrizCompleta() {
         });
     }
     
-    if (window.franquicias) {
-        window.franquicias.filter(f => f.activa).forEach(franquicia => {
-            if (esAdmin || visiblesFra.has(franquicia.id)) {
+    if ((!soloTipo || soloTipo === 'franquicia') && window.franquicias) {
+        const normalizarModeloLocal = (m) => String(m || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/\p{Diacritic}/gu, '')
+            .trim();
+        const modeloEsperado = soloModelo ? normalizarModeloLocal(soloModelo) : null;
+
+        window.franquicias
+            .filter(f => f && f.activa)
+            .filter(f => {
+                if (!modeloEsperado) return true;
+                return normalizarModeloLocal(f.modelo) === modeloEsperado;
+            })
+            .forEach(franquicia => {
+            if (esAdmin || mostrarTodasEntidades || visiblesFra.has(franquicia.id)) {
                 entidades.push({
                     id: franquicia.id,
                     nombre: franquicia.nombre,
                     tipo: 'Franquicia'
                 });
             }
-        });
+            });
     }
     
     if (entidades.length === 0) {
         html += '<p>No hay entidades para mostrar con evaluaciones visibles.</p>';
-        document.getElementById('matriz').innerHTML = html;
+        containerEl.innerHTML = html;
         return;
     }
     
     // Verificar que tenemos parámetros
     if (!window.parametros || window.parametros.length === 0) {
         html += '<p>No se han cargado los parámetros de evaluación.</p>';
-        document.getElementById('matriz').innerHTML = html;
+        containerEl.innerHTML = html;
         return;
     }
     
@@ -506,7 +528,6 @@ function renderMatrizCompleta() {
                     <span style="display: inline-block; width: 20px; height: 20px; background-color: #999; color: white; text-align: center; line-height: 20px; border-radius: 3px; font-size: 10px;">N/A</span>
                     <span style="color: #999; font-weight: 600;">Sin evaluar</span>
                     <span style="color: #6c757d;">- Parámetro no evaluado aún</span>
-                </div>
             </div>
         </div>
         
@@ -515,18 +536,13 @@ function renderMatrizCompleta() {
         </div>
     `;
     
-    document.getElementById('matriz').innerHTML = html;
+    containerEl.innerHTML = html;
     console.log('Matriz completa renderizada exitosamente');
     
     // Inicializar soporte de tooltips para dispositivos táctiles y clics
-    if (debeMostrarKPI2(window.mesSeleccionado)) {
-        inicializarTooltipsMatrizTouch('#matrizWrapperKPI2');
-    }
-    
-    // Inicializar funcionalidad de arrastre con mouse e inercia
-    if (debeMostrarKPI2(window.mesSeleccionado)) {
-        inicializarArrastreMatriz('KPI2');
-    }
+    try {
+        inicializarTooltipsMatrizTouch(`#${containerId} .matriz-wrapper`);
+    } catch (e) {}
 }
 
 /**
@@ -727,16 +743,92 @@ function obtenerParametrosExcluidos(entidadId, tipo) {
     return idsExcluidos;
 }
 
+function renderMatrizFranquiciasCafeteria() {
+    return renderMatrizCompleta({
+        containerId: 'matriz',
+        soloTipo: 'franquicia',
+        soloModelo: 'Cafetería',
+        mostrarTodasEntidades: true,
+        titulo: 'Matriz de Evaluación (Franquicias · Cafetería)'
+    });
+}
+
 /**
  * Reemplaza la función renderMatriz original con la versión completa
  * Mantiene compatibilidad con el código existente
  */
 function renderMatriz() {
-    renderMatrizCompleta();
+    const rol = (window.usuarioActual && window.usuarioActual.rol) ? String(window.usuarioActual.rol).toLowerCase() : '';
+    const email = (window.usuarioActual && window.usuarioActual.email) ? String(window.usuarioActual.email).toLowerCase() : '';
+
+    const esAdmin = rol === 'admin';
+    const esDg = rol === 'dg' || email === 'dg@cafelacabana.com';
+    const esDirGral = rol === 'dirgral' || email === 'dirgral@cafelacabana.com';
+    const esGop = rol === 'gop';
+    const esFranquicias = rol === 'franquicias';
+
+    const contSuc = document.getElementById('matrizSucursales');
+    const contFra = document.getElementById('matrizFranquicias');
+
+    // Limpieza defensiva
+    if (contSuc) contSuc.innerHTML = '';
+    if (contFra) contFra.innerHTML = '';
+
+    // 1) Rol Franquicias: SOLO franquicias (cafetería) en el tab Matriz
+    if (esFranquicias) {
+        if (contSuc) contSuc.style.display = 'none';
+        if (contFra) contFra.style.display = 'block';
+
+        renderMatrizCompleta({
+            containerId: 'matrizFranquicias',
+            soloTipo: 'franquicia',
+            soloModelo: 'Cafetería',
+            mostrarTodasEntidades: true,
+            titulo: 'Matriz de Evaluación (Franquicias · Cafetería)'
+        });
+        return;
+    }
+
+    // 2) GOP: SOLO sucursales
+    if (esGop) {
+        if (contSuc) contSuc.style.display = 'block';
+        if (contFra) contFra.style.display = 'none';
+
+        renderMatrizCompleta({
+            containerId: 'matrizSucursales',
+            soloTipo: 'sucursal',
+            titulo: 'Matriz de Evaluación (Sucursales)'
+        });
+        return;
+    }
+
+    // 3) Admin/DG/DirGral: ver ambas (sucursales y franquicias cafetería)
+    const puedeVer2 = !!(esAdmin || esDg || esDirGral);
+
+    if (contSuc) contSuc.style.display = 'block';
+    renderMatrizCompleta({
+        containerId: 'matrizSucursales',
+        soloTipo: 'sucursal',
+        titulo: 'Matriz de Evaluación (Sucursales)'
+    });
+
+    if (puedeVer2) {
+        if (contFra) contFra.style.display = 'block';
+        renderMatrizCompleta({
+            containerId: 'matrizFranquicias',
+            soloTipo: 'franquicia',
+            soloModelo: 'Cafetería',
+            mostrarTodasEntidades: true,
+            titulo: 'Matriz de Evaluación (Franquicias · Cafetería)'
+        });
+    } else {
+        if (contFra) contFra.style.display = 'none';
+    }
 }
 
 // Exportar funciones para uso global
 window.renderMatrizCompleta = renderMatrizCompleta;
+window.renderMatrizFranquiciasCafeteria = renderMatrizFranquiciasCafeteria;
 window.obtenerParametrosExcluidos = obtenerParametrosExcluidos;
 
 /**

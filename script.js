@@ -1,5 +1,12 @@
 // Función para cambiar vista
 function cambiarVista(vista) {
+    try {
+        const rol = (window.usuarioActual && window.usuarioActual.rol) ? String(window.usuarioActual.rol).toLowerCase() : '';
+        if (rol === 'franquicias' && vista === 'evaluaciones') {
+            vista = 'franquicias';
+        }
+    } catch (e) {}
+
     // Actualizar botones de navegación
     document.querySelectorAll('.tab-btn').forEach(button => {
         button.classList.remove('active');

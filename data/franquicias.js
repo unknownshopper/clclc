@@ -7,8 +7,8 @@ window.franquicias = [
     { id: 'dosbocas', nombre: 'Dos Bocas', activa: true, modelo: 'Móvil' },
     { id: 'cumuapa', nombre: 'Cumuapa', activa: true, modelo: 'Móvil' },
     { id: 'cunduacan', nombre: 'Cunduacán', activa: true, modelo: 'Cafetería' },
+    { id: 'senderos', nombre: 'Senderos', activa: true, modelo: 'Cafetería' },
     { id: 'jalpa', nombre: 'Jalpa de Méndez', activa: true, modelo: 'Cafetería' },
     { id: 'cd-carmen', nombre: 'Cd del Cármen', activa: true, modelo: 'Cafetería' },
     { id: 'ujat', nombre: 'UJAT', activa: true, modelo: 'Cafetería' }
   ];
-  
