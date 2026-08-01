@@ -44,6 +44,9 @@ function cambiarVista(vista) {
         case 'evaluaciones':
             renderEvaluaciones();
             break;
+        case 'franquicias':
+            renderEvaluacionesFranquicias();
+            break;
         case 'matriz':
             renderMatriz();
             break;
@@ -544,6 +547,8 @@ async function manejarVideo(entidadId, tipo) {
         alert('Enlace de video guardado correctamente.');
         if (window.vistaActual === 'evaluaciones') {
             renderEvaluaciones();
+        } else if (window.vistaActual === 'franquicias') {
+            renderEvaluacionesFranquicias();
         }
     } catch (e) {
         console.error('Error en manejarVideo:', e);
@@ -552,8 +557,12 @@ async function manejarVideo(entidadId, tipo) {
 }
 
 // Función para renderizar evaluaciones
-async function renderEvaluaciones() {
-    const container = document.getElementById('evaluaciones');
+async function renderEvaluacionesBase({
+    containerId,
+    titulo,
+    tipoFiltro
+}) {
+    const container = document.getElementById(containerId);
     if (!container) return;
 
     const kpi2Utils = window.kpi2Utils || null;
@@ -647,13 +656,18 @@ async function renderEvaluaciones() {
     // Obtener evaluaciones del mes y aplicar filtro por rol
     const todasLasEvaluaciones = obtenerEvaluacionesDelMes(window.mesSeleccionado);
     let evaluacionesFiltradas = filtrarDatosPorRol(todasLasEvaluaciones);
+
+    // Forzar vista por tipo (evitar mezclar sucursales con franquicias aquí)
+    if (tipoFiltro) {
+        evaluacionesFiltradas = (evaluacionesFiltradas || []).filter(ev => ev && ev.tipo === tipoFiltro);
+    }
     
     console.log(`Evaluaciones - Total: ${todasLasEvaluaciones.length}, Filtradas: ${evaluacionesFiltradas.length}`);
     
     let html = `
         <div style="margin-bottom: 20px;">
             <h2 style="color: #0077cc; margin-bottom: 10px; text-align: center;">
-                Evaluaciones - ${formatearMesLegible(window.mesSeleccionado)}
+                ${titulo} - ${formatearMesLegible(window.mesSeleccionado)}
             </h2>
             ${tienePermiso('crear') ? `
             <div style="text-align: center; margin-bottom: 20px;">
@@ -690,7 +704,11 @@ async function renderEvaluaciones() {
                 campo: c,
                 dir: mismoCampo ? (actual.dir === 'asc' ? 'desc' : 'asc') : 'asc'
             };
-            renderEvaluaciones();
+            if (containerId === 'franquicias') {
+                renderEvaluacionesFranquicias();
+            } else {
+                renderEvaluaciones();
+            }
         };
         window.ordenarEvaluacionesPor = ordenar;
 
@@ -920,6 +938,22 @@ async function renderEvaluaciones() {
     
     // Aplicar restricciones de rol después de renderizar
     // aplicarRestriccionesPorRol();
+}
+
+async function renderEvaluaciones() {
+    return renderEvaluacionesBase({
+        containerId: 'evaluaciones',
+        titulo: 'Evaluaciones (Sucursales)',
+        tipoFiltro: 'sucursal'
+    });
+}
+
+async function renderEvaluacionesFranquicias() {
+    return renderEvaluacionesBase({
+        containerId: 'franquicias',
+        titulo: 'Evaluaciones (Franquicias)',
+        tipoFiltro: 'franquicia'
+    });
 }
 
 function abrirModalNuevaEvaluacion() {

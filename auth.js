@@ -149,6 +149,20 @@ function puedeVerCompetencia() {
     }
 }
 
+function puedeVerFranquicias() {
+    try {
+        const rol = (window.usuarioActual && window.usuarioActual.rol) ? String(window.usuarioActual.rol).toLowerCase() : '';
+        const email = (window.usuarioActual && window.usuarioActual.email) ? String(window.usuarioActual.email).toLowerCase() : '';
+        const esAdmin = rol === 'admin';
+        const esDg = rol === 'dg' || email === 'dg@cafelacabana.com';
+        const esDirGral = rol === 'dirgral' || email === 'dirgral@cafelacabana.com';
+        const esFranquicias = rol === 'franquicias';
+        return !!(esAdmin || esDg || esDirGral || esFranquicias);
+    } catch (e) {
+        return false;
+    }
+}
+
 // Función para aplicar restricciones basadas en el rol del usuario
 function aplicarRestriccionesPorRol() {
     if (!usuarioActual) return;
@@ -160,6 +174,7 @@ function aplicarRestriccionesPorRol() {
     const botonesEditar = document.querySelectorAll('.btn-edit, .btn-editar');
     const botonesEliminar = document.querySelectorAll('.btn-delete, .btn-eliminar');
     const tabCompetencia = document.querySelector('.tab-btn[data-section="competencia"]');
+    const tabFranquicias = document.querySelector('.tab-btn[data-section="franquicias"]');
     
     if (rol === 'admin') {
         // Admin puede hacer todo
@@ -176,6 +191,10 @@ function aplicarRestriccionesPorRol() {
 
     if (tabCompetencia) {
         tabCompetencia.style.display = puedeVerCompetencia() ? '' : 'none';
+    }
+
+    if (tabFranquicias) {
+        tabFranquicias.style.display = puedeVerFranquicias() ? '' : 'none';
     }
     
     console.log(`Restricciones aplicadas para rol: ${rol}`);
