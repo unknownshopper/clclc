@@ -1054,14 +1054,6 @@ function cargarParametrosEvaluacion(entidadValue) {
         });
     } catch (e) {}
 
-    // Parámetros específicos solo para sucursales en KPI2
-    try {
-        parametrosAplicables = parametrosAplicables.filter(p => {
-            if (!p) return false;
-            if (p.id === 'mencion_promociones' && tipo !== 'sucursal') return false;
-            return true;
-        });
-    } catch (e) {}
     console.log(`Usando todos los parámetros para ${tipo}: ${entidadId} (${parametrosAplicables.length} parámetros)`);
     
     console.log('Lista de parámetros antes de exclusiones:', parametrosAplicables.map(p => p.nombre));
@@ -1695,8 +1687,6 @@ function generarTopDriversKPI2() {
 
         window.parametros.forEach(p => {
             if (!p || esExcluido(p)) return;
-
-            if (p.id === 'mencion_promociones' && tipo !== 'sucursal') return;
 
             const peso2 = kpi2Utils.getPesoKPI2(p.id, p.peso, modelo);
             if (!peso2 || peso2 <= 0) return;
@@ -2777,13 +2767,6 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
             } else if (tipo === 'franquicia') {
                 parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaAFranquicias && p.aplicaAFranquicias.includes(entidadId)));
             }
-
-            // Solo sucursales para menciona_promociones
-            parametrosAplicables = parametrosAplicables.filter(p => {
-                if (!p) return false;
-                if (p.id === 'mencion_promociones' && tipo !== 'sucursal') return false;
-                return true;
-            });
 
             return parametrosAplicables.map(p => {
                 const existe = !!(evaluacionFinal.parametros && evaluacionFinal.parametros[p.id] !== undefined);

@@ -15,6 +15,10 @@ function renderMatrizCompleta() {
     const soloModelo = opts.soloModelo || null;
     const titulo = opts.titulo || 'Matriz de Evaluación';
     const mostrarTodasEntidades = !!opts.mostrarTodasEntidades;
+    const forzarSoloKPI2 = !!opts.forzarSoloKPI2;
+    const ocultarNA = !!opts.ocultarNA;
+    const asumirTodoCumple = !!opts.asumirTodoCumple;
+    const asumirCumpleSiNoEval = !!opts.asumirCumpleSiNoEval;
     const containerEl = document.getElementById(containerId);
     if (!containerEl) return;
 
@@ -142,8 +146,8 @@ function renderMatrizCompleta() {
     const paramsKPI2 = (window.parametros || []).slice();
 
     const soloKPI2 = (typeof window.debeUsarSoloKPI2 === 'function')
-        ? window.debeUsarSoloKPI2(window.mesSeleccionado)
-        : false;
+        ? (window.debeUsarSoloKPI2(window.mesSeleccionado) || forzarSoloKPI2)
+        : forzarSoloKPI2;
 
     const renderTabla = (modo, paramsTabla) => {
         const esKPI2 = modo === 'kpi2';
@@ -222,11 +226,16 @@ function renderMatrizCompleta() {
                 return evaluacion;
             })();
 
-            let kpiGeneral = 'N/A';
+            let kpiGeneral = ocultarNA ? '—' : 'N/A';
             let kpiColor = '#999';
+
+            if (asumirTodoCumple && !evaluacion) {
+                kpiGeneral = '100%';
+                kpiColor = '#28a745';
+            }
             if (evaluacion) {
                 let porcentaje = null;
-                if (soloKPI2 && esKPI2) {
+                if ((soloKPI2 || forzarSoloKPI2) && esKPI2) {
                     const k2 = calcularKPI2Matriz(entidad.id, tipoLower, evalParaTabla || null);
                     if (typeof k2 === 'number') porcentaje = Math.round(k2 * 100);
                 } else {
@@ -254,6 +263,10 @@ function renderMatrizCompleta() {
             let kpi2General = '—';
             let kpi2Color = '#999';
             if (esKPI2) {
+                if (asumirTodoCumple && !evaluacion) {
+                    kpi2General = '100%';
+                    kpi2Color = '#28a745';
+                }
                 const kpi2 = calcularKPI2Matriz(entidad.id, tipoLower, evalParaTabla || null);
                 if (typeof kpi2 === 'number') {
                     const porcentaje2 = Math.round(kpi2 * 100);
@@ -302,6 +315,36 @@ function renderMatrizCompleta() {
             `;
 
             paramsTabla.forEach(param => {
+                // Si no hay evaluación para esta entidad/mes y queremos que la matriz refleje el default del modal
+                // (todo cumple), pintar todo como ✅ sin aplicar exclusiones.
+                if (asumirTodoCumple && !evaluacion) {
+                    html += `
+                        <td style="border: 1px solid #ddd; padding: 8px 4px; text-align: center; background-color: #28a745; color: #ffffff; font-weight: bold;">
+                            <div class="matriz-tooltip">
+                                <span style="font-size: 12px;">✅</span>
+                                <div class="matriz-tooltip-bubble">
+                                    <div class="matriz-tooltip-row">
+                                        <div class="matriz-tooltip-icon">🏢</div>
+                                        <div class="matriz-tooltip-label">Entidad</div>
+                                        <div class="matriz-tooltip-value">${entidad.tipo}: ${entidad.nombre}</div>
+                                    </div>
+                                    <div class="matriz-tooltip-row">
+                                        <div class="matriz-tooltip-icon">📊</div>
+                                        <div class="matriz-tooltip-label">Parámetro</div>
+                                        <div class="matriz-tooltip-value">${param.nombre}</div>
+                                    </div>
+                                    <div class="matriz-tooltip-row">
+                                        <div class="matriz-tooltip-icon">✅</div>
+                                        <div class="matriz-tooltip-label">Estado</div>
+                                        <div class="matriz-tooltip-value">Sin evaluación: Asumido cumple</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                    return;
+                }
+
                 const aplicaEntidad = (() => {
                     try {
                         if (!param) return false;
@@ -333,10 +376,41 @@ function renderMatrizCompleta() {
                 });
 
                 if (esExcluido) {
+                    // En la matriz de franquicias (ocultarNA + KPI2 forzado), no mostramos celdas negras.
+                    // Regla de negocio: se asume que el parámetro "cumple" para poder evaluar todos.
+                    if (ocultarNA && forzarSoloKPI2 && tipoLower === 'franquicia') {
+                        html += `
+                            <td style="border: 1px solid #ddd; padding: 8px 4px; text-align: center; background-color: #28a745; color: #ffffff; font-weight: bold;">
+                                <div class="matriz-tooltip">
+                                    <span style="font-size: 12px;">✓</span>
+                                    <div class="matriz-tooltip-bubble">
+                                        <div class="matriz-tooltip-row">
+                                            <div class="matriz-tooltip-icon">🏢</div>
+                                            <div class="matriz-tooltip-label">Entidad</div>
+                                            <div class="matriz-tooltip-value">${entidad.tipo}: ${entidad.nombre}</div>
+                                        </div>
+                                        <div class="matriz-tooltip-row">
+                                            <div class="matriz-tooltip-icon">📊</div>
+                                            <div class="matriz-tooltip-label">Parámetro</div>
+                                            <div class="matriz-tooltip-value">${param.nombre}</div>
+                                        </div>
+                                        <div class="matriz-tooltip-row">
+                                            <div class="matriz-tooltip-icon">✅</div>
+                                            <div class="matriz-tooltip-label">Estado</div>
+                                            <div class="matriz-tooltip-value">Asumido: Cumple</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        `;
+                        return;
+                    }
+
+                    const naText = ocultarNA ? '—' : 'N/A';
                     html += `
                         <td style="border: 1px solid #ddd; padding: 8px 4px; text-align: center; background-color: #000000; color: #ffffff;">
                             <div class="matriz-tooltip">
-                                <span style="font-size: 10px;">N/A</span>
+                                <span style="font-size: 10px;">${naText}</span>
                                 <div class="matriz-tooltip-bubble">
                                     <div class="matriz-tooltip-row">
                                         <div class="matriz-tooltip-icon">🏢</div>
@@ -360,7 +434,7 @@ function renderMatrizCompleta() {
                     return;
                 }
 
-                let estado = 'N/A';
+                let estado = ocultarNA ? '—' : 'N/A';
                 let color = '#999';
                 let bgColor = 'transparent';
                 let estadoTexto = 'Sin evaluar';
@@ -369,9 +443,21 @@ function renderMatrizCompleta() {
                 let estadoIcono = '⏳';
 
                 const tieneValor = !!(evalParaTabla && evalParaTabla.parametros && evalParaTabla.parametros[param.id] !== undefined);
-                const defaultCumplePromo = (!tieneValor && esKPI2 && tipoLower === 'sucursal' && entidad.id !== 'walmart-carrizal' && param && param.id === 'mencion_promociones');
-                const defaultFallaPromo = (!tieneValor && esKPI2 && tipoLower === 'sucursal' && entidad.id === 'walmart-carrizal' && param && param.id === 'mencion_promociones');
-                if (!tieneValor && esKPI2 && param && param.soloKPI2) {
+                const defaultCumplePromo = (!!evaluacion && !tieneValor && esKPI2 && tipoLower === 'sucursal' && entidad.id !== 'walmart-carrizal' && param && param.id === 'mencion_promociones');
+                const defaultFallaPromo = (!!evaluacion && !tieneValor && esKPI2 && tipoLower === 'sucursal' && entidad.id === 'walmart-carrizal' && param && param.id === 'mencion_promociones');
+
+                // Sucursales: si no existe evaluación del mes, pintar como ✅ (default del modal)
+                // para todos los parámetros aplicables (no excluidos). No aplican reglas especiales.
+                if (asumirCumpleSiNoEval && tipoLower === 'sucursal' && !evaluacion) {
+                    estado = '✅';
+                    color = '#ffffff';
+                    bgColor = '#28a745';
+                    estadoTexto = 'Sin evaluación: Asumido cumple';
+                    estadoIcono = '✅';
+                    valor = Number(param.peso) || 0;
+                    peso = param.peso;
+                }
+                if (!tieneValor && esKPI2 && param && param.soloKPI2 && !(asumirCumpleSiNoEval && tipoLower === 'sucursal' && !evaluacion)) {
                     if (defaultCumplePromo) {
                         estado = '✓';
                         color = '#ffffff';
@@ -387,6 +473,16 @@ function renderMatrizCompleta() {
                         estadoTexto = 'No cumple';
                         estadoIcono = '❌';
                         valor = 0;
+                        peso = param.peso;
+                    } else if (forzarSoloKPI2 && tipoLower === 'franquicia') {
+                        // Regla de negocio para franquicias: si el parámetro KPI2 no fue capturado,
+                        // asumir que cumple (full points) para no penalizar históricos.
+                        estado = '✓';
+                        color = '#ffffff';
+                        bgColor = '#28a745';
+                        estadoTexto = 'Asumido: Cumple';
+                        estadoIcono = '✅';
+                        valor = Number(param.peso) || 0;
                         peso = param.peso;
                     } else {
                         estado = '—';
@@ -479,9 +575,12 @@ function renderMatrizCompleta() {
         `;
     };
 
-    if (debeMostrarKPI2(window.mesSeleccionado)) {
-        renderTabla('kpi2', paramsKPI2);
+    if (!soloKPI2 && !forzarSoloKPI2) {
+        renderTabla('kpi', paramsKPI);
     }
+    renderTabla('kpi2', paramsKPI2);
+
+    const legendNaText = ocultarNA ? '—' : 'N/A';
 
     html += `
         <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; border: 1px solid #dee2e6;">
@@ -520,12 +619,12 @@ function renderMatrizCompleta() {
                     <span style="color: #6c757d;">- Sin puntaje obtenido</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="display: inline-block; width: 20px; height: 20px; background-color: #000000; color: white; text-align: center; line-height: 20px; border-radius: 3px; font-size: 10px;">N/A</span>
+                    <span style="display: inline-block; width: 20px; height: 20px; background-color: #000000; color: white; text-align: center; line-height: 20px; border-radius: 3px; font-size: 10px;">${legendNaText}</span>
                     <span style="color: #000000; font-weight: 600;">Excluido</span>
                     <span style="color: #6c757d;">- Parámetro no aplica a esta entidad</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="display: inline-block; width: 20px; height: 20px; background-color: #999; color: white; text-align: center; line-height: 20px; border-radius: 3px; font-size: 10px;">N/A</span>
+                    <span style="display: inline-block; width: 20px; height: 20px; background-color: #999; color: white; text-align: center; line-height: 20px; border-radius: 3px; font-size: 10px;">${legendNaText}</span>
                     <span style="color: #999; font-weight: 600;">Sin evaluar</span>
                     <span style="color: #6c757d;">- Parámetro no evaluado aún</span>
             </div>
@@ -784,6 +883,9 @@ function renderMatriz() {
             soloTipo: 'franquicia',
             soloModelo: 'Cafetería',
             mostrarTodasEntidades: true,
+            forzarSoloKPI2: true,
+            ocultarNA: true,
+            asumirTodoCumple: true,
             titulo: 'Matriz de Evaluación (Franquicias · Cafetería)'
         });
         return;
@@ -797,6 +899,7 @@ function renderMatriz() {
         renderMatrizCompleta({
             containerId: 'matrizSucursales',
             soloTipo: 'sucursal',
+            asumirCumpleSiNoEval: true,
             titulo: 'Matriz de Evaluación (Sucursales)'
         });
         return;
@@ -809,6 +912,7 @@ function renderMatriz() {
     renderMatrizCompleta({
         containerId: 'matrizSucursales',
         soloTipo: 'sucursal',
+        asumirCumpleSiNoEval: true,
         titulo: 'Matriz de Evaluación (Sucursales)'
     });
 
@@ -819,6 +923,9 @@ function renderMatriz() {
             soloTipo: 'franquicia',
             soloModelo: 'Cafetería',
             mostrarTodasEntidades: true,
+            forzarSoloKPI2: true,
+            ocultarNA: true,
+            asumirTodoCumple: true,
             titulo: 'Matriz de Evaluación (Franquicias · Cafetería)'
         });
     } else {
