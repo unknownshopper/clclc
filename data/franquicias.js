@@ -4,7 +4,7 @@ window.franquicias = [
     { id: 'citycenter', nombre: 'City center', activa: true, modelo: 'Cafetería' },
     { id: 'cardenas', nombre: 'Cárdenas', activa: true, modelo: 'Cafetería' },
     { id: 'paraiso', nombre: 'Paraíso', activa: true, modelo: 'Cafetería' },
-    { id: 'dosbocas', nombre: 'Dos Bocas', activa: true, modelo: 'Móvil' },
+    { id: 'dosbocas', nombre: 'Dos Bocas', activa: true, modelo: 'Cafetería' },
     { id: 'cumuapa', nombre: 'Cumuapa', activa: true, modelo: 'Móvil' },
     { id: 'cunduacan', nombre: 'Cunduacán', activa: true, modelo: 'Cafetería' },
     { id: 'senderos', nombre: 'Senderos', activa: true, modelo: 'Cafetería' },

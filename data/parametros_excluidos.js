@@ -208,7 +208,6 @@ window.parametrosExcluidosPorFranquicia = {
   ],
   "dosbocas": [
     "Atención en mesa",
-    "Uso de tableta",
     "Jardineras y macetas",
     "Puertas y vidrios",
     "Música y volumen",
