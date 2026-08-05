@@ -1554,6 +1554,12 @@ function toggleSeleccionarTodo() {
 // Función para renderizar gráficas
 function renderGraficas() {
     console.log('Renderizando gráficas para mes:', window.mesSeleccionado);
+
+    const rol = (window.usuarioActual && window.usuarioActual.rol)
+        ? String(window.usuarioActual.rol).toLowerCase().trim()
+        : '';
+    const puedeVerSuc = !!(rol === 'admin' || rol === 'dg' || rol === 'dirgral' || rol === 'gop');
+    const puedeVerFra = !!(rol === 'admin' || rol === 'dg' || rol === 'dirgral' || rol === 'franquicias');
     
     let html = `
         <div style="margin-bottom: 30px;">
@@ -1565,17 +1571,33 @@ function renderGraficas() {
             </p>
         </div>
         
+        ${puedeVerSuc ? `
         <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 30px;">
             <h3 style="text-align: center; margin-bottom: 25px; color: #2c3e50; font-size: 1.4rem; font-weight: 600;">
-                📈 KPI2 por entidad
+                📈 KPI2 por sucursal
             </h3>
             <div style="display: flex; justify-content: center; margin-bottom: 15px;">
-                <canvas id="graficoKPIsComparacion" width="900" height="440" style="max-width: 100%; border-radius: 8px;"></canvas>
+                <canvas id="graficoKPIsComparacionSucursales" width="900" height="440" style="max-width: 100%; border-radius: 8px;"></canvas>
             </div>
             <p style="text-align: center; color: #7f8c8d; font-size: 0.9rem; margin-top: 15px;">
-                KPI2 (PONDERA IA) por entidad
+                KPI2 (PONDERA IA) por sucursal
             </p>
         </div>
+        ` : ''}
+
+        ${puedeVerFra ? `
+        <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 30px;">
+            <h3 style="text-align: center; margin-bottom: 25px; color: #2c3e50; font-size: 1.4rem; font-weight: 600;">
+                📈 KPI2 por franquicia
+            </h3>
+            <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                <canvas id="graficoKPIsComparacionFranquicias" width="900" height="440" style="max-width: 100%; border-radius: 8px;"></canvas>
+            </div>
+            <p style="text-align: center; color: #7f8c8d; font-size: 0.9rem; margin-top: 15px;">
+                KPI2 (PONDERA IA) por franquicia
+            </p>
+        </div>
+        ` : ''}
 
         <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 30px;">
             <h3 style="text-align: center; margin-bottom: 20px; color: #2c3e50; font-size: 1.3rem; font-weight: 600;">
@@ -1601,8 +1623,122 @@ function renderGraficas() {
     document.getElementById('graficas').innerHTML = html;
     
     // Generar datos para gráficas
-    generarGraficosKPI();
+    if (puedeVerSuc) generarGraficoKPI2PorEntidad({ tipoFiltro: 'sucursal', canvasId: 'graficoKPIsComparacionSucursales' });
+    if (puedeVerFra) generarGraficoKPI2PorEntidad({ tipoFiltro: 'franquicia', canvasId: 'graficoKPIsComparacionFranquicias' });
     generarTopDriversKPI2();
+}
+
+function generarGraficoKPI2PorEntidad({ tipoFiltro, canvasId }) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const kpi2Utils = window.kpi2Utils || null;
+    if (!kpi2Utils || typeof kpi2Utils.calcularKPI2 !== 'function') return;
+
+    const mes = window.mesSeleccionado;
+    const tipo = String(tipoFiltro || '').toLowerCase().trim();
+
+    const catalogo = (tipo === 'sucursal')
+        ? (Array.isArray(window.sucursales) ? window.sucursales : [])
+        : (Array.isArray(window.franquicias) ? window.franquicias : []);
+
+    const entidadesActivas = catalogo.filter(e => e && e.activa);
+
+    const labels = [];
+    const data = [];
+
+    entidadesActivas.forEach(e => {
+        const entidadId = e.id;
+        const nombre = e.nombre || entidadId;
+        const evaluacion = (tipo === 'sucursal')
+            ? window.evaluaciones?.sucursales?.[entidadId]?.[mes]
+            : window.evaluaciones?.franquicias?.[entidadId]?.[mes];
+
+        const evKpi2 = (evaluacion && evaluacion.modalidades && evaluacion.modalidades.kpi2)
+            ? evaluacion.modalidades.kpi2
+            : (evaluacion && evaluacion._kpi2 ? evaluacion._kpi2 : evaluacion);
+
+        const kpi2 = (evKpi2 && evKpi2.parametros)
+            ? kpi2Utils.calcularKPI2(entidadId, tipo, evKpi2)
+            : 1;
+
+        labels.push(nombre);
+        data.push(Math.round((typeof kpi2 === 'number' ? kpi2 : 1) * 100));
+    });
+
+    const ctx = canvas.getContext('2d');
+    try {
+        window._chartsGraficasKPI2 = window._chartsGraficasKPI2 || {};
+        window._chartsGraficasKPI2[canvasId]?.destroy?.();
+    } catch (e) {}
+
+    if (!labels.length || !window.Chart) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#666';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('No hay entidades para graficar', canvas.width / 2, canvas.height / 2);
+        return;
+    }
+
+    window._chartsGraficasKPI2 = window._chartsGraficasKPI2 || {};
+    window._chartsGraficasKPI2[canvasId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'KPI2 (%)',
+                    data,
+                    backgroundColor: 'rgba(168,85,247,0.22)',
+                    borderColor: '#a855f7',
+                    borderWidth: 2,
+                    borderRadius: 6,
+                },
+                {
+                    label: 'Meta 95%',
+                    data: new Array(labels.length).fill(95),
+                    type: 'line',
+                    borderColor: '#22c55e',
+                    borderDash: [6, 6],
+                    pointRadius: 0,
+                    borderWidth: 2,
+                    fill: false,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: { color: '#2c3e50' }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: (c) => ` ${c.dataset.label}: ${c.parsed.y}%`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#6b7280', maxRotation: 45, minRotation: 45 },
+                    grid: { display: false }
+                },
+                y: {
+                    min: 0,
+                    max: 100,
+                    ticks: { color: '#6b7280', callback: (v) => v + '%' },
+                    grid: { color: 'rgba(0,0,0,0.06)' }
+                }
+            },
+            interaction: { mode: 'nearest', intersect: false },
+            animation: { duration: 800, easing: 'easeOutQuart' }
+        }
+    });
 }
 
 function generarTopDriversKPI2() {
