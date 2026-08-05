@@ -846,7 +846,6 @@ function renderMatrizFranquiciasCafeteria() {
     return renderMatrizCompleta({
         containerId: 'matriz',
         soloTipo: 'franquicia',
-        soloModelo: 'Cafetería',
         mostrarTodasEntidades: true,
         titulo: 'Matriz de Evaluación (Franquicias · Cafetería)'
     });
@@ -881,12 +880,11 @@ function renderMatriz() {
         renderMatrizCompleta({
             containerId: 'matrizFranquicias',
             soloTipo: 'franquicia',
-            soloModelo: 'Cafetería',
             mostrarTodasEntidades: true,
             forzarSoloKPI2: true,
             ocultarNA: true,
             asumirTodoCumple: true,
-            titulo: 'Matriz de Evaluación (Franquicias · Cafetería)'
+            titulo: 'Matriz de Evaluación (Franquicias)'
         });
         return;
     }
@@ -921,12 +919,11 @@ function renderMatriz() {
         renderMatrizCompleta({
             containerId: 'matrizFranquicias',
             soloTipo: 'franquicia',
-            soloModelo: 'Cafetería',
             mostrarTodasEntidades: true,
             forzarSoloKPI2: true,
             ocultarNA: true,
             asumirTodoCumple: true,
-            titulo: 'Matriz de Evaluación (Franquicias · Cafetería)'
+            titulo: 'Matriz de Evaluación (Franquicias)'
         });
     } else {
         if (contFra) contFra.style.display = 'none';
