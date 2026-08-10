@@ -208,6 +208,8 @@ function renderMatrizCompleta() {
                 ? window.evaluaciones?.sucursales?.[entidad.id]?.[mes]
                 : window.evaluaciones?.franquicias?.[entidad.id]?.[mes];
 
+            const parametrosExcluidos = obtenerParametrosExcluidos(entidad.id, tipoLower);
+
             const evalParaTabla = (() => {
                 if (!evaluacion) return evaluacion;
                 if (esKPI2) {
@@ -225,6 +227,48 @@ function renderMatrizCompleta() {
                 }
                 return evaluacion;
             })();
+
+            // Para franquicias en KPI2 forzado: si faltan parámetros en la evaluación, asumir "cumple"
+            // (full points) para la matriz y para el KPI2 mostrado.
+            let evalParaKPI2Matriz = evalParaTabla;
+            if (esKPI2 && evaluacion && forzarSoloKPI2 && tipoLower === 'franquicia' && evalParaTabla && evalParaTabla.parametros) {
+                try {
+                    const aplicaEntidad = (p) => {
+                        if (!p) return false;
+                        if (p.aplicaATodas) return true;
+                        const hasSuc = Array.isArray(p.aplicaASucursales);
+                        const hasFra = Array.isArray(p.aplicaAFranquicias);
+                        if (!hasSuc && !hasFra) return true;
+                        if (tipoLower === 'sucursal') {
+                            if (!hasSuc) return true;
+                            return p.aplicaASucursales.includes(entidad.id);
+                        }
+                        if (tipoLower === 'franquicia') {
+                            if (!hasFra) return true;
+                            return p.aplicaAFranquicias.includes(entidad.id);
+                        }
+                        return false;
+                    };
+
+                    const excl = Array.isArray(parametrosExcluidos) ? parametrosExcluidos : [];
+                    const exclNorm = excl.map(x => String(x || '').trim().toLowerCase());
+
+                    const nuevos = { ...(evalParaTabla.parametros || {}) };
+                    (window.parametros || []).forEach(p => {
+                        if (!p) return;
+                        if (!aplicaEntidad(p)) return;
+                        if (exclNorm.includes(String(p.nombre || '').trim().toLowerCase())) return;
+                        if (nuevos[p.id] === undefined) {
+                            const pesoOriginal = Number(p.peso) || 0;
+                            nuevos[p.id] = pesoOriginal;
+                        }
+                    });
+
+                    evalParaKPI2Matriz = { ...evalParaTabla, parametros: nuevos };
+                } catch (e) {
+                    evalParaKPI2Matriz = evalParaTabla;
+                }
+            }
 
             let kpiGeneral = ocultarNA ? '—' : 'N/A';
             let kpiColor = '#999';
@@ -267,15 +311,13 @@ function renderMatrizCompleta() {
                     kpi2General = '100%';
                     kpi2Color = '#28a745';
                 }
-                const kpi2 = calcularKPI2Matriz(entidad.id, tipoLower, evalParaTabla || null);
+                const kpi2 = calcularKPI2Matriz(entidad.id, tipoLower, evalParaKPI2Matriz || null);
                 if (typeof kpi2 === 'number') {
                     const porcentaje2 = Math.round(kpi2 * 100);
                     kpi2General = `${porcentaje2}%`;
                     kpi2Color = porcentaje2 >= 95 ? '#28a745' : porcentaje2 >= 90 ? '#ffc107' : '#dc3545';
                 }
             }
-
-            const parametrosExcluidos = obtenerParametrosExcluidos(entidad.id, tipoLower);
             const rowBg = entidadIndex % 2 === 0 ? '#ffffff' : '#f8f9fa';
 
             html += `
@@ -445,6 +487,18 @@ function renderMatrizCompleta() {
                 const tieneValor = !!(evalParaTabla && evalParaTabla.parametros && evalParaTabla.parametros[param.id] !== undefined);
                 const defaultCumplePromo = (!!evaluacion && !tieneValor && esKPI2 && tipoLower === 'sucursal' && entidad.id !== 'walmart-carrizal' && param && param.id === 'mencion_promociones');
                 const defaultFallaPromo = (!!evaluacion && !tieneValor && esKPI2 && tipoLower === 'sucursal' && entidad.id === 'walmart-carrizal' && param && param.id === 'mencion_promociones');
+
+                // Franquicias: si existe evaluación pero este parámetro no fue capturado, asumir ✅
+                // para que la tabla sea "descontable".
+                if (!tieneValor && evaluacion && forzarSoloKPI2 && tipoLower === 'franquicia') {
+                    estado = '✅';
+                    color = '#ffffff';
+                    bgColor = '#28a745';
+                    estadoTexto = 'Asumido: Cumple';
+                    estadoIcono = '✅';
+                    valor = Number(param.peso) || 0;
+                    peso = param.peso;
+                }
 
                 // Sucursales: si no existe evaluación del mes, pintar como ✅ (default del modal)
                 // para todos los parámetros aplicables (no excluidos). No aplican reglas especiales.

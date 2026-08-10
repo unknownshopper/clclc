@@ -236,6 +236,9 @@ const definirParametros = [
       'usuma',
       'centro',
       'angeles'
+    ],
+    aplicaAFranquicias: [
+      'dosbocas'
     ]
   },
   {

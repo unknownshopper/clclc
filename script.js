@@ -2911,6 +2911,11 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                         const vPromo = (entidadId !== 'walmart-carrizal') ? (Number(p.peso) || 0) : 0;
                         return [p.id, vPromo];
                     }
+                    // Franquicias KPI2: si falta el parámetro, asumir que cumple (full points)
+                    // para mantener el esquema "todo cumple y se descuenta".
+                    if (tipo === 'franquicia') {
+                        return [p.id, Number(p.peso) || 0];
+                    }
                     if (p.soloKPI2) {
                         return [p.id, null];
                     }
