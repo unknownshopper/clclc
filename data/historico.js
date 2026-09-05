@@ -35,9 +35,16 @@ function calcularKPI2ParaEvaluacion(entidadId, tipo, evaluacionLocal) {
     const kpi2Utils = window.kpi2Utils || null;
     if (kpi2Utils && typeof kpi2Utils.calcularKPI2 === 'function') {
       const evBase = evaluacionLocal || null;
-      const evParaKPI2 = (evBase && evBase.modalidades && evBase.modalidades.kpi2)
+      const evParaKPI2Raw = (evBase && evBase.modalidades && evBase.modalidades.kpi2)
         ? evBase.modalidades.kpi2
         : (evBase && evBase._kpi2 ? evBase._kpi2 : evBase);
+
+      // Importante para histórico: si la evaluación no trae `mes`, kpi2Utils.calcularKPI2
+      // cae en `window.mesSeleccionado` y eso puede distorsionar meses pasados (p.ej. agosto)
+      // por reglas de vigencia (`vigenteDesde`).
+      const evParaKPI2 = (evParaKPI2Raw && typeof evParaKPI2Raw === 'object')
+        ? evParaKPI2Raw
+        : null;
       return kpi2Utils.calcularKPI2(entidadId, tipo, evParaKPI2);
     }
     return null;
@@ -60,7 +67,28 @@ function calcularKPI2GlobalMesConFiltros(mes) {
   let count = 0;
 
   sinCompetencia.forEach(ev => {
-    const kpi2 = calcularKPI2ParaEvaluacion(ev.entidadId, ev.tipo, ev.evaluacion);
+    // Pasar `mes` para que el cálculo respete vigencia real del mes agregado
+    const base = ev && ev.evaluacion ? ev.evaluacion : null;
+    let evConMes = base;
+    try {
+      const evBase = base || null;
+      const evParaKPI2Raw = (evBase && evBase.modalidades && evBase.modalidades.kpi2)
+        ? evBase.modalidades.kpi2
+        : (evBase && evBase._kpi2 ? evBase._kpi2 : evBase);
+      if (evParaKPI2Raw && typeof evParaKPI2Raw === 'object' && !evParaKPI2Raw.mes && mes) {
+        // Clonar sólo para inyectar mes sin mutar la evaluación en memoria
+        const clonado = { ...evParaKPI2Raw, mes };
+        if (evBase && evBase.modalidades && evBase.modalidades.kpi2) {
+          evConMes = { ...evBase, modalidades: { ...evBase.modalidades, kpi2: clonado } };
+        } else if (evBase && evBase._kpi2) {
+          evConMes = { ...evBase, _kpi2: clonado };
+        } else {
+          evConMes = clonado;
+        }
+      }
+    } catch (e) {}
+
+    const kpi2 = calcularKPI2ParaEvaluacion(ev.entidadId, ev.tipo, evConMes);
     if (typeof kpi2 === 'number') {
       sum += (kpi2 * 100);
       count += 1;
