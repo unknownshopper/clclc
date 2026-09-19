@@ -1147,6 +1147,9 @@ function cargarParametrosEvaluacion(entidadValue) {
         `;
         
         categoria.forEach(param => {
+            const pesoMostrar = (modalidadForm === 'kpi2' && window.kpi2Utils && typeof window.kpi2Utils.getPesoKPI2 === 'function')
+                ? window.kpi2Utils.getPesoKPI2(param.id, param.peso, window.kpi2Utils.getModeloEntidad(entidadId, tipo))
+                : param.peso;
             html += `
                 <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f9f9f9; border-radius: 4px;">
                     <div style="flex: 1; display: flex; align-items: center;">
@@ -1164,7 +1167,7 @@ function cargarParametrosEvaluacion(entidadValue) {
                                data-peso="${param.peso}"
                                style="width: 18px; height: 18px; margin-right: 8px; cursor: pointer;"
                                onchange="actualizarTotalPuntos(); actualizarObservacionParametro('${param.id}')">
-                        <span style="font-size: 14px; color: #0077cc; font-weight: bold;">${param.peso} pts</span>
+                        <span style="font-size: 14px; color: #0077cc; font-weight: bold;">${pesoMostrar} pts</span>
                     </div>
                 </div>
                 ${(modalidadForm === 'kpi2') ? `
@@ -1255,13 +1258,29 @@ function getCategoriaName(categoriaId) {
 function actualizarTotalPuntos() {
     const totalPuntosDiv = document.getElementById('total-puntos-evaluacion');
     const checkboxes = document.querySelectorAll('#parametros-evaluacion-container input[type="checkbox"]');
-    
+
     let totalObtenido = 0;
     let totalMaximo = 0;
-    
+
+    // En captura KPI2 el total se muestra en la escala KPI2 (ponderaciones por modelo),
+    // igual que el KPI que se calculará al guardar.
+    const esKPI2 = !!(window.modoEdicion && String(window.modoEdicion.modalidad).toLowerCase() === 'kpi2')
+        && window.kpi2Utils && typeof window.kpi2Utils.getPesoKPI2 === 'function';
+    let modeloEntidad = null;
+    if (esKPI2) {
+        const entidadValue = (document.getElementById('select-entidad-evaluacion') || {}).value || '';
+        const di = entidadValue.indexOf('-');
+        if (di > 0 && typeof window.kpi2Utils.getModeloEntidad === 'function') {
+            modeloEntidad = window.kpi2Utils.getModeloEntidad(entidadValue.substring(di + 1), entidadValue.substring(0, di));
+        }
+    }
+
     checkboxes.forEach(checkbox => {
         const pesoRaw = Number(checkbox.getAttribute('data-peso'));
-        const peso = Number.isFinite(pesoRaw) ? pesoRaw : 0;
+        const pesoBase = Number.isFinite(pesoRaw) ? pesoRaw : 0;
+        const peso = esKPI2
+            ? window.kpi2Utils.getPesoKPI2(checkbox.id.replace('param-', ''), pesoBase, modeloEntidad)
+            : pesoBase;
         if (checkbox.checked) {
             totalObtenido += peso;
         }
@@ -1356,7 +1375,22 @@ async function guardarEvaluacion(entidadValue) {
         estadoPublicacion: 'borrador',
         fechaPublicacion: null
     };
-    
+
+    // Para evaluaciones KPI2, los totales y el KPI se guardan en escala KPI2
+    // (ponderaciones por modelo) para que lo almacenado cuadre con lo mostrado.
+    if (modalidadEdicion === 'kpi2' && window.kpi2Utils && typeof window.kpi2Utils.calcularDetalleKPI2 === 'function') {
+        const detalleKPI2 = window.kpi2Utils.calcularDetalleKPI2(entidadId, tipo, {
+            mes: window.mesSeleccionado,
+            parametros: evaluacion
+        });
+        if (detalleKPI2 && typeof detalleKPI2.kpi === 'number') {
+            evaluacionData.totalObtenido = detalleKPI2.totalObt;
+            evaluacionData.totalMaximo = detalleKPI2.totalMax;
+            evaluacionData.kpi = detalleKPI2.kpi;
+            evaluacionData.estado = (detalleKPI2.kpi * 100) >= 95 ? 'Excelente' : (detalleKPI2.kpi * 100) >= 90 ? 'Bueno' : 'Necesita mejora';
+        }
+    }
+
     try {
         // Verificar si estamos en modo edición
         const esEdicion = window.modoEdicion && window.modoEdicion.activo;
@@ -1400,9 +1434,9 @@ async function guardarEvaluacion(entidadValue) {
             modalidad: modalidadEdicion,
             parametros: evaluacion,
             ...(modalidadEdicion === 'kpi2' ? { observaciones } : {}),
-            totalObtenido: totalObtenido,
-            totalMaximo: totalMaximo,
-            kpi: kpi,
+            totalObtenido: evaluacionData.totalObtenido,
+            totalMaximo: evaluacionData.totalMaximo,
+            kpi: evaluacionData.kpi,
             estado: evaluacionData.estado,
             estadoPublicacion: evaluacionData.estadoPublicacion,
             fechaCreacion: new Date().toISOString(),
@@ -2455,27 +2489,41 @@ function generarResumenEstadistico() {
     // Recopilar todos los KPIs
     let kpis = [];
     
+    const kpiDeEvaluacion = (evaluacion, entidadId, tipo) => {
+        if (!evaluacion) return null;
+        const evKpi2 = (evaluacion.modalidades && evaluacion.modalidades.kpi2)
+            ? evaluacion.modalidades.kpi2
+            : (evaluacion._kpi2 || null);
+        if (evKpi2 && window.kpi2Utils && typeof window.kpi2Utils.calcularKPI2 === 'function') {
+            const k2 = window.kpi2Utils.calcularKPI2(entidadId, tipo, evKpi2);
+            if (typeof k2 === 'number') return Math.round(k2 * 100);
+        }
+        if (evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
+            return evaluacion.totalMaximo > 0
+                ? Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100) : 0;
+        }
+        return null;
+    };
+
     // Sucursales
     if (window.sucursales) {
         window.sucursales.filter(s => s.activa).forEach(sucursal => {
-            const evaluacion = window.evaluaciones?.sucursales?.[sucursal.id]?.[window.mesSeleccionado];
-            if (evaluacion && evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
-                const kpi = evaluacion.totalMaximo > 0 ? 
-                    Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100) : 0;
-                kpis.push(kpi);
-            }
+            const kpi = kpiDeEvaluacion(
+                window.evaluaciones?.sucursales?.[sucursal.id]?.[window.mesSeleccionado],
+                sucursal.id, 'sucursal'
+            );
+            if (kpi !== null) kpis.push(kpi);
         });
     }
-    
+
     // Franquicias
     if (window.franquicias) {
         window.franquicias.filter(f => f.activa).forEach(franquicia => {
-            const evaluacion = window.evaluaciones?.franquicias?.[franquicia.id]?.[window.mesSeleccionado];
-            if (evaluacion && evaluacion.totalObtenido !== undefined && evaluacion.totalMaximo !== undefined) {
-                const kpi = evaluacion.totalMaximo > 0 ? 
-                    Math.round((evaluacion.totalObtenido / evaluacion.totalMaximo) * 100) : 0;
-                kpis.push(kpi);
-            }
+            const kpi = kpiDeEvaluacion(
+                window.evaluaciones?.franquicias?.[franquicia.id]?.[window.mesSeleccionado],
+                franquicia.id, 'franquicia'
+            );
+            if (kpi !== null) kpis.push(kpi);
         });
     }
     
@@ -2864,6 +2912,14 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
     const kpi2Calculado = (mod === 'kpi2' && kpi2Utils && typeof kpi2Utils.calcularKPI2 === 'function')
         ? kpi2Utils.calcularKPI2(entidadId, tipo, evalParaKPI2)
         : null;
+    const modeloEntidad = (kpi2Utils && typeof kpi2Utils.getModeloEntidad === 'function')
+        ? kpi2Utils.getModeloEntidad(entidadId, tipo)
+        : null;
+    const detalleKPI2 = (mod === 'kpi2' && kpi2Utils && typeof kpi2Utils.calcularDetalleKPI2 === 'function')
+        ? kpi2Utils.calcularDetalleKPI2(entidadId, tipo, evalParaKPI2)
+        : null;
+    const totalObtenidoMostrar = detalleKPI2 ? detalleKPI2.totalObt : totalObtenido;
+    const totalMaximoMostrar = detalleKPI2 ? detalleKPI2.totalMax : totalMaximo;
 
     // Use the stored KPI value for consistency with the table
     const kpiPorcentaje = (mod === 'kpi2' && typeof kpi2Calculado === 'number')
@@ -2897,11 +2953,20 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                 return !!mes && mes >= p.vigenteDesde;
             });
 
-            // Filtrar por aplicación a entidad
-            if (tipo === 'sucursal') {
-                parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaASucursales && p.aplicaASucursales.includes(entidadId)));
-            } else if (tipo === 'franquicia') {
-                parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaAFranquicias && p.aplicaAFranquicias.includes(entidadId)));
+            // Filtrar por aplicación a entidad (misma regla que la Matriz y calcularKPI2)
+            if (tipo === 'sucursal' || tipo === 'franquicia') {
+                parametrosAplicables = parametrosAplicables.filter(p => parametroAplicaAEntidad(p, tipo, entidadId));
+            }
+
+            // Los parámetros excluidos (celdas negras de la Matriz) no son auditables
+            // para esta entidad: no deben listarse en el detalle.
+            const excluidosIds = (typeof obtenerIdsParametrosExcluidos === 'function')
+                ? obtenerIdsParametrosExcluidos(entidadId, tipo)
+                : [];
+            if (excluidosIds.length) {
+                parametrosAplicables = parametrosAplicables.filter(p =>
+                    !excluidosIds.includes(String(p.id || '').toLowerCase().replace(/[-_]/g, ''))
+                );
             }
 
             return parametrosAplicables.map(p => {
@@ -2920,7 +2985,7 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                         return [p.id, null];
                     }
                 }
-                const v = existe ? evaluacionFinal.parametros[p.id] : 0;
+                const v = existe ? evaluacionFinal.parametros[p.id] : null;
                 return [p.id, v];
             });
         } catch (e) {
@@ -2929,6 +2994,8 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
     };
 
     const parametrosParaMostrar = obtenerParametrosParaMostrar();
+    const totalFilasParametros = parametrosParaMostrar.length;
+    const totalParametrosContados = parametrosParaMostrar.filter(([, v]) => v !== null && v !== undefined).length;
     
     let detallesHtml = `
         <div class="modal" id="modalVerEvaluacion" style="display: block; z-index: 10000;">
@@ -2950,16 +3017,21 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                             <h3 style="color: #555; margin-bottom: 15px;">Resultados</h3>
                             <p><strong>KPI:</strong> <span style="color: ${kpiPorcentaje >= 95 ? '#28a745' : kpiPorcentaje >= 90 ? '#ffc107' : '#dc3545'}; font-weight: bold; font-size: 18px;">${kpiPorcentaje.toFixed(1)}%</span></p>
                             <p><strong>Estado:</strong> <span style="color: ${kpiPorcentaje >= 95 ? '#28a745' : kpiPorcentaje >= 90 ? '#ffc107' : '#dc3545'}; font-weight: bold;">${estado}</span></p>
-                            <p><strong>Total Obtenido:</strong> ${evaluacionFinal.totalObtenido || 0}</p>
-                            <p><strong>Total Máximo:</strong> ${evaluacionFinal.totalMaximo || 0}</p>
+                            <p><strong>Total Obtenido:</strong> ${totalObtenidoMostrar}</p>
+                            <p><strong>Total Máximo:</strong> ${totalMaximoMostrar}</p>
+                            <p><strong>Parámetros contados:</strong> ${totalParametrosContados}</p>
                         </div>
                     </div>
                     
-                    <h3 style="color: #555; margin-bottom: 15px;">Parámetros Evaluados</h3>
+                    <h3 style="color: #555; margin-bottom: 8px;">Parámetros Evaluados</h3>
+                    <p style="margin: 0 0 12px 0; font-size: 13px; color: #6c757d;">
+                        ${totalParametrosContados} de ${totalFilasParametros} parámetros cuentan en el KPI de esta entidad${totalParametrosContados !== totalFilasParametros ? ' (los marcados "— No capturado" no aplican o no fueron capturados)' : ''}
+                    </p>
                     <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px;">
                         <table style="width: 100%; border-collapse: collapse;">
                             <thead>
                                 <tr style="background: #f8f9fa;">
+                                    <th style="padding: 12px; text-align: center; border-bottom: 1px solid #eee; position: sticky; top: 0; background: #f8f9fa; z-index: 2; box-shadow: 0 1px 0 rgba(0,0,0,0.08); width: 40px;">#</th>
                                     <th style="padding: 12px; text-align: left; border-bottom: 1px solid #eee; position: sticky; top: 0; background: #f8f9fa; z-index: 2; box-shadow: 0 1px 0 rgba(0,0,0,0.08);">Parámetro</th>
                                     <th style="padding: 12px; text-align: center; border-bottom: 1px solid #eee; position: sticky; top: 0; background: #f8f9fa; z-index: 2; box-shadow: 0 1px 0 rgba(0,0,0,0.08);">Estado</th>
                                     <th style="padding: 12px; text-align: center; border-bottom: 1px solid #eee; position: sticky; top: 0; background: #f8f9fa; z-index: 2; box-shadow: 0 1px 0 rgba(0,0,0,0.08);">Peso</th>
@@ -2967,10 +3039,12 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${parametrosParaMostrar.map(([paramId, valor]) => {
+                                ${parametrosParaMostrar.map(([paramId, valor], idx) => {
                                     const param = window.parametros?.find(p => p.id === paramId);
                                     const nombreParam = param ? param.nombre : paramId;
-                                    const peso = param ? param.peso : valor;
+                                    const peso = (mod === 'kpi2' && kpi2Utils && typeof kpi2Utils.getPesoKPI2 === 'function')
+                                        ? kpi2Utils.getPesoKPI2(paramId, param ? param.peso : valor, modeloEntidad)
+                                        : (param ? param.peso : valor);
                                     const noCapturado = (valor === null || valor === undefined);
                                     const cumple = !noCapturado && (Number(valor) > 0);
                                     const obs = (mod === 'kpi2' && evaluacionFinal && evaluacionFinal.observaciones && typeof evaluacionFinal.observaciones === 'object')
@@ -2979,6 +3053,7 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                                     
                                     return `
                                         <tr style="border-bottom: 1px solid #f0f0f0;">
+                                            <td style="padding: 10px; text-align: center; color: #6c757d; font-weight: bold;">${idx + 1}</td>
                                             <td style="padding: 10px;">${nombreParam}</td>
                                             <td style="padding: 10px; text-align: center;">
                                                 ${noCapturado
@@ -3418,17 +3493,24 @@ function obtenerEvaluacionesDelMes(mes) {
             if (evaluacion) {
                 const sucursal = window.sucursales?.find(s => s.id === sucursalId);
                 if (sucursal) {
-                    // Calcular KPI directamente de los totales almacenados
+                    // KPI2 es la fuente oficial cuando existe la modalidad; si no, cálculo legacy
                     let kpiPorcentaje = null;
                     try {
                         const evBase = evaluacion || null;
-                        const evParaKPI = (evBase && evBase.modalidades && evBase.modalidades.kpi)
-                            ? evBase.modalidades.kpi
-                            : (evBase && evBase.modalidades && evBase.modalidades.kpi2)
-                                ? evBase.modalidades.kpi2
-                                : (evBase && evBase._kpi2 ? evBase._kpi2 : evBase);
-                        if (typeof calcularPorcentajeEvaluacion === 'function' && evParaKPI) {
-                            kpiPorcentaje = calcularPorcentajeEvaluacion(sucursalId, 'sucursal', evParaKPI);
+                        const evKpi2 = (evBase && evBase.modalidades && evBase.modalidades.kpi2)
+                            ? evBase.modalidades.kpi2
+                            : (evBase && evBase._kpi2 ? evBase._kpi2 : null);
+                        if (evKpi2 && window.kpi2Utils && typeof window.kpi2Utils.calcularKPI2 === 'function') {
+                            const k2 = window.kpi2Utils.calcularKPI2(sucursalId, 'sucursal', evKpi2);
+                            if (typeof k2 === 'number') kpiPorcentaje = Math.round(k2 * 100);
+                        }
+                        if (typeof kpiPorcentaje !== 'number' || !Number.isFinite(kpiPorcentaje)) {
+                            const evParaKPI = (evBase && evBase.modalidades && evBase.modalidades.kpi)
+                                ? evBase.modalidades.kpi
+                                : (evKpi2 || evBase);
+                            if (typeof calcularPorcentajeEvaluacion === 'function' && evParaKPI) {
+                                kpiPorcentaje = calcularPorcentajeEvaluacion(sucursalId, 'sucursal', evParaKPI);
+                            }
                         }
                     } catch (e) {
                         kpiPorcentaje = null;
@@ -3471,17 +3553,24 @@ function obtenerEvaluacionesDelMes(mes) {
                 if (franquicia || true) { // Procesar todas las evaluaciones
                     const nombreFranquicia = franquicia ? franquicia.nombre : franquiciaId;
                     
-                    // Calcular KPI directamente de los totales almacenados
+                    // KPI2 es la fuente oficial cuando existe la modalidad; si no, cálculo legacy
                     let kpiPorcentaje = null;
                     try {
                         const evBase = evaluacion || null;
-                        const evParaKPI = (evBase && evBase.modalidades && evBase.modalidades.kpi)
-                            ? evBase.modalidades.kpi
-                            : (evBase && evBase.modalidades && evBase.modalidades.kpi2)
-                                ? evBase.modalidades.kpi2
-                                : (evBase && evBase._kpi2 ? evBase._kpi2 : evBase);
-                        if (typeof calcularPorcentajeEvaluacion === 'function' && evParaKPI) {
-                            kpiPorcentaje = calcularPorcentajeEvaluacion(franquiciaId, 'franquicia', evParaKPI);
+                        const evKpi2 = (evBase && evBase.modalidades && evBase.modalidades.kpi2)
+                            ? evBase.modalidades.kpi2
+                            : (evBase && evBase._kpi2 ? evBase._kpi2 : null);
+                        if (evKpi2 && window.kpi2Utils && typeof window.kpi2Utils.calcularKPI2 === 'function') {
+                            const k2 = window.kpi2Utils.calcularKPI2(franquiciaId, 'franquicia', evKpi2);
+                            if (typeof k2 === 'number') kpiPorcentaje = Math.round(k2 * 100);
+                        }
+                        if (typeof kpiPorcentaje !== 'number' || !Number.isFinite(kpiPorcentaje)) {
+                            const evParaKPI = (evBase && evBase.modalidades && evBase.modalidades.kpi)
+                                ? evBase.modalidades.kpi
+                                : (evKpi2 || evBase);
+                            if (typeof calcularPorcentajeEvaluacion === 'function' && evParaKPI) {
+                                kpiPorcentaje = calcularPorcentajeEvaluacion(franquiciaId, 'franquicia', evParaKPI);
+                            }
                         }
                     } catch (e) {
                         kpiPorcentaje = null;

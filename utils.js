@@ -56,6 +56,41 @@ function formatearMesLegible(mesString) {
     return `${meses[parseInt(mes) - 1]} ${año}`;
 }
 
+// Regla única de aplicabilidad de parámetros (misma que usa la Matriz y el
+// formulario de captura): un parámetro aplica si tiene aplicaATodas, si la
+// entidad está en su lista específica, o si no tiene listas (back-compat).
+// Lo que "no aplica" se controla exclusivamente vía parametros_excluidos.js.
+function parametroAplicaAEntidad(param, tipo, entidadId) {
+    if (!param) return false;
+    if (param.aplicaATodas) return true;
+    const hasSuc = Array.isArray(param.aplicaASucursales);
+    const hasFra = Array.isArray(param.aplicaAFranquicias);
+    if (!hasSuc && !hasFra) return true;
+    if (tipo === 'sucursal') return !hasSuc || param.aplicaASucursales.includes(entidadId);
+    if (tipo === 'franquicia') return !hasFra || param.aplicaAFranquicias.includes(entidadId);
+    return true;
+}
+window.parametroAplicaAEntidad = parametroAplicaAEntidad;
+
+// IDs normalizados de los parámetros excluidos para una entidad
+// (las listas en parametros_excluidos.js vienen por nombre).
+function obtenerIdsParametrosExcluidos(entidadId, tipo) {
+    const nombres = (tipo === 'sucursal' && window.parametrosExcluidosPorSucursal && window.parametrosExcluidosPorSucursal[entidadId])
+        ? window.parametrosExcluidosPorSucursal[entidadId]
+        : (tipo === 'franquicia' && window.parametrosExcluidosPorFranquicia && window.parametrosExcluidosPorFranquicia[entidadId])
+            ? window.parametrosExcluidosPorFranquicia[entidadId]
+            : [];
+    return nombres
+        .map(nombre => {
+            const param = (window.parametros || []).find(p =>
+                p.nombre.trim().toLowerCase() === String(nombre).trim().toLowerCase()
+            );
+            return param ? param.id.toLowerCase().replace(/[-_]/g, '') : null;
+        })
+        .filter(id => id !== null);
+}
+window.obtenerIdsParametrosExcluidos = obtenerIdsParametrosExcluidos;
+
 // Función para calcular porcentaje de evaluación
 function calcularPorcentajeEvaluacion(entidadId, tipo, evaluacion) {
     if (!evaluacion || !window.parametros) return 0;
@@ -63,37 +98,16 @@ function calcularPorcentajeEvaluacion(entidadId, tipo, evaluacion) {
     let parametrosAplicables = window.parametros;
     
     // Obtener parámetros excluidos usando la misma lógica que en matriz.js
-    let parametrosExcluidos = [];
-    if (tipo === 'sucursal' && window.parametrosExcluidosPorSucursal && window.parametrosExcluidosPorSucursal[entidadId]) {
-        parametrosExcluidos = window.parametrosExcluidosPorSucursal[entidadId]
-            .map(nombre => {
-                const param = window.parametros.find(p => 
-                    p.nombre.trim().toLowerCase() === nombre.trim().toLowerCase()
-                );
-                return param ? param.id.toLowerCase().replace(/[-_]/g, '') : null;
-            })
-            .filter(id => id !== null);
-    } else if (tipo === 'franquicia' && window.parametrosExcluidosPorFranquicia && window.parametrosExcluidosPorFranquicia[entidadId]) {
-        parametrosExcluidos = window.parametrosExcluidosPorFranquicia[entidadId]
-            .map(nombre => {
-                const param = window.parametros.find(p => 
-                    p.nombre.trim().toLowerCase() === nombre.trim().toLowerCase()
-                );
-                return param ? param.id.toLowerCase().replace(/[-_]/g, '') : null;
-            })
-            .filter(id => id !== null);
-    }
+    const parametrosExcluidos = obtenerIdsParametrosExcluidos(entidadId, tipo);
     
     // Filtrar parámetros excluidos
     parametrosAplicables = parametrosAplicables.filter(param => 
         !parametrosExcluidos.includes(param.id.toLowerCase().replace(/[-_]/g, ''))
     );
     
-    // Filtrar parámetros que aplican a la entidad
-    if (tipo === 'sucursal') {
-        parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaASucursales && p.aplicaASucursales.includes(entidadId)));
-    } else if (tipo === 'franquicia') {
-        parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaAFranquicias && p.aplicaAFranquicias.includes(entidadId)));
+    // Filtrar parámetros que aplican a la entidad (misma regla que la Matriz)
+    if (tipo === 'sucursal' || tipo === 'franquicia') {
+        parametrosAplicables = parametrosAplicables.filter(p => parametroAplicaAEntidad(p, tipo, entidadId));
     }
     
     // Calcular puntaje máximo posible.
@@ -343,7 +357,7 @@ window.kpi2Utils = (function() {
         return Number(pesoActual) || 0;
     }
 
-    function calcularKPI2(entidadId, tipo, evaluacionLocal) {
+    function calcularDetalleKPI2(entidadId, tipo, evaluacionLocal) {
         try {
             if (!evaluacionLocal || !evaluacionLocal.parametros || !Array.isArray(window.parametros)) return null;
 
@@ -351,26 +365,7 @@ window.kpi2Utils = (function() {
 
             const modelo = getModeloEntidad(entidadId, tipo);
 
-            let parametrosExcluidos = [];
-            if (tipo === 'sucursal' && window.parametrosExcluidosPorSucursal && window.parametrosExcluidosPorSucursal[entidadId]) {
-                parametrosExcluidos = window.parametrosExcluidosPorSucursal[entidadId]
-                    .map(nombre => {
-                        const param = window.parametros.find(p =>
-                            p.nombre.trim().toLowerCase() === nombre.trim().toLowerCase()
-                        );
-                        return param ? param.id.toLowerCase().replace(/[-_]/g, '') : null;
-                    })
-                    .filter(id => id !== null);
-            } else if (tipo === 'franquicia' && window.parametrosExcluidosPorFranquicia && window.parametrosExcluidosPorFranquicia[entidadId]) {
-                parametrosExcluidos = window.parametrosExcluidosPorFranquicia[entidadId]
-                    .map(nombre => {
-                        const param = window.parametros.find(p =>
-                            p.nombre.trim().toLowerCase() === nombre.trim().toLowerCase()
-                        );
-                        return param ? param.id.toLowerCase().replace(/[-_]/g, '') : null;
-                    })
-                    .filter(id => id !== null);
-            }
+            const parametrosExcluidos = obtenerIdsParametrosExcluidos(entidadId, tipo);
 
             let parametrosAplicables = window.parametros.filter(param =>
                 !parametrosExcluidos.includes(param.id.toLowerCase().replace(/[-_]/g, ''))
@@ -384,22 +379,22 @@ window.kpi2Utils = (function() {
                 });
             }
 
-            if (tipo === 'sucursal') {
-                parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaASucursales && p.aplicaASucursales.includes(entidadId)));
-            } else if (tipo === 'franquicia') {
-                parametrosAplicables = parametrosAplicables.filter(p => p.aplicaATodas || (p.aplicaAFranquicias && p.aplicaAFranquicias.includes(entidadId)));
+            // Misma regla de aplicabilidad que la Matriz: lo que no está excluido
+            // por nombre en parametros_excluidos.js cuenta en el KPI2.
+            if (tipo === 'sucursal' || tipo === 'franquicia') {
+                parametrosAplicables = parametrosAplicables.filter(p => parametroAplicaAEntidad(p, tipo, entidadId));
             }
 
             let totalMax = 0;
             let totalObt = 0;
             parametrosAplicables.forEach(param => {
-                // Si es un parámetro soloKPI2 (p.ej. existencia) pero aún no existe en la evaluación,
-                // no debe penalizar: se omite del cálculo.
+                // "No capturado" (undefined) no penaliza ni infla el máximo: se omite del cálculo,
+                // igual que en la Matriz, topDrivers y calcularPorcentajeEvaluacion.
                 const valorExiste = !!(evaluacionLocal && evaluacionLocal.parametros && evaluacionLocal.parametros[param.id] !== undefined);
-                if (param?.soloKPI2 && !valorExiste) {
+                if (!valorExiste) {
                     // Regla de negocio: se asume que "Menciona promociones" cumple por default en sucursales,
                     // excepto Walmart Carrizal (única que falló).
-                    if (param.id === 'mencion_promociones' && tipo === 'sucursal') {
+                    if (param?.soloKPI2 && param.id === 'mencion_promociones' && tipo === 'sucursal') {
                         // continuar: se contará abajo como ratio=1 (default) o ratio=0 (Carrizal)
                     } else {
                         return;
@@ -423,12 +418,17 @@ window.kpi2Utils = (function() {
             });
 
             if (totalMax <= 0) return null;
-            return totalObt / totalMax;
+            return { totalObt, totalMax, kpi: totalObt / totalMax };
         } catch (e) {
             console.warn('No se pudo calcular KPI2', e);
             return null;
         }
 }
+
+    function calcularKPI2(entidadId, tipo, evaluacionLocal) {
+        const detalle = calcularDetalleKPI2(entidadId, tipo, evaluacionLocal);
+        return detalle ? detalle.kpi : null;
+    }
 
 return {
     MES_KPI2_DESDE,
@@ -437,6 +437,7 @@ return {
     getModeloEntidad,
     getPesoKPI2,
     PONDERA_IA_PESOS_POR_MODELO,
-    calcularKPI2
+    calcularKPI2,
+    calcularDetalleKPI2
 };
 })();

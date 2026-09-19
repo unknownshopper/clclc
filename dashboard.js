@@ -363,8 +363,15 @@ function generarCSVReporte(items, mes) {
     items.forEach(e => {
         const ev = e.evaluacion || {};
         const params = ev.parametros || {};
-        const totalObtenido = ev.totalObtenido ?? Math.round((e.kpi || 0) * (ev.totalMaximo || 0));
-        const totalMaximo = ev.totalMaximo ?? 0;
+        const evKpi2 = (ev.modalidades && ev.modalidades.kpi2) ? ev.modalidades.kpi2 : (ev._kpi2 || null);
+        const detK2 = (evKpi2 && window.kpi2Utils && typeof window.kpi2Utils.calcularDetalleKPI2 === 'function')
+            ? window.kpi2Utils.calcularDetalleKPI2(e.entidadId, e.tipo, evKpi2)
+            : null;
+        const modelo = (window.kpi2Utils && typeof window.kpi2Utils.getModeloEntidad === 'function')
+            ? window.kpi2Utils.getModeloEntidad(e.entidadId, e.tipo)
+            : null;
+        const totalObtenido = detK2 ? detK2.totalObt : (ev.totalObtenido ?? Math.round((e.kpi || 0) * (ev.totalMaximo || 0)));
+        const totalMaximo = detK2 ? detK2.totalMax : (ev.totalMaximo ?? 0);
         const kpiPct = ((e.kpi || 0) * 100).toFixed(1);
 
         // Identificar parámetros fallados (valor 0)
@@ -372,7 +379,12 @@ function generarCSVReporte(items, mes) {
         const nombresFallados = idsFallados.map(pid => mapaParametros[pid]?.nombre || pid);
         const detalleFallados = idsFallados.map(pid => {
             const p = mapaParametros[pid];
-            if (p) return `${p.nombre} [${p.peso} pts]`;
+            if (p) {
+                const pesoMostrar = (window.kpi2Utils && typeof window.kpi2Utils.getPesoKPI2 === 'function')
+                    ? window.kpi2Utils.getPesoKPI2(p.id, p.peso, modelo)
+                    : p.peso;
+                return `${p.nombre} [${pesoMostrar} pts]`;
+            }
             return pid;
         });
 
@@ -484,15 +496,28 @@ async function descargarReporteDashboardXLSX() {
         entidades.forEach(e => {
             const ev = e.evaluacion || {};
             const params = ev.parametros || {};
-            const totalObtenido = ev.totalObtenido ?? Math.round((e.kpi || 0) * (ev.totalMaximo || 0));
-            const totalMaximo = ev.totalMaximo ?? 0;
+            const evKpi2 = (ev.modalidades && ev.modalidades.kpi2) ? ev.modalidades.kpi2 : (ev._kpi2 || null);
+            const detK2 = (evKpi2 && window.kpi2Utils && typeof window.kpi2Utils.calcularDetalleKPI2 === 'function')
+                ? window.kpi2Utils.calcularDetalleKPI2(e.entidadId, e.tipo, evKpi2)
+                : null;
+            const modelo = (window.kpi2Utils && typeof window.kpi2Utils.getModeloEntidad === 'function')
+                ? window.kpi2Utils.getModeloEntidad(e.entidadId, e.tipo)
+                : null;
+            const totalObtenido = detK2 ? detK2.totalObt : (ev.totalObtenido ?? Math.round((e.kpi || 0) * (ev.totalMaximo || 0)));
+            const totalMaximo = detK2 ? detK2.totalMax : (ev.totalMaximo ?? 0);
             const kpiPct = ((e.kpi || 0) * 100).toFixed(1);
 
             const idsFallados = Object.keys(params).filter(pid => (params[pid] || 0) === 0);
             const nombresFallados = idsFallados.map(pid => mapaParametros[pid]?.nombre || pid);
             const detalleFallados = idsFallados.map(pid => {
                 const p = mapaParametros[pid];
-                return p ? `${p.nombre} [${p.peso} pts]` : pid;
+                if (p) {
+                    const pesoMostrar = (window.kpi2Utils && typeof window.kpi2Utils.getPesoKPI2 === 'function')
+                        ? window.kpi2Utils.getPesoKPI2(p.id, p.peso, modelo)
+                        : p.peso;
+                    return `${p.nombre} [${pesoMostrar} pts]`;
+                }
+                return pid;
             });
 
             ws.getRow(r).values = [
