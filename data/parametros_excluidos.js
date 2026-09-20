@@ -19,14 +19,12 @@ window.parametrosExcluidosPorSucursal = {
     ],
     "centro": [
       "Jardineras y macetas",
-      "Música y volumen",
       "Estado de botes de basura",
       "Tiempo en fila"
     ],
     "crystal": [
       "Jardineras y macetas",
       "Puertas y vidrios",
-      "Música y volumen",
       "Estado de baños",
       "Tiempo en fila"
     ],
@@ -132,7 +130,6 @@ window.parametrosExcluidosPorSucursal = {
     ],
     "usuma": [
       "Jardineras y macetas",
-      "Música y volumen",
       "Estado de botes de basura",
       "Tiempo en fila"
     ],

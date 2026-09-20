@@ -235,7 +235,8 @@ const definirParametros = [
       'deportiva',
       'usuma',
       'centro',
-      'angeles'
+      'angeles',
+      'americas'
     ],
     aplicaAFranquicias: [
       'dosbocas'

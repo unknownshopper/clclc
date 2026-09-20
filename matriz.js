@@ -1,10 +1,10 @@
 // matriz.js - Módulo para renderizar la matriz de evaluación completa
-// Muestra todos los 32 parámetros con manejo de exclusiones
+// Muestra todos los parámetros del catálogo con manejo de exclusiones
 
 /**
  * Función principal para renderizar la matriz completa
  * Mantiene las columnas de Entidad, Tipo y KPI General
- * Muestra todos los 32 parámetros con exclusiones en negro
+ * Muestra todos los parámetros del catálogo con exclusiones en negro
  */
 function renderMatrizCompleta() {
     console.log('Renderizando matriz completa para mes:', window.mesSeleccionado);

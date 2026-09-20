@@ -2996,6 +2996,11 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
     const parametrosParaMostrar = obtenerParametrosParaMostrar();
     const totalFilasParametros = parametrosParaMostrar.length;
     const totalParametrosContados = parametrosParaMostrar.filter(([, v]) => v !== null && v !== undefined).length;
+    const catalogoVigente = (window.parametros || []).filter(p =>
+        !p.vigenteDesde || (window.mesSeleccionado && window.mesSeleccionado >= p.vigenteDesde)
+    ).length;
+    const noAplican = Math.max(0, catalogoVigente - totalFilasParametros);
+    const noCapturados = Math.max(0, totalFilasParametros - totalParametrosContados);
     
     let detallesHtml = `
         <div class="modal" id="modalVerEvaluacion" style="display: block; z-index: 10000;">
@@ -3019,13 +3024,13 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                             <p><strong>Estado:</strong> <span style="color: ${kpiPorcentaje >= 95 ? '#28a745' : kpiPorcentaje >= 90 ? '#ffc107' : '#dc3545'}; font-weight: bold;">${estado}</span></p>
                             <p><strong>Total Obtenido:</strong> ${totalObtenidoMostrar}</p>
                             <p><strong>Total Máximo:</strong> ${totalMaximoMostrar}</p>
-                            <p><strong>Parámetros contados:</strong> ${totalParametrosContados}</p>
+                            <p><strong>Parámetros contados:</strong> ${totalParametrosContados}/${catalogoVigente}</p>
                         </div>
                     </div>
                     
                     <h3 style="color: #555; margin-bottom: 8px;">Parámetros Evaluados</h3>
                     <p style="margin: 0 0 12px 0; font-size: 13px; color: #6c757d;">
-                        ${totalParametrosContados} de ${totalFilasParametros} parámetros cuentan en el KPI de esta entidad${totalParametrosContados !== totalFilasParametros ? ' (los marcados "— No capturado" no aplican o no fueron capturados)' : ''}
+                        ${totalParametrosContados} de ${catalogoVigente} parámetros del catálogo cuentan en el KPI de esta entidad${noAplican > 0 ? ` · ${noAplican} no aplican (excluidos)` : ''}${noCapturados > 0 ? ` · ${noCapturados} sin capturar (omitidos del KPI)` : ''}
                     </p>
                     <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px;">
                         <table style="width: 100%; border-collapse: collapse;">
