@@ -381,7 +381,7 @@ function generarCSVReporte(items, mes) {
             const p = mapaParametros[pid];
             if (p) {
                 const pesoMostrar = (window.kpi2Utils && typeof window.kpi2Utils.getPesoKPI2 === 'function')
-                    ? window.kpi2Utils.getPesoKPI2(p.id, p.peso, modelo)
+                    ? window.kpi2Utils.getPesoKPI2(p.id, p.peso, modelo, (evKpi2 && evKpi2.mes) || mes)
                     : p.peso;
                 return `${p.nombre} [${pesoMostrar} pts]`;
             }
@@ -513,7 +513,7 @@ async function descargarReporteDashboardXLSX() {
                 const p = mapaParametros[pid];
                 if (p) {
                     const pesoMostrar = (window.kpi2Utils && typeof window.kpi2Utils.getPesoKPI2 === 'function')
-                        ? window.kpi2Utils.getPesoKPI2(p.id, p.peso, modelo)
+                        ? window.kpi2Utils.getPesoKPI2(p.id, p.peso, modelo, (evKpi2 && evKpi2.mes) || window.mesSeleccionado)
                         : p.peso;
                     return `${p.nombre} [${pesoMostrar} pts]`;
                 }

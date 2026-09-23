@@ -1213,3 +1213,155 @@ footer a:focus {
 .matriz-wrapper .matriz-table td[style*="left:"] {
   box-shadow: 2px 0 4px rgba(0,0,0,0.06);
 }
+/* ===== Panel Ponderancias KPI2 (admin) ===== */
+.pond-wrap { max-width: 1400px; margin: 0 auto; }
+.pond-titulo { color: #0077cc; text-align: center; margin-bottom: 18px; }
+.pond-card {
+  background: #fff; border-radius: 12px; padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.08); margin-bottom: 22px;
+}
+.pond-card h3 { color: #2c3e50; margin: 0 0 10px 0; font-size: 1.15rem; }
+.pond-card h3 i { color: #0077cc; margin-right: 6px; }
+.pond-nota { color: #6c757d; font-size: 13px; margin: 4px 0 12px 0; }
+.pond-badge {
+  font-size: 12px; font-weight: 600; color: #155724;
+  background: #d4edda; border-radius: 12px; padding: 3px 10px; margin-left: 8px;
+}
+.pond-tag {
+  font-size: 10px; color: #6c757d; background: #e9ecef;
+  border-radius: 8px; padding: 1px 6px; vertical-align: middle;
+}
+.pond-acciones {
+  display: flex; flex-wrap: wrap; gap: 14px;
+  justify-content: space-between; align-items: flex-start;
+}
+.pond-acciones-btns { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.pond-acciones input[type="month"] { padding: 6px 8px; border: 1px solid #ced4da; border-radius: 6px; }
+.pond-acciones input[type="text"] { padding: 7px 10px; border: 1px solid #ced4da; border-radius: 6px; }
+
+/* Tarjetas de propuestas de ponderancia */
+.pond-propuestas {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px; margin-bottom: 10px;
+}
+.pond-propuesta {
+  background: linear-gradient(160deg, #ffffff 0%, #f0f7ff 100%);
+  border: 1px solid #cfe3f5; border-left: 5px solid #0077cc;
+  border-radius: 12px; padding: 18px 20px;
+  box-shadow: 0 3px 10px rgba(0,60,120,.08);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.pond-propuesta h4 {
+  margin: 0; color: #2d3e50; font-size: 1.05rem;
+}
+.pond-propuesta h4 i { color: #f0a500; margin-right: 6px; }
+.pond-propuesta p {
+  margin: 0; color: #5a6b7b; font-size: 13px; line-height: 1.45; flex: 1;
+}
+.pond-btn-propuesta {
+  align-self: flex-start;
+  background: linear-gradient(135deg, #0077cc 0%, #005fa3 100%);
+  color: #fff; border: none; border-radius: 9px;
+  padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0,119,204,.3);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.pond-btn-propuesta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(0,119,204,.4);
+}
+.pond-propuesta-vigente {
+  border-left-color: #28a745;
+  background: linear-gradient(160deg, #ffffff 0%, #f2fbf4 100%);
+  border-color: #cdeeda;
+}
+.pond-propuesta-vigente h4 i { color: #28a745; }
+.pond-btn-vigente {
+  background: linear-gradient(135deg, #28a745 0%, #1e8e3e 100%);
+  box-shadow: 0 3px 10px rgba(40,167,69,.3);
+}
+.pond-btn-vigente:hover { box-shadow: 0 5px 14px rgba(40,167,69,.4); }
+
+.pond-table-wrap { overflow-x: auto; max-height: 70vh; overflow-y: auto; }
+.pond-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.pond-table th, .pond-table td {
+  border: 1px solid #e3e6ea; padding: 6px 8px; text-align: center; white-space: nowrap;
+}
+.pond-table thead th {
+  background: #2d3e50; color: #fff; position: sticky; top: 0; z-index: 3;
+}
+.pond-table tfoot td { background: #f1f3f5; font-weight: 600; }
+.pond-cat td {
+  background: #eef4fb; color: #2d3e50; font-weight: 700; text-align: left;
+}
+.pond-base { color: #6c757d; }
+.pond-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #0077cc; color: #fff; font-size: 11px; margin-right: 6px;
+}
+.pond-table input[type="number"] {
+  width: 56px; padding: 4px; text-align: center;
+  border: 1px solid #ced4da; border-radius: 6px;
+}
+.pond-matriz td, .pond-matriz th { min-width: 44px; }
+.pond-matriz .pond-sticky {
+  position: sticky; left: 0; background: #fff; z-index: 2;
+  box-shadow: 2px 0 4px rgba(0,0,0,.06); min-width: 210px;
+}
+.pond-matriz thead .pond-sticky { background: #2d3e50; z-index: 4; }
+.pond-matriz tfoot .pond-sticky { background: #f1f3f5; }
+.pond-matriz .pond-cat .pond-sticky { background: #eef4fb; }
+.pond-vert {
+  display: inline-block; writing-mode: vertical-rl; transform: rotate(180deg);
+  max-height: 110px; font-size: 11px; font-weight: 600;
+}
+.pond-tot { font-size: 11px; color: #2d3e50; white-space: normal; min-width: 60px; }
+
+.pond-btn-simular {
+  background: linear-gradient(135deg, #6f42c1 0%, #5630a0 100%);
+  color: #fff; border: none; border-radius: 10px;
+  padding: 11px 24px; font-size: 14px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(111,66,193,.35);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.pond-btn-simular:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(111,66,193,.45);
+}
+
+/* Acciones finales del panel Ponderancias */
+.pond-guardar {
+  border: 2px solid #0077cc;
+  background: linear-gradient(180deg, #f4f9ff 0%, #ffffff 100%);
+}
+.pond-guardar-campos {
+  display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 16px;
+}
+.pond-campo {
+  display: flex; flex-direction: column; gap: 6px;
+  font-size: 13px; font-weight: 700; color: #2d3e50;
+}
+.pond-campo input {
+  padding: 9px 12px; border: 1px solid #b9c4d0; border-radius: 8px;
+  font-size: 14px; font-weight: 500; min-width: 200px;
+}
+.pond-guardar-btns { display: flex; flex-wrap: wrap; gap: 12px; }
+.pond-btn-guardar {
+  background: linear-gradient(135deg, #28a745 0%, #1e8e3e 100%);
+  color: #fff; border: none; border-radius: 10px;
+  padding: 13px 28px; font-size: 15px; font-weight: 800; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(40,167,69,.35);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.pond-btn-guardar:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(40,167,69,.45);
+}
+.pond-btn-guardar:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
+.pond-btn-descartar {
+  background: #fff; color: #6c757d; border: 2px solid #ced4da;
+  border-radius: 10px; padding: 13px 24px; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: border-color .12s ease, color .12s ease;
+}
+.pond-btn-descartar:hover { border-color: #dc3545; color: #dc3545; }

@@ -5,6 +5,9 @@ function cambiarVista(vista) {
         if (rol === 'franquicias' && vista === 'evaluaciones') {
             vista = 'franquicias';
         }
+        if (vista === 'ponderancias' && rol !== 'admin') {
+            vista = 'dashboard';
+        }
     } catch (e) {}
 
     // Actualizar botones de navegación
@@ -16,7 +19,7 @@ function cambiarVista(vista) {
     try {
         const mainEl = document.querySelector('main');
         if (mainEl) {
-            if (vista === 'matriz') {
+            if (vista === 'matriz' || vista === 'ponderancias') {
                 mainEl.classList.add('matriz-fullwidth');
             } else {
                 mainEl.classList.remove('matriz-fullwidth');
@@ -47,6 +50,11 @@ function cambiarVista(vista) {
     switch(vista) {
         case 'dashboard':
             renderDashboard();
+            break;
+        case 'ponderancias':
+            if (typeof renderPonderancias === 'function') {
+                renderPonderancias();
+            }
             break;
         case 'evaluaciones':
             renderEvaluaciones();
@@ -1063,29 +1071,20 @@ function cargarParametrosEvaluacion(entidadValue) {
     console.log('window.parametrosExcluidosPorSucursal existe:', !!window.parametrosExcluidosPorSucursal);
     console.log('window.parametrosExcluidosPorFranquicia existe:', !!window.parametrosExcluidosPorFranquicia);
     
-    if (window.parametrosExcluidosPorSucursal && tipo === 'sucursal' && window.parametrosExcluidosPorSucursal[entidadId]) {
-        const excluidos = window.parametrosExcluidosPorSucursal[entidadId];
-        console.log(`APLICANDO exclusiones para sucursal ${entidadId}:`, excluidos);
-        const parametrosAntesDelFiltro = parametrosAplicables.length;
-        parametrosAplicables = parametrosAplicables.filter(p => !excluidos.includes(p.nombre));
-        console.log(`Parámetros filtrados: ${parametrosAntesDelFiltro} -> ${parametrosAplicables.length}`);
-        console.log('Lista de parámetros después de exclusiones:', parametrosAplicables.map(p => p.nombre));
-    } else if (tipo === 'sucursal') {
-        console.log(`NO se encontraron exclusiones para sucursal ${entidadId}`);
-        console.log('Claves disponibles en parametrosExcluidosPorSucursal:', Object.keys(window.parametrosExcluidosPorSucursal || {}));
-    }
-    
-    if (window.parametrosExcluidosPorFranquicia && tipo === 'franquicia' && window.parametrosExcluidosPorFranquicia[entidadId]) {
-        const excluidos = window.parametrosExcluidosPorFranquicia[entidadId];
-        console.log(`APLICANDO exclusiones para franquicia ${entidadId}:`, excluidos);
-        const parametrosAntesDelFiltro = parametrosAplicables.length;
-        parametrosAplicables = parametrosAplicables.filter(p => !excluidos.includes(p.nombre));
-        console.log(`Parámetros filtrados: ${parametrosAntesDelFiltro} -> ${parametrosAplicables.length}`);
-        console.log('Lista de parámetros después de exclusiones:', parametrosAplicables.map(p => p.nombre));
-    } else if (tipo === 'franquicia') {
-        console.log(`NO se encontraron exclusiones para franquicia ${entidadId}`);
-        console.log('Claves disponibles en parametrosExcluidosPorFranquicia:', Object.keys(window.parametrosExcluidosPorFranquicia || {}));
-    }
+    // Regla única de aplicabilidad (compartida con Matriz y KPI2): aplica si no
+    // está excluido y pasa parametroAplicaAEntidad. Con override de Firestore
+    // (configuracion/ponderanciasKPI2) la lista de excluidos ES la aplicabilidad.
+    const excluidosIds = (typeof obtenerIdsParametrosExcluidos === 'function')
+        ? obtenerIdsParametrosExcluidos(entidadId, tipo)
+        : [];
+    const parametrosAntesDelFiltro = parametrosAplicables.length;
+    parametrosAplicables = parametrosAplicables.filter(p => {
+        const idN = String(p.id || '').toLowerCase().replace(/[-_]/g, '');
+        if (excluidosIds.includes(idN)) return false;
+        if (typeof parametroAplicaAEntidad === 'function' && !parametroAplicaAEntidad(p, tipo, entidadId)) return false;
+        return true;
+    });
+    console.log(`Parámetros filtrados para ${tipo} ${entidadId}: ${parametrosAntesDelFiltro} -> ${parametrosAplicables.length}`);
     
     const modalidadForm = (window.modoEdicion && window.modoEdicion.modalidad)
         ? String(window.modoEdicion.modalidad).toLowerCase().trim()
@@ -1148,7 +1147,7 @@ function cargarParametrosEvaluacion(entidadValue) {
         
         categoria.forEach(param => {
             const pesoMostrar = (modalidadForm === 'kpi2' && window.kpi2Utils && typeof window.kpi2Utils.getPesoKPI2 === 'function')
-                ? window.kpi2Utils.getPesoKPI2(param.id, param.peso, window.kpi2Utils.getModeloEntidad(entidadId, tipo))
+                ? window.kpi2Utils.getPesoKPI2(param.id, param.peso, window.kpi2Utils.getModeloEntidad(entidadId, tipo), window.mesSeleccionado)
                 : param.peso;
             html += `
                 <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f9f9f9; border-radius: 4px;">
@@ -1279,7 +1278,7 @@ function actualizarTotalPuntos() {
         const pesoRaw = Number(checkbox.getAttribute('data-peso'));
         const pesoBase = Number.isFinite(pesoRaw) ? pesoRaw : 0;
         const peso = esKPI2
-            ? window.kpi2Utils.getPesoKPI2(checkbox.id.replace('param-', ''), pesoBase, modeloEntidad)
+            ? window.kpi2Utils.getPesoKPI2(checkbox.id.replace('param-', ''), pesoBase, modeloEntidad, window.mesSeleccionado)
             : pesoBase;
         if (checkbox.checked) {
             totalObtenido += peso;
@@ -1816,11 +1815,13 @@ function generarTopDriversKPI2() {
             ? kpi2Utils.getModeloEntidad(entidadId, tipo)
             : null;
 
-        const parametrosExcluidos = (tipo === 'sucursal' && typeof window.obtenerParametrosExcluidos === 'function')
-            ? window.obtenerParametrosExcluidos(entidadId)
-            : (tipo === 'franquicia' && typeof window.obtenerParametrosExcluidosFranquicia === 'function')
-                ? window.obtenerParametrosExcluidosFranquicia(entidadId)
-                : [];
+        const parametrosExcluidos = (typeof window.obtenerIdsParametrosExcluidos === 'function')
+            ? window.obtenerIdsParametrosExcluidos(entidadId, tipo)
+            : ((tipo === 'sucursal' && typeof window.obtenerParametrosExcluidos === 'function')
+                ? window.obtenerParametrosExcluidos(entidadId)
+                : (tipo === 'franquicia' && typeof window.obtenerParametrosExcluidosFranquicia === 'function')
+                    ? window.obtenerParametrosExcluidosFranquicia(entidadId)
+                    : []);
 
         const excluidosNorm = Array.isArray(parametrosExcluidos)
             ? parametrosExcluidos.map(normKey)
@@ -1829,6 +1830,9 @@ function generarTopDriversKPI2() {
         const tipoLower = String(tipo).toLowerCase();
 
         const aplicaEntidad = (p) => {
+            if (typeof window.parametroAplicaAEntidad === 'function') {
+                return window.parametroAplicaAEntidad(p, tipoLower, entidadId);
+            }
             if (!p) return false;
             if (p.aplicaATodas) return true;
             const hasSuc = Array.isArray(p.aplicaASucursales);
@@ -1858,7 +1862,7 @@ function generarTopDriversKPI2() {
         window.parametros.forEach(p => {
             if (!p || esExcluido(p)) return;
 
-            const peso2 = kpi2Utils.getPesoKPI2(p.id, p.peso, modelo);
+            const peso2 = kpi2Utils.getPesoKPI2(p.id, p.peso, modelo, window.mesSeleccionado);
             if (!peso2 || peso2 <= 0) return;
 
             const pesoOriginal = Number(p.peso) || 0;
@@ -3048,7 +3052,7 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                                     const param = window.parametros?.find(p => p.id === paramId);
                                     const nombreParam = param ? param.nombre : paramId;
                                     const peso = (mod === 'kpi2' && kpi2Utils && typeof kpi2Utils.getPesoKPI2 === 'function')
-                                        ? kpi2Utils.getPesoKPI2(paramId, param ? param.peso : valor, modeloEntidad)
+                                        ? kpi2Utils.getPesoKPI2(paramId, param ? param.peso : valor, modeloEntidad, (evalParaKPI2 && evalParaKPI2.mes) || window.mesSeleccionado)
                                         : (param ? param.peso : valor);
                                     const noCapturado = (valor === null || valor === undefined);
                                     const cumple = !noCapturado && (Number(valor) > 0);

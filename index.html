@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Sistema de Evaluaciones - Café La Cabaña</title>
-    <link rel="stylesheet" href="style.css?v=eaf111a">
+    <link rel="stylesheet" href="style.css?v=ponderancias-4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Chart.js CDN para gráficas -->
 
@@ -160,6 +160,18 @@
           if (user && window.firebaseDB && typeof window.firebaseDB.cargarEvaluaciones === 'function') {
             const evaluacionesFirebase = await window.firebaseDB.cargarEvaluaciones();
             integrarEvaluacionesConRetry(evaluacionesFirebase);
+          }
+
+          // Configuración remota KPI2 (ponderancias versionadas + aplicabilidad por entidad)
+          if (user && window.firebaseDB && typeof window.firebaseDB.cargarPonderanciasKPI2 === 'function') {
+            try {
+              const cfgKpi2 = await window.firebaseDB.cargarPonderanciasKPI2();
+              if (cfgKpi2 && window.kpi2Utils && typeof window.kpi2Utils.aplicarConfiguracionKPI2 === 'function') {
+                window.kpi2Utils.aplicarConfiguracionKPI2(cfgKpi2);
+              }
+            } catch (e) {
+              console.warn('No se pudo cargar configuración KPI2:', e);
+            }
           }
 
           if (typeof aplicarRestriccionesPorRol === 'function') {
@@ -351,6 +363,31 @@
           }
         },
 
+        async cargarPonderanciasKPI2() {
+          try {
+            const snap = await getDoc(doc(db, 'configuracion', 'ponderanciasKPI2'));
+            return snap.exists() ? snap.data() : null;
+          } catch (error) {
+            console.error('Error cargando ponderancias KPI2:', error);
+            return null;
+          }
+        },
+
+        async guardarPonderanciasKPI2(payload) {
+          try {
+            await setDoc(doc(db, 'configuracion', 'ponderanciasKPI2'), {
+              ...(payload || {}),
+              fechaActualizacion: new Date(),
+              timestampActualizacion: Date.now()
+            }, { merge: true });
+            console.log('Ponderancias KPI2 guardadas en Firebase');
+            return true;
+          } catch (error) {
+            console.error('Error guardando ponderancias KPI2:', error);
+            throw error;
+          }
+        },
+
         async cargarCompetenciaPublicada() {
           try {
             const snap = await getDoc(doc(db, 'configuracion', 'competencia'));
@@ -413,6 +450,7 @@
     
     <nav>
         <button class="tab-btn" data-section="dashboard">Dashboard</button>
+        <button class="tab-btn" data-section="ponderancias" style="display:none">Ponderancias</button>
         <button class="tab-btn" data-section="evaluaciones">Evaluaciones</button>
         <button class="tab-btn" data-section="franquicias">Franquicias</button>
         <button class="tab-btn" data-section="matriz">Matriz</button>
@@ -428,6 +466,10 @@
                 <select id="mes-selector"></select>
             </div>
             <!-- KPIs y resumen general -->
+        </section>
+        <section id="ponderancias" class="tab-section" style="display:none">
+            <div class="mes-selector-container" data-mes-selector-host="ponderancias"></div>
+            <div id="ponderanciasContainer"></div>
         </section>
         <section id="evaluaciones" class="tab-section" style="display:none">
             <div class="mes-selector-container" data-mes-selector-host="evaluaciones"></div>
@@ -461,17 +503,18 @@
     </main>
     <script src="data/sucursales.js"></script>
     <script src="data/franquicias.js"></script>
-    <script src="data/parametros.js?v=parametros-tableta-franquicia-1"></script>
-    <script src="data/parametros_excluidos.js"></script>
+    <script src="data/parametros.js?v=ponderancias-1"></script>
+    <script src="data/parametros_excluidos.js?v=ponderancias-1"></script>
     <script src="data/competencia.js?v=competencia-sync-2"></script>
     <script src="data/usuarios.js"></script>
-    <script src="matriz.js?v=franquicias-matriz-3"></script>
-    <script src="auth.js?v=competencia-evals-1"></script>
-    <script src="utils.js"></script>
-    <script src="dashboard.js"></script>
-    <script src="data/historico.js?v=kpi2-only-3"></script>
+    <script src="matriz.js?v=ponderancias-1"></script>
+    <script src="auth.js?v=ponderancias-1"></script>
+    <script src="utils.js?v=ponderancias-1"></script>
+    <script src="dashboard.js?v=ponderancias-1"></script>
+    <script src="ponderancias.js?v=ponderancias-4"></script>
+    <script src="data/historico.js?v=ponderancias-1"></script>
     <script src="competencia.js?v=competencia-reporte-operativo-2"></script>
-    <script src="script.js?v=graficas-split-1"></script>
+    <script src="script.js?v=ponderancias-1"></script>
     <style>
         /* Estilos para la tabla de evaluaciones */
         .evaluaciones-table {

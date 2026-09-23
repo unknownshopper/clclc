@@ -176,6 +176,7 @@ function aplicarRestriccionesPorRol() {
     const tabCompetencia = document.querySelector('.tab-btn[data-section="competencia"]');
     const tabFranquicias = document.querySelector('.tab-btn[data-section="franquicias"]');
     const tabEvaluaciones = document.querySelector('.tab-btn[data-section="evaluaciones"]');
+    const tabPonderancias = document.querySelector('.tab-btn[data-section="ponderancias"]');
     
     if (rol === 'admin') {
         // Admin puede hacer todo
@@ -200,6 +201,16 @@ function aplicarRestriccionesPorRol() {
 
     if (tabEvaluaciones) {
         tabEvaluaciones.style.display = (String(rol || '').toLowerCase() === 'franquicias') ? 'none' : '';
+    }
+
+    if (tabPonderancias) {
+        tabPonderancias.style.display = (String(rol || '').toLowerCase() === 'admin') ? '' : 'none';
+    }
+
+    if (String(rol || '').toLowerCase() !== 'admin' && window.vistaActual === 'ponderancias') {
+        try {
+            if (typeof cambiarVista === 'function') cambiarVista('dashboard');
+        } catch (e) {}
     }
 
     if (String(rol || '').toLowerCase() === 'franquicias' && window.vistaActual === 'evaluaciones') {

@@ -234,6 +234,9 @@ function renderMatrizCompleta() {
             if (esKPI2 && evaluacion && forzarSoloKPI2 && tipoLower === 'franquicia' && evalParaTabla && evalParaTabla.parametros) {
                 try {
                     const aplicaEntidad = (p) => {
+                        if (typeof window.parametroAplicaAEntidad === 'function') {
+                            return window.parametroAplicaAEntidad(p, tipoLower, entidad.id);
+                        }
                         if (!p) return false;
                         if (p.aplicaATodas) return true;
                         const hasSuc = Array.isArray(p.aplicaASucursales);
@@ -389,6 +392,9 @@ function renderMatrizCompleta() {
 
                 const aplicaEntidad = (() => {
                     try {
+                        if (typeof window.parametroAplicaAEntidad === 'function') {
+                            return window.parametroAplicaAEntidad(param, tipoLower, entidad.id);
+                        }
                         if (!param) return false;
                         if (param.aplicaATodas) return true;
 
@@ -874,6 +880,10 @@ function inicializarArrastreMatriz(sufijo = '') {
  * @returns {Array} Array de IDs de parámetros excluidos normalizados
  */
 function obtenerParametrosExcluidos(entidadId, tipo) {
+    // Fuente única en utils.js (incluye overrides de aplicabilidad de Firestore)
+    if (typeof window.obtenerIdsParametrosExcluidos === 'function') {
+        return window.obtenerIdsParametrosExcluidos(entidadId, tipo);
+    }
     let nombresExcluidos = [];
     
     if (tipo === 'sucursal' && window.parametrosExcluidosPorSucursal && window.parametrosExcluidosPorSucursal[entidadId]) {

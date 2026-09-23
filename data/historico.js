@@ -260,7 +260,7 @@ function calcularKPI2AtencionVentaParaEvaluacion(entidadId, tipo, evaluacionLoca
     let totalObt = 0;
     params.forEach(p => {
       const pesoOriginal = Number(p.peso) || 0;
-      const peso2 = Number(kpi2Utils.getPesoKPI2(p.id, p.peso, modelo)) || 0;
+      const peso2 = Number(kpi2Utils.getPesoKPI2(p.id, p.peso, modelo, mes)) || 0;
       if (peso2 <= 0) return;
 
       if (p?.soloKPI2 && ev.parametros && ev.parametros[p.id] === undefined) return;

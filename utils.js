@@ -56,12 +56,34 @@ function formatearMesLegible(mesString) {
     return `${meses[parseInt(mes) - 1]} ${año}`;
 }
 
+// Override de aplicabilidad cargado desde Firestore (configuracion/ponderanciasKPI2).
+// Si existe para la entidad, contiene el conjunto EFECTIVO de parámetros excluidos
+// (ids) y sustituye tanto a las listas del catálogo como a parametros_excluidos.js.
+function obtenerAplicabilidadOverride(entidadId, tipo) {
+    try {
+        const ov = window.kpi2ConfigOverrides && window.kpi2ConfigOverrides.aplicabilidad;
+        const grupo = tipo === 'sucursal' ? 'sucursales' : (tipo === 'franquicia' ? 'franquicias' : null);
+        if (ov && grupo && ov[grupo] && Array.isArray(ov[grupo][entidadId])) {
+            return ov[grupo][entidadId];
+        }
+    } catch (e) {}
+    return null;
+}
+window.obtenerAplicabilidadOverride = obtenerAplicabilidadOverride;
+
 // Regla única de aplicabilidad de parámetros (misma que usa la Matriz y el
 // formulario de captura): un parámetro aplica si tiene aplicaATodas, si la
 // entidad está en su lista específica, o si no tiene listas (back-compat).
-// Lo que "no aplica" se controla exclusivamente vía parametros_excluidos.js.
+// Lo que "no aplica" se controla exclusivamente vía parametros_excluidos.js,
+// salvo que exista override de aplicabilidad (Firestore) para la entidad.
 function parametroAplicaAEntidad(param, tipo, entidadId) {
     if (!param) return false;
+    const override = obtenerAplicabilidadOverride(entidadId, tipo);
+    if (override) {
+        const idNorm = param.id.toLowerCase().replace(/[-_]/g, '');
+        return !override.some(x => String(x || '').toLowerCase().replace(/[-_]/g, '') === idNorm);
+    }
+    if (param.aplicaATodas) return true;
     if (param.aplicaATodas) return true;
     const hasSuc = Array.isArray(param.aplicaASucursales);
     const hasFra = Array.isArray(param.aplicaAFranquicias);
@@ -75,6 +97,10 @@ window.parametroAplicaAEntidad = parametroAplicaAEntidad;
 // IDs normalizados de los parámetros excluidos para una entidad
 // (las listas en parametros_excluidos.js vienen por nombre).
 function obtenerIdsParametrosExcluidos(entidadId, tipo) {
+    const override = obtenerAplicabilidadOverride(entidadId, tipo);
+    if (override) {
+        return override.map(id => String(id || '').toLowerCase().replace(/[-_]/g, ''));
+    }
     const nombres = (tipo === 'sucursal' && window.parametrosExcluidosPorSucursal && window.parametrosExcluidosPorSucursal[entidadId])
         ? window.parametrosExcluidosPorSucursal[entidadId]
         : (tipo === 'franquicia' && window.parametrosExcluidosPorFranquicia && window.parametrosExcluidosPorFranquicia[entidadId])
@@ -195,8 +221,10 @@ function poblarSelectorMes() {
             renderGraficas();
         } else if (window.vistaActual === 'competencia') {
             renderCompetencia();
+        } else if (window.vistaActual === 'ponderancias' && typeof renderPonderancias === 'function') {
+            renderPonderancias();
         }
-        
+
         // Siempre actualizar evaluaciones para que los datos estén listos
         renderEvaluaciones();
         
@@ -349,26 +377,85 @@ window.kpi2Utils = (function() {
         }
     };
 
-    function getPesoKPI2(paramId, pesoActual, modelo) {
+    // ===== Ponderancias KPI2 versionadas por vigencia =====
+    // '0000-00' es la base compilada en código. Las versiones guardadas en
+    // Firestore (configuracion/ponderanciasKPI2) se insertan aquí; cada
+    // evaluación se calcula con la versión vigente en SU mes → histórico congelado.
+    const versionesPonderancia = [
+        { vigenteDesde: '0000-00', nombre: 'Base', pesos: PONDERA_IA_PESOS_POR_MODELO }
+    ];
+
+    function obtenerVersionPesos(mes) {
+        const m = mes ? String(mes) : '9999-99';
+        let vigente = versionesPonderancia[0];
+        versionesPonderancia.forEach(v => {
+            if (v && v.vigenteDesde && v.vigenteDesde <= m && v.vigenteDesde >= vigente.vigenteDesde) {
+                vigente = v;
+            }
+        });
+        return vigente;
+    }
+
+    function listarVersionesPonderancia() {
+        return versionesPonderancia.map(v => ({
+            vigenteDesde: v.vigenteDesde,
+            nombre: v.nombre || '',
+            pesos: v.pesos
+        }));
+    }
+
+    function getPesoKPI2(paramId, pesoActual, modelo, mes) {
         const m = normalizarModelo(modelo);
-        const tabla = m ? PONDERA_IA_PESOS_POR_MODELO[m] : null;
+        const tabla = m ? (obtenerVersionPesos(mes).pesos || {})[m] : null;
         const p = tabla ? tabla[paramId] : undefined;
         if (typeof p === 'number') return p;
         return Number(pesoActual) || 0;
     }
 
-    function calcularDetalleKPI2(entidadId, tipo, evaluacionLocal) {
+    // Aplica configuración remota: versiones de ponderancias + overrides de
+    // aplicabilidad por entidad. Devuelve true si aplicó algo.
+    function aplicarConfiguracionKPI2(cfg) {
         try {
+            if (!cfg || typeof cfg !== 'object') return false;
+            if (Array.isArray(cfg.versiones)) {
+                cfg.versiones.forEach(v => {
+                    if (!v || !v.vigenteDesde || !v.pesos || typeof v.pesos !== 'object') return;
+                    if (v.vigenteDesde === '0000-00') return;
+                    const i = versionesPonderancia.findIndex(x => x.vigenteDesde === v.vigenteDesde);
+                    if (i >= 0) versionesPonderancia[i] = v;
+                    else versionesPonderancia.push(v);
+                });
+                versionesPonderancia.sort((a, b) => String(a.vigenteDesde).localeCompare(String(b.vigenteDesde)));
+            }
+            if (cfg.aplicabilidad && typeof cfg.aplicabilidad === 'object') {
+                window.kpi2ConfigOverrides = window.kpi2ConfigOverrides || {};
+                window.kpi2ConfigOverrides.aplicabilidad = cfg.aplicabilidad;
+            }
+            return true;
+        } catch (e) {
+            console.warn('No se pudo aplicar configuración KPI2:', e);
+            return false;
+        }
+    }
+
+    // opciones (para simulador): { tablaPesos: {Modelo:{paramId:peso}}, esAplicable: (param,entidadId,tipo)=>bool }
+    function calcularDetalleKPI2(entidadId, tipo, evaluacionLocal, opciones) {
+        try {
+            const opts = opciones || {};
             if (!evaluacionLocal || !evaluacionLocal.parametros || !Array.isArray(window.parametros)) return null;
 
             const mesEval = evaluacionLocal.mes || window.mesSeleccionado || null;
 
             const modelo = getModeloEntidad(entidadId, tipo);
+            const tablaPesos = (opts.tablaPesos && typeof opts.tablaPesos === 'object') ? opts.tablaPesos : null;
 
             const parametrosExcluidos = obtenerIdsParametrosExcluidos(entidadId, tipo);
+            const conAplicableCustom = typeof opts.esAplicable === 'function';
 
             let parametrosAplicables = window.parametros.filter(param =>
-                !parametrosExcluidos.includes(param.id.toLowerCase().replace(/[-_]/g, ''))
+                conAplicableCustom
+                    ? !!opts.esAplicable(param, entidadId, tipo)
+                    : !parametrosExcluidos.includes(param.id.toLowerCase().replace(/[-_]/g, ''))
             );
 
             // Respetar vigencia de parámetros (p.ej. existencia desde 2026-03)
@@ -381,7 +468,8 @@ window.kpi2Utils = (function() {
 
             // Misma regla de aplicabilidad que la Matriz: lo que no está excluido
             // por nombre en parametros_excluidos.js cuenta en el KPI2.
-            if (tipo === 'sucursal' || tipo === 'franquicia') {
+            // (Con esAplicable custom o override Firestore ya viene resuelto.)
+            if (!conAplicableCustom && (tipo === 'sucursal' || tipo === 'franquicia')) {
                 parametrosAplicables = parametrosAplicables.filter(p => parametroAplicaAEntidad(p, tipo, entidadId));
             }
 
@@ -401,7 +489,9 @@ window.kpi2Utils = (function() {
                     }
                 }
 
-                const peso2 = getPesoKPI2(param.id, param.peso, modelo);
+                const peso2 = (tablaPesos && modelo && tablaPesos[modelo] && typeof tablaPesos[modelo][param.id] === 'number')
+                    ? tablaPesos[modelo][param.id]
+                    : getPesoKPI2(param.id, param.peso, modelo, mesEval);
                 if (peso2 <= 0) return;
                 totalMax += peso2;
 
@@ -425,8 +515,8 @@ window.kpi2Utils = (function() {
         }
 }
 
-    function calcularKPI2(entidadId, tipo, evaluacionLocal) {
-        const detalle = calcularDetalleKPI2(entidadId, tipo, evaluacionLocal);
+    function calcularKPI2(entidadId, tipo, evaluacionLocal, opciones) {
+        const detalle = calcularDetalleKPI2(entidadId, tipo, evaluacionLocal, opciones);
         return detalle ? detalle.kpi : null;
     }
 
@@ -435,8 +525,13 @@ return {
     MODO_DUAL_SIEMPRE,
     debeMostrarKPI2,
     getModeloEntidad,
+    normalizarModelo,
     getPesoKPI2,
+    obtenerVersionPesos,
+    listarVersionesPonderancia,
+    aplicarConfiguracionKPI2,
     PONDERA_IA_PESOS_POR_MODELO,
+    MODELOS: ['Cafetería', 'Express', 'Móvil'],
     calcularKPI2,
     calcularDetalleKPI2
 };
