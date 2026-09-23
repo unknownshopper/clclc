@@ -157,7 +157,20 @@ function puedeVerFranquicias() {
         const esDg = rol === 'dg' || email === 'dg@cafelacabana.com';
         const esDirGral = rol === 'dirgral' || email === 'dirgral@cafelacabana.com';
         const esFranquicias = rol === 'franquicias';
-        return !!(esAdmin || esDg || esDirGral || esFranquicias);
+        const esDgaux = rol === 'dgaux' || email === 'dgaux@cafelacabana.com';
+        return !!(esAdmin || esDg || esDirGral || esFranquicias || esDgaux);
+    } catch (e) {
+        return false;
+    }
+}
+
+// Solo dgaux (verificado contra la sesión Firebase real) o el admin pueden
+// otorgar/quitar la bonificación "Actitud de servicio".
+function puedeOtorgarBono() {
+    try {
+        const fbEmail = String((window.__firebaseCurrentUser && window.__firebaseCurrentUser.email) || '').toLowerCase();
+        if (window.firebaseAdminAuthenticated) return true;
+        return fbEmail === 'dgaux@cafelacabana.com';
     } catch (e) {
         return false;
     }
@@ -286,13 +299,22 @@ function filtrarDatosPorRol(evaluaciones) {
 
         case 'capacitacion':
             // Capacitación NO debe ver competencia: solo sucursales + franquicias (solo publicadas)
-            const evaluacionesCap = evalsNormalizadas.filter(ev => 
+            const evaluacionesCap = evalsNormalizadas.filter(ev =>
                 ev.tipo === 'sucursal' || ev.tipo === 'franquicia'
             );
             const evaluacionesCapPublicadas = filtrarPorPublicacion(evaluacionesCap);
             console.log(`Capacitación: filtrando ${evaluacionesCapPublicadas.length} evaluaciones publicadas (sucursales + franquicias) de ${evaluacionesCap.length} total`);
             return evaluacionesCapPublicadas;
-            
+
+        case 'dgaux':
+            // DGAux da seguimiento a sucursales y franquicias (solo publicadas)
+            const evaluacionesDgaux = evalsNormalizadas.filter(ev =>
+                ev.tipo === 'sucursal' || ev.tipo === 'franquicia'
+            );
+            const evaluacionesDgauxPublicadas = filtrarPorPublicacion(evaluacionesDgaux);
+            console.log(`DGAux: filtrando ${evaluacionesDgauxPublicadas.length} evaluaciones publicadas (sucursales + franquicias) de ${evaluacionesDgaux.length} total`);
+            return evaluacionesDgauxPublicadas;
+
         default:
             console.log(`Rol desconocido: ${rol}, no se muestran datos`);
             return [];
@@ -312,6 +334,8 @@ function tienePermiso(accion) {
         case 'eliminar':
         case 'publicar':
             return adminEscrituraOk;
+        case 'bono':
+            return puedeOtorgarBono();
         case 'ver':
             return true; // Todos pueden ver (pero con filtros)
         case 'admin':

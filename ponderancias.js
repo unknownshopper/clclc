@@ -135,7 +135,9 @@
     }
 
     function catalogoVigente(mes) {
-        return catalogo().filter(p => p && (!p.vigenteDesde || (mes && mes >= p.vigenteDesde)));
+        // Los parámetros bono no aplican por entidad (se otorgan manualmente):
+        // se excluyen de matrices y del cálculo de máximos.
+        return catalogo().filter(p => p && !p.bono && (!p.vigenteDesde || (mes && mes >= p.vigenteDesde)));
     }
 
     function categoriasOrdenadas() {
@@ -463,10 +465,27 @@
         if (m) m.classList.remove('abierto');
     }
 
+    function esperar(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    // Descarga el paquete completo: JSON (respaldo) + CSV + Excel + PDF,
+    // con pausas para que el navegador no bloquee las descargas múltiples.
+    async function exportarTodo() {
+        asegurarDraft();
+        cerrarMenuExportar();
+        exportarJSON();
+        await esperar(450);
+        exportarCSV();
+        await esperar(450);
+        await exportarXLSX();
+        await esperar(450);
+        exportarPDF();
+    }
+
     function exportar(formato) {
         asegurarDraft();
         cerrarMenuExportar();
-        if (formato === 'xlsx') exportarXLSX();
+        if (formato === 'todo') exportarTodo();
+        else if (formato === 'xlsx') exportarXLSX();
         else if (formato === 'csv') exportarCSV();
         else if (formato === 'pdf') exportarPDF();
         else exportarJSON();
@@ -588,7 +607,7 @@
         MODELOS.forEach(m => {
             const el = document.getElementById(`pond-total-${m}`);
             if (el) {
-                el.innerHTML = `<strong>${catalogo().reduce((s, p) => s + (Number(draft.pesos[m][p.id]) || 0), 0)}</strong>`;
+                el.innerHTML = `<strong>${catalogo().reduce((s, p) => s + (p.bono ? 0 : (Number(draft.pesos[m][p.id]) || 0)), 0)}</strong>`;
             }
         });
     }
@@ -666,7 +685,7 @@
                         <tfoot>
                             <tr>
                                 <td style="text-align:left"><strong>Total si todo cumple</strong></td>
-                                ${MODELOS.map(m => `<td id="pond-total-${m}"><strong>${catalogo().reduce((s, p) => s + (Number(draft.pesos[m][p.id]) || 0), 0)}</strong></td>`).join('')}
+                                ${MODELOS.map(m => `<td id="pond-total-${m}"><strong>${catalogo().reduce((s, p) => s + (p.bono ? 0 : (Number(draft.pesos[m][p.id]) || 0)), 0)}</strong></td>`).join('')}
                             </tr>
                         </tfoot>
                     </table>
@@ -783,6 +802,7 @@
                                 <i class="fas fa-chevron-down"></i>
                             </button>
                             <div class="pond-export-menu" id="pondExportMenu">
+                                <button class="pond-export-todo" onclick="window.ponderanciasUI.exportar('todo')"><i class="fas fa-box-open"></i> <strong>Todo</strong> — paquete completo (4 formatos)</button>
                                 <button onclick="window.ponderanciasUI.exportar('json')"><i class="fas fa-file-code"></i> JSON — respaldo reimportable</button>
                                 <button onclick="window.ponderanciasUI.exportar('xlsx')"><i class="fas fa-file-excel"></i> Excel — pesos + aplicabilidad</button>
                                 <button onclick="window.ponderanciasUI.exportar('csv')"><i class="fas fa-file-csv"></i> CSV — solo ponderancias</button>

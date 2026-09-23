@@ -2755,11 +2755,32 @@ function mostrarEvaluaciones() {
         <div class="evaluaciones-grid">
     `;
     
+    // Vigencia del bono "Actitud de servicio" (del catálogo)
+    const paramBono = (window.parametros || []).find(p => p && p.id === 'actitud_servicio');
+    const bonoVigente = !paramBono || !paramBono.vigenteDesde
+        || !window.mesSeleccionado || window.mesSeleccionado >= paramBono.vigenteDesde;
+    const usuarioPuedeBono = typeof puedeOtorgarBono === 'function' && puedeOtorgarBono();
+
     evaluacionesFiltradas.forEach(evaluacion => {
         const porcentaje = ((evaluacion.kpi || 0) * 100).toFixed(1);
-        const estadoClass = evaluacion.estado === 'Excelente' ? 'excelente' : 
+        const estadoClass = evaluacion.estado === 'Excelente' ? 'excelente' :
                            evaluacion.estado === 'Bueno' ? 'bueno' : 'mejora';
-        
+
+        // El bono vive en el documento de la modalidad KPI2
+        const evBase = evaluacion.evaluacion || null;
+        const evKpi2 = (evBase && evBase.modalidades && evBase.modalidades.kpi2)
+            ? evBase.modalidades.kpi2
+            : (evBase && evBase._kpi2 ? evBase._kpi2 : null);
+        const bonoInfo = (evKpi2 && evKpi2.bonoActitud && evKpi2.bonoActitud.otorgado) ? evKpi2.bonoActitud : null;
+        let bonoPts = 0;
+        if (bonoInfo && window.kpi2Utils && typeof window.kpi2Utils.calcularDetalleKPI2 === 'function') {
+            try {
+                const detBono = window.kpi2Utils.calcularDetalleKPI2(evaluacion.entidadId, evaluacion.tipo, evKpi2);
+                if (detBono && typeof detBono.bono === 'number') bonoPts = detBono.bono;
+            } catch (e) {}
+        }
+        const puedeBono = usuarioPuedeBono && bonoVigente && evKpi2 && evKpi2.firebaseId;
+
         html += `
             <div class="evaluacion-card ${estadoClass}">
                 <div class="evaluacion-header">
@@ -2770,13 +2791,14 @@ function mostrarEvaluaciones() {
                     <div class="kpi-display">
                         <span class="kpi-value">${porcentaje}%</span>
                         <span class="kpi-label">KPI</span>
+                        ${bonoInfo ? `<span class="bono-badge" title="Bono Actitud de servicio — otorgado por ${bonoInfo.otorgadoPor || 'Dirección de Operaciones'}"><i class="fas fa-star"></i> +${bonoPts} bono</span>` : ''}
                     </div>
                     <div class="evaluacion-details">
                         <p><strong>Estado:</strong> ${evaluacion.estado}</p>
                         <p><strong>Fecha:</strong> ${evaluacion.fecha}</p>
                     </div>
                 </div>
-                ${tienePermiso('editar') || tienePermiso('eliminar') || tienePermiso('publicar') ? `
+                ${tienePermiso('editar') || tienePermiso('eliminar') || tienePermiso('publicar') || puedeBono ? `
                 <div class="evaluacion-actions">
                     ${tienePermiso('editar') ? `
                     <button class="btn btn-secondary btn-editar" onclick="editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}')" title="Editar evaluación">
@@ -2793,11 +2815,18 @@ function mostrarEvaluaciones() {
                                 <i class="fas ${((evaluacion.estadoPublicacion || 'borrador') === 'publicado') ? 'fa-undo' : 'fa-share'}"></i>
                             </button>
                             ` : ''}
+                            ${puedeBono ? `
+                            <button class="btn btn-bono ${bonoInfo ? 'btn-bono-activo' : ''}" onclick="toggleBonoActitud('${evaluacion.entidadId}', '${evaluacion.tipo}')" title="${bonoInfo ? 'Quitar bono Actitud de servicio' : 'Otorgar bono Actitud de servicio'}">
+                                <i class="fas fa-star"></i>
+                            </button>
+                            ` : ''}
+                            ${(tienePermiso('editar') || tienePermiso('eliminar') || tienePermiso('publicar')) ? `
                             <button onclick="verVideo('${evaluacion.entidadId}', '${evaluacion.tipo}')"
-                                    class="btn btn-video" 
+                                    class="btn btn-video"
                                     title="Ver video de evaluación">
                                 <i class="fas fa-video"></i>
                             </button>
+                            ` : ''}
                         </div>
                         ` : ''}
             </div>
@@ -3001,7 +3030,7 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
     const totalFilasParametros = parametrosParaMostrar.length;
     const totalParametrosContados = parametrosParaMostrar.filter(([, v]) => v !== null && v !== undefined).length;
     const catalogoVigente = (window.parametros || []).filter(p =>
-        !p.vigenteDesde || (window.mesSeleccionado && window.mesSeleccionado >= p.vigenteDesde)
+        !p.bono && (!p.vigenteDesde || (window.mesSeleccionado && window.mesSeleccionado >= p.vigenteDesde))
     ).length;
     const noAplican = Math.max(0, catalogoVigente - totalFilasParametros);
     const noCapturados = Math.max(0, totalFilasParametros - totalParametrosContados);
@@ -3029,6 +3058,7 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                             <p><strong>Total Obtenido:</strong> ${totalObtenidoMostrar}</p>
                             <p><strong>Total Máximo:</strong> ${totalMaximoMostrar}</p>
                             <p><strong>Parámetros contados:</strong> ${totalParametrosContados}/${catalogoVigente}</p>
+                            ${(detalleKPI2 && detalleKPI2.bono > 0) ? `<p style="color:#b8860b;"><strong><i class="fas fa-star"></i> Actitud de servicio (bono):</strong> +${detalleKPI2.bono} pts — ${(evalParaKPI2.bonoActitud && evalParaKPI2.bonoActitud.otorgadoPor) || 'Dirección de Operaciones'}</p>` : ''}
                         </div>
                     </div>
                     
@@ -3747,6 +3777,7 @@ function integrarDatosFirebase(evaluacionesFirebase) {
             fechaCreacion: evaluacion.fechaCreacion || evaluacion.created_at || new Date().toISOString(),
             timestamp: evaluacion.timestamp || Date.now(),
             videoUrl: evaluacion.videoUrl || null,
+            bonoActitud: evaluacion.bonoActitud || null,
             firebaseId: evaluacion.id || evaluacion.firebaseId || null
         };
 
@@ -3832,6 +3863,49 @@ function existeEnFirebase(entidadId, tipo) {
     
     // Para sucursales, asumimos que todas existen (puedes ajustar si es necesario)
     return true;
+}
+
+// Otorgar/quitar la bonificación "Actitud de servicio" (solo dgaux/admin).
+// Escribe únicamente el campo bonoActitud del documento KPI2 en Firestore.
+async function toggleBonoActitud(entidadId, tipo) {
+    if (typeof puedeOtorgarBono !== 'function' || !puedeOtorgarBono()) {
+        alert('Solo Dirección de Operaciones puede otorgar la bonificación de Actitud de servicio.');
+        return;
+    }
+    const grupo = tipo === 'sucursal' ? 'sucursales' : (tipo === 'franquicia' ? 'franquicias' : 'competencia');
+    const cont = window.evaluaciones?.[grupo]?.[entidadId]?.[window.mesSeleccionado];
+    if (!cont) {
+        alert('Evaluación no encontrada para el mes seleccionado.');
+        return;
+    }
+    const target = (cont.modalidades && cont.modalidades.kpi2)
+        ? cont.modalidades.kpi2
+        : (cont._kpi2 || null);
+    if (!target || !target.firebaseId) {
+        alert('La evaluación KPI2 no tiene referencia en Firebase.');
+        return;
+    }
+
+    const otorgar = !(target.bonoActitud && target.bonoActitud.otorgado);
+    const entidad = (tipo === 'sucursal' ? window.sucursales : window.franquicias)?.find(e => e.id === entidadId);
+    const nombre = entidad ? entidad.nombre : entidadId;
+    if (!confirm(`¿${otorgar ? 'Otorgar' : 'Quitar'} la bonificación "Actitud de servicio" a ${nombre} (${window.mesSeleccionado})?`)) return;
+
+    const email = String((window.__firebaseCurrentUser && window.__firebaseCurrentUser.email) || '').toLowerCase();
+    const bono = {
+        otorgado: otorgar,
+        otorgadoPor: email,
+        fecha: new Date().toISOString()
+    };
+
+    try {
+        await window.firebaseDB.actualizarBonoActitud(target.firebaseId, bono);
+        target.bonoActitud = bono;
+        mostrarEvaluaciones();
+    } catch (e) {
+        console.error('Error actualizando bono:', e);
+        alert('No se pudo actualizar la bonificación: ' + (e && e.message ? e.message : e));
+    }
 }
 
 // Función para publicar una evaluación (solo admin)

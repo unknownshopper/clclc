@@ -78,6 +78,11 @@ window.obtenerAplicabilidadOverride = obtenerAplicabilidadOverride;
 // salvo que exista override de aplicabilidad (Firestore) para la entidad.
 function parametroAplicaAEntidad(param, tipo, entidadId) {
     if (!param) return false;
+    // Los parámetros de bonificación (p.ej. actitud_servicio) nunca se capturan
+    // en el formulario ni cuentan en el máximo: se otorgan aparte vía bonoActitud.
+    // También los protege de overrides de aplicabilidad guardados antes de que
+    // existieran (los overrides solo listan excluidos conocidos).
+    if (param.bono) return false;
     const override = obtenerAplicabilidadOverride(entidadId, tipo);
     if (override) {
         const idNorm = param.id.toLowerCase().replace(/[-_]/g, '');
@@ -510,8 +515,23 @@ window.kpi2Utils = (function() {
                 totalObt += (peso2 * ratio);
             });
 
+            // Bono "Actitud de servicio": puntos extra otorgados por Dirección de
+            // Operaciones. Suman al obtenido SIN aumentar el máximo (el KPI puede
+            // pasar de 100%). Respeta vigenteDesde del parámetro.
+            let bono = 0;
+            if (evaluacionLocal.bonoActitud && evaluacionLocal.bonoActitud.otorgado) {
+                const pb = window.parametros.find(x => x && x.id === 'actitud_servicio');
+                const vigente = !pb || !pb.vigenteDesde || !mesEval || mesEval >= pb.vigenteDesde;
+                if (vigente) {
+                    bono = (tablaPesos && modelo && typeof tablaPesos[modelo]?.actitud_servicio === 'number')
+                        ? tablaPesos[modelo].actitud_servicio
+                        : getPesoKPI2('actitud_servicio', pb ? pb.peso : 0, modelo, mesEval);
+                    totalObt += bono;
+                }
+            }
+
             if (totalMax <= 0) return null;
-            return { totalObt, totalMax, kpi: totalObt / totalMax };
+            return { totalObt, totalMax, kpi: totalObt / totalMax, bono };
         } catch (e) {
             console.warn('No se pudo calcular KPI2', e);
             return null;

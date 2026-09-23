@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Sistema de Evaluaciones - Café La Cabaña</title>
-    <link rel="stylesheet" href="style.css?v=ponderancias-9">
+    <link rel="stylesheet" href="style.css?v=ponderancias-11">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Chart.js CDN para gráficas -->
 
@@ -363,6 +363,22 @@
           }
         },
 
+        // Otorgar/quitar bonificación "Actitud de servicio".
+        // Actualiza ÚNICAMENTE el campo bonoActitud (las reglas de Firestore
+        // restringen a dgaux/admin a modificar solo esta llave).
+        async actualizarBonoActitud(evaluacionId, bono) {
+          try {
+            await updateDoc(doc(db, 'evaluaciones', evaluacionId), {
+              bonoActitud: bono
+            });
+            console.log('Bono Actitud de servicio actualizado en Firebase:', evaluacionId);
+            return true;
+          } catch (error) {
+            console.error('Error actualizando bono en Firebase:', error);
+            throw error;
+          }
+        },
+
         async cargarPonderanciasKPI2() {
           try {
             const snap = await getDoc(doc(db, 'configuracion', 'ponderanciasKPI2'));
@@ -503,18 +519,18 @@
     </main>
     <script src="data/sucursales.js"></script>
     <script src="data/franquicias.js"></script>
-    <script src="data/parametros.js?v=ponderancias-1"></script>
-    <script src="data/parametros_excluidos.js?v=ponderancias-1"></script>
+    <script src="data/parametros.js?v=ponderancias-11"></script>
+    <script src="data/parametros_excluidos.js?v=ponderancias-11"></script>
     <script src="data/competencia.js?v=competencia-sync-2"></script>
     <script src="data/usuarios.js"></script>
-    <script src="matriz.js?v=ponderancias-1"></script>
-    <script src="auth.js?v=ponderancias-1"></script>
-    <script src="utils.js?v=ponderancias-1"></script>
-    <script src="dashboard.js?v=ponderancias-1"></script>
-    <script src="ponderancias.js?v=ponderancias-9"></script>
-    <script src="data/historico.js?v=ponderancias-1"></script>
+    <script src="matriz.js?v=ponderancias-11"></script>
+    <script src="auth.js?v=ponderancias-11"></script>
+    <script src="utils.js?v=ponderancias-11"></script>
+    <script src="dashboard.js?v=ponderancias-11"></script>
+    <script src="ponderancias.js?v=ponderancias-11"></script>
+    <script src="data/historico.js?v=ponderancias-11"></script>
     <script src="competencia.js?v=competencia-reporte-operativo-2"></script>
-    <script src="script.js?v=ponderancias-1"></script>
+    <script src="script.js?v=ponderancias-11"></script>
     <style>
         /* Estilos para la tabla de evaluaciones */
         .evaluaciones-table {

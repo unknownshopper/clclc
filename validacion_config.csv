@@ -1,0 +1,1574 @@
+﻿tipo,entidad,modelo,mes,parametro,categoria,peso_kpi2
+sucursal,altabrisa,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,altabrisa,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,altabrisa,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,altabrisa,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+sucursal,altabrisa,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,altabrisa,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,altabrisa,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,altabrisa,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+sucursal,altabrisa,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,altabrisa,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,altabrisa,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,altabrisa,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,altabrisa,Cafetería,2026-09,"Apariencia del personal",personal,2
+sucursal,altabrisa,Cafetería,2026-09,"Uso de tableta",personal,1
+sucursal,altabrisa,Cafetería,2026-09,"Pin personalizador",personal,3
+sucursal,altabrisa,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,altabrisa,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+sucursal,altabrisa,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+sucursal,altabrisa,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,altabrisa,Cafetería,2026-09,"Existencia",presentacion_producto,5
+sucursal,altabrisa,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,altabrisa,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,altabrisa,Cafetería,2026-09,"Iluminación",interiores,2
+sucursal,altabrisa,Cafetería,2026-09,"Área de mostrador",interiores,2
+sucursal,altabrisa,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+sucursal,altabrisa,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+sucursal,altabrisa,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+sucursal,altabrisa,Cafetería,2026-09,"Limpieza de barra",interiores,2
+sucursal,altabrisa,Cafetería,2026-09,"Climatización",interiores,4
+sucursal,altabrisa,Cafetería,2026-09,"Estado de muebles",interiores,2
+sucursal,altabrisa,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,altabrisa,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,altabrisa,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,altabrisa,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+sucursal,altabrisa,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,altabrisa,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,altabrisa,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,altabrisa,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+sucursal,altabrisa,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,altabrisa,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,altabrisa,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,altabrisa,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,altabrisa,Cafetería,2026-10,"Apariencia del personal",personal,2
+sucursal,altabrisa,Cafetería,2026-10,"Uso de tableta",personal,1
+sucursal,altabrisa,Cafetería,2026-10,"Pin personalizador",personal,4
+sucursal,altabrisa,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,altabrisa,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,altabrisa,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,altabrisa,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,altabrisa,Cafetería,2026-10,"Existencia",presentacion_producto,3
+sucursal,altabrisa,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,altabrisa,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,altabrisa,Cafetería,2026-10,"Iluminación",interiores,2
+sucursal,altabrisa,Cafetería,2026-10,"Área de mostrador",interiores,3
+sucursal,altabrisa,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+sucursal,altabrisa,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+sucursal,altabrisa,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+sucursal,altabrisa,Cafetería,2026-10,"Limpieza de barra",interiores,2
+sucursal,altabrisa,Cafetería,2026-10,"Climatización",interiores,4
+sucursal,altabrisa,Cafetería,2026-10,"Estado de muebles",interiores,3
+sucursal,americas,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,americas,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,americas,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,americas,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+sucursal,americas,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,americas,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,americas,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,americas,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+sucursal,americas,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,americas,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,americas,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,americas,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,americas,Cafetería,2026-09,"Apariencia del personal",personal,2
+sucursal,americas,Cafetería,2026-09,"Uso de tableta",personal,1
+sucursal,americas,Cafetería,2026-09,"Pin personalizador",personal,3
+sucursal,americas,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,americas,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+sucursal,americas,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+sucursal,americas,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,americas,Cafetería,2026-09,"Existencia",presentacion_producto,5
+sucursal,americas,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,americas,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,americas,Cafetería,2026-09,"Iluminación",interiores,2
+sucursal,americas,Cafetería,2026-09,"Área de mostrador",interiores,2
+sucursal,americas,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+sucursal,americas,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+sucursal,americas,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+sucursal,americas,Cafetería,2026-09,"Limpieza de barra",interiores,2
+sucursal,americas,Cafetería,2026-09,"Climatización",interiores,4
+sucursal,americas,Cafetería,2026-09,"Estado de muebles",interiores,2
+sucursal,americas,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,americas,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,americas,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,americas,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+sucursal,americas,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,americas,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,americas,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,americas,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+sucursal,americas,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,americas,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,americas,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,americas,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,americas,Cafetería,2026-10,"Apariencia del personal",personal,2
+sucursal,americas,Cafetería,2026-10,"Uso de tableta",personal,1
+sucursal,americas,Cafetería,2026-10,"Pin personalizador",personal,4
+sucursal,americas,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,americas,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,americas,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,americas,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,americas,Cafetería,2026-10,"Existencia",presentacion_producto,3
+sucursal,americas,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,americas,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,americas,Cafetería,2026-10,"Iluminación",interiores,2
+sucursal,americas,Cafetería,2026-10,"Área de mostrador",interiores,3
+sucursal,americas,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+sucursal,americas,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+sucursal,americas,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+sucursal,americas,Cafetería,2026-10,"Limpieza de barra",interiores,2
+sucursal,americas,Cafetería,2026-10,"Climatización",interiores,4
+sucursal,americas,Cafetería,2026-10,"Estado de muebles",interiores,3
+sucursal,angeles,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,angeles,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,angeles,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,angeles,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+sucursal,angeles,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,angeles,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,angeles,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,angeles,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+sucursal,angeles,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,angeles,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,angeles,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,angeles,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,angeles,Cafetería,2026-09,"Apariencia del personal",personal,2
+sucursal,angeles,Cafetería,2026-09,"Uso de tableta",personal,1
+sucursal,angeles,Cafetería,2026-09,"Pin personalizador",personal,3
+sucursal,angeles,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,angeles,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+sucursal,angeles,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+sucursal,angeles,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,angeles,Cafetería,2026-09,"Existencia",presentacion_producto,5
+sucursal,angeles,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,angeles,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,angeles,Cafetería,2026-09,"Iluminación",interiores,2
+sucursal,angeles,Cafetería,2026-09,"Área de mostrador",interiores,2
+sucursal,angeles,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+sucursal,angeles,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+sucursal,angeles,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+sucursal,angeles,Cafetería,2026-09,"Limpieza de barra",interiores,2
+sucursal,angeles,Cafetería,2026-09,"Climatización",interiores,4
+sucursal,angeles,Cafetería,2026-09,"Estado de muebles",interiores,2
+sucursal,angeles,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,angeles,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,angeles,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,angeles,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+sucursal,angeles,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,angeles,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,angeles,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,angeles,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+sucursal,angeles,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,angeles,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,angeles,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,angeles,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,angeles,Cafetería,2026-10,"Apariencia del personal",personal,2
+sucursal,angeles,Cafetería,2026-10,"Uso de tableta",personal,1
+sucursal,angeles,Cafetería,2026-10,"Pin personalizador",personal,4
+sucursal,angeles,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,angeles,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,angeles,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,angeles,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,angeles,Cafetería,2026-10,"Existencia",presentacion_producto,3
+sucursal,angeles,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,angeles,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,angeles,Cafetería,2026-10,"Iluminación",interiores,2
+sucursal,angeles,Cafetería,2026-10,"Área de mostrador",interiores,3
+sucursal,angeles,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+sucursal,angeles,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+sucursal,angeles,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+sucursal,angeles,Cafetería,2026-10,"Limpieza de barra",interiores,2
+sucursal,angeles,Cafetería,2026-10,"Climatización",interiores,4
+sucursal,angeles,Cafetería,2026-10,"Estado de muebles",interiores,3
+sucursal,galerias,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,galerias,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,galerias,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,galerias,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+sucursal,galerias,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,galerias,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,galerias,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,galerias,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+sucursal,galerias,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,galerias,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,galerias,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,galerias,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,galerias,Cafetería,2026-09,"Apariencia del personal",personal,2
+sucursal,galerias,Cafetería,2026-09,"Uso de tableta",personal,1
+sucursal,galerias,Cafetería,2026-09,"Pin personalizador",personal,3
+sucursal,galerias,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,galerias,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+sucursal,galerias,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+sucursal,galerias,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,galerias,Cafetería,2026-09,"Existencia",presentacion_producto,5
+sucursal,galerias,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,galerias,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,galerias,Cafetería,2026-09,"Iluminación",interiores,2
+sucursal,galerias,Cafetería,2026-09,"Área de mostrador",interiores,2
+sucursal,galerias,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+sucursal,galerias,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+sucursal,galerias,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+sucursal,galerias,Cafetería,2026-09,"Limpieza de barra",interiores,2
+sucursal,galerias,Cafetería,2026-09,"Climatización",interiores,4
+sucursal,galerias,Cafetería,2026-09,"Estado de muebles",interiores,2
+sucursal,galerias,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,galerias,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,galerias,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,galerias,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+sucursal,galerias,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,galerias,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,galerias,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,galerias,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+sucursal,galerias,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,galerias,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,galerias,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,galerias,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,galerias,Cafetería,2026-10,"Apariencia del personal",personal,2
+sucursal,galerias,Cafetería,2026-10,"Uso de tableta",personal,1
+sucursal,galerias,Cafetería,2026-10,"Pin personalizador",personal,4
+sucursal,galerias,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,galerias,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,galerias,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,galerias,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,galerias,Cafetería,2026-10,"Existencia",presentacion_producto,3
+sucursal,galerias,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,galerias,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,galerias,Cafetería,2026-10,"Iluminación",interiores,2
+sucursal,galerias,Cafetería,2026-10,"Área de mostrador",interiores,3
+sucursal,galerias,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+sucursal,galerias,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+sucursal,galerias,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+sucursal,galerias,Cafetería,2026-10,"Limpieza de barra",interiores,2
+sucursal,galerias,Cafetería,2026-10,"Climatización",interiores,4
+sucursal,galerias,Cafetería,2026-10,"Estado de muebles",interiores,3
+sucursal,centro,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,centro,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,centro,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,centro,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+sucursal,centro,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,centro,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,centro,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,centro,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+sucursal,centro,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,centro,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,centro,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,centro,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,centro,Cafetería,2026-09,"Apariencia del personal",personal,2
+sucursal,centro,Cafetería,2026-09,"Uso de tableta",personal,1
+sucursal,centro,Cafetería,2026-09,"Pin personalizador",personal,3
+sucursal,centro,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,centro,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+sucursal,centro,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+sucursal,centro,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,centro,Cafetería,2026-09,"Existencia",presentacion_producto,5
+sucursal,centro,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,centro,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,centro,Cafetería,2026-09,"Iluminación",interiores,2
+sucursal,centro,Cafetería,2026-09,"Puertas y vidrios",interiores,2
+sucursal,centro,Cafetería,2026-09,"Música y volumen",interiores,2
+sucursal,centro,Cafetería,2026-09,"Área de mostrador",interiores,2
+sucursal,centro,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+sucursal,centro,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+sucursal,centro,Cafetería,2026-09,"Estado de baños",interiores,4
+sucursal,centro,Cafetería,2026-09,"Limpieza de barra",interiores,2
+sucursal,centro,Cafetería,2026-09,"Climatización",interiores,4
+sucursal,centro,Cafetería,2026-09,"Estado de muebles",interiores,2
+sucursal,centro,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,centro,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,centro,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,centro,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+sucursal,centro,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,centro,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,centro,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,centro,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+sucursal,centro,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,centro,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,centro,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,centro,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,centro,Cafetería,2026-10,"Apariencia del personal",personal,2
+sucursal,centro,Cafetería,2026-10,"Uso de tableta",personal,1
+sucursal,centro,Cafetería,2026-10,"Pin personalizador",personal,4
+sucursal,centro,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,centro,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,centro,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,centro,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,centro,Cafetería,2026-10,"Existencia",presentacion_producto,3
+sucursal,centro,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,centro,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,centro,Cafetería,2026-10,"Iluminación",interiores,2
+sucursal,centro,Cafetería,2026-10,"Puertas y vidrios",interiores,2
+sucursal,centro,Cafetería,2026-10,"Música y volumen",interiores,1
+sucursal,centro,Cafetería,2026-10,"Área de mostrador",interiores,3
+sucursal,centro,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+sucursal,centro,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+sucursal,centro,Cafetería,2026-10,"Estado de baños",interiores,3
+sucursal,centro,Cafetería,2026-10,"Limpieza de barra",interiores,2
+sucursal,centro,Cafetería,2026-10,"Climatización",interiores,4
+sucursal,centro,Cafetería,2026-10,"Estado de muebles",interiores,3
+sucursal,olmeca,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,olmeca,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,olmeca,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,olmeca,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+sucursal,olmeca,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,olmeca,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,olmeca,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,olmeca,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+sucursal,olmeca,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,olmeca,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,olmeca,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,olmeca,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,olmeca,Cafetería,2026-09,"Apariencia del personal",personal,2
+sucursal,olmeca,Cafetería,2026-09,"Uso de tableta",personal,1
+sucursal,olmeca,Cafetería,2026-09,"Pin personalizador",personal,3
+sucursal,olmeca,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,olmeca,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+sucursal,olmeca,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+sucursal,olmeca,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,olmeca,Cafetería,2026-09,"Existencia",presentacion_producto,5
+sucursal,olmeca,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,olmeca,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,olmeca,Cafetería,2026-09,"Iluminación",interiores,2
+sucursal,olmeca,Cafetería,2026-09,"Puertas y vidrios",interiores,2
+sucursal,olmeca,Cafetería,2026-09,"Música y volumen",interiores,2
+sucursal,olmeca,Cafetería,2026-09,"Área de mostrador",interiores,2
+sucursal,olmeca,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+sucursal,olmeca,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+sucursal,olmeca,Cafetería,2026-09,"Estado de baños",interiores,4
+sucursal,olmeca,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+sucursal,olmeca,Cafetería,2026-09,"Limpieza de barra",interiores,2
+sucursal,olmeca,Cafetería,2026-09,"Climatización",interiores,4
+sucursal,olmeca,Cafetería,2026-09,"Estado de muebles",interiores,2
+sucursal,olmeca,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,olmeca,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,olmeca,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,olmeca,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+sucursal,olmeca,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,olmeca,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,olmeca,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,olmeca,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+sucursal,olmeca,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,olmeca,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,olmeca,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,olmeca,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,olmeca,Cafetería,2026-10,"Apariencia del personal",personal,2
+sucursal,olmeca,Cafetería,2026-10,"Uso de tableta",personal,1
+sucursal,olmeca,Cafetería,2026-10,"Pin personalizador",personal,4
+sucursal,olmeca,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,olmeca,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,olmeca,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,olmeca,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,olmeca,Cafetería,2026-10,"Existencia",presentacion_producto,3
+sucursal,olmeca,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,olmeca,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,olmeca,Cafetería,2026-10,"Iluminación",interiores,2
+sucursal,olmeca,Cafetería,2026-10,"Puertas y vidrios",interiores,2
+sucursal,olmeca,Cafetería,2026-10,"Música y volumen",interiores,1
+sucursal,olmeca,Cafetería,2026-10,"Área de mostrador",interiores,3
+sucursal,olmeca,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+sucursal,olmeca,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+sucursal,olmeca,Cafetería,2026-10,"Estado de baños",interiores,3
+sucursal,olmeca,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+sucursal,olmeca,Cafetería,2026-10,"Limpieza de barra",interiores,2
+sucursal,olmeca,Cafetería,2026-10,"Climatización",interiores,4
+sucursal,olmeca,Cafetería,2026-10,"Estado de muebles",interiores,3
+sucursal,usuma,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,usuma,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,usuma,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,usuma,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+sucursal,usuma,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,usuma,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,usuma,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,usuma,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+sucursal,usuma,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,usuma,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,usuma,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,usuma,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,usuma,Cafetería,2026-09,"Apariencia del personal",personal,2
+sucursal,usuma,Cafetería,2026-09,"Uso de tableta",personal,1
+sucursal,usuma,Cafetería,2026-09,"Pin personalizador",personal,3
+sucursal,usuma,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,usuma,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+sucursal,usuma,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+sucursal,usuma,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,usuma,Cafetería,2026-09,"Existencia",presentacion_producto,5
+sucursal,usuma,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,usuma,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,usuma,Cafetería,2026-09,"Iluminación",interiores,2
+sucursal,usuma,Cafetería,2026-09,"Puertas y vidrios",interiores,2
+sucursal,usuma,Cafetería,2026-09,"Música y volumen",interiores,2
+sucursal,usuma,Cafetería,2026-09,"Área de mostrador",interiores,2
+sucursal,usuma,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+sucursal,usuma,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+sucursal,usuma,Cafetería,2026-09,"Estado de baños",interiores,4
+sucursal,usuma,Cafetería,2026-09,"Limpieza de barra",interiores,2
+sucursal,usuma,Cafetería,2026-09,"Climatización",interiores,4
+sucursal,usuma,Cafetería,2026-09,"Estado de muebles",interiores,2
+sucursal,usuma,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,usuma,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,usuma,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,usuma,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+sucursal,usuma,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,usuma,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,usuma,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,usuma,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+sucursal,usuma,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,usuma,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,usuma,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,usuma,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,usuma,Cafetería,2026-10,"Apariencia del personal",personal,2
+sucursal,usuma,Cafetería,2026-10,"Uso de tableta",personal,1
+sucursal,usuma,Cafetería,2026-10,"Pin personalizador",personal,4
+sucursal,usuma,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,usuma,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,usuma,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,usuma,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,usuma,Cafetería,2026-10,"Existencia",presentacion_producto,3
+sucursal,usuma,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,usuma,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,usuma,Cafetería,2026-10,"Iluminación",interiores,2
+sucursal,usuma,Cafetería,2026-10,"Puertas y vidrios",interiores,2
+sucursal,usuma,Cafetería,2026-10,"Música y volumen",interiores,1
+sucursal,usuma,Cafetería,2026-10,"Área de mostrador",interiores,3
+sucursal,usuma,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+sucursal,usuma,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+sucursal,usuma,Cafetería,2026-10,"Estado de baños",interiores,3
+sucursal,usuma,Cafetería,2026-10,"Limpieza de barra",interiores,2
+sucursal,usuma,Cafetería,2026-10,"Climatización",interiores,4
+sucursal,usuma,Cafetería,2026-10,"Estado de muebles",interiores,3
+sucursal,pista,Express,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,pista,Express,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,pista,Express,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,pista,Express,2026-09,"Producto del mes",producto_ventas,3
+sucursal,pista,Express,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,pista,Express,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,pista,Express,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,pista,Express,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,pista,Express,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,pista,Express,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,pista,Express,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,pista,Express,2026-09,"Apariencia del personal",personal,2
+sucursal,pista,Express,2026-09,"Pin personalizador",personal,4
+sucursal,pista,Express,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,pista,Express,2026-09,"Presentación del café",presentacion_producto,3
+sucursal,pista,Express,2026-09,"Presentación de alimentos",presentacion_producto,3
+sucursal,pista,Express,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,pista,Express,2026-09,"Existencia",presentacion_producto,5
+sucursal,pista,Express,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,pista,Express,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,pista,Express,2026-09,"Iluminación",interiores,2
+sucursal,pista,Express,2026-09,"Área de mostrador",interiores,2
+sucursal,pista,Express,2026-09,"Limpieza de barra",interiores,2
+sucursal,pista,Express,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,pista,Express,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,pista,Express,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,pista,Express,2026-10,"Producto del mes",producto_ventas,4
+sucursal,pista,Express,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,pista,Express,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,pista,Express,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,pista,Express,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,pista,Express,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,pista,Express,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,pista,Express,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,pista,Express,2026-10,"Apariencia del personal",personal,2
+sucursal,pista,Express,2026-10,"Pin personalizador",personal,4
+sucursal,pista,Express,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,pista,Express,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,pista,Express,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,pista,Express,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,pista,Express,2026-10,"Existencia",presentacion_producto,3
+sucursal,pista,Express,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,pista,Express,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,pista,Express,2026-10,"Iluminación",interiores,2
+sucursal,pista,Express,2026-10,"Área de mostrador",interiores,3
+sucursal,pista,Express,2026-10,"Limpieza de barra",interiores,2
+sucursal,guayabal,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,guayabal,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,guayabal,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,guayabal,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+sucursal,guayabal,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,guayabal,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,guayabal,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,guayabal,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+sucursal,guayabal,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,guayabal,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,guayabal,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,guayabal,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,guayabal,Cafetería,2026-09,"Apariencia del personal",personal,2
+sucursal,guayabal,Cafetería,2026-09,"Pin personalizador",personal,3
+sucursal,guayabal,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,guayabal,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+sucursal,guayabal,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+sucursal,guayabal,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,guayabal,Cafetería,2026-09,"Existencia",presentacion_producto,5
+sucursal,guayabal,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,guayabal,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,guayabal,Cafetería,2026-09,"Iluminación",interiores,2
+sucursal,guayabal,Cafetería,2026-09,"Puertas y vidrios",interiores,2
+sucursal,guayabal,Cafetería,2026-09,"Área de mostrador",interiores,2
+sucursal,guayabal,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+sucursal,guayabal,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+sucursal,guayabal,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+sucursal,guayabal,Cafetería,2026-09,"Limpieza de barra",interiores,2
+sucursal,guayabal,Cafetería,2026-09,"Climatización",interiores,4
+sucursal,guayabal,Cafetería,2026-09,"Estado de muebles",interiores,2
+sucursal,guayabal,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,guayabal,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,guayabal,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,guayabal,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+sucursal,guayabal,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,guayabal,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,guayabal,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,guayabal,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+sucursal,guayabal,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,guayabal,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,guayabal,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,guayabal,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,guayabal,Cafetería,2026-10,"Apariencia del personal",personal,2
+sucursal,guayabal,Cafetería,2026-10,"Pin personalizador",personal,4
+sucursal,guayabal,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,guayabal,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,guayabal,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,guayabal,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,guayabal,Cafetería,2026-10,"Existencia",presentacion_producto,3
+sucursal,guayabal,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,guayabal,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,guayabal,Cafetería,2026-10,"Iluminación",interiores,2
+sucursal,guayabal,Cafetería,2026-10,"Puertas y vidrios",interiores,2
+sucursal,guayabal,Cafetería,2026-10,"Área de mostrador",interiores,3
+sucursal,guayabal,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+sucursal,guayabal,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+sucursal,guayabal,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+sucursal,guayabal,Cafetería,2026-10,"Limpieza de barra",interiores,2
+sucursal,guayabal,Cafetería,2026-10,"Climatización",interiores,4
+sucursal,guayabal,Cafetería,2026-10,"Estado de muebles",interiores,3
+sucursal,crystal,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,crystal,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,crystal,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,crystal,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+sucursal,crystal,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,crystal,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,crystal,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,crystal,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+sucursal,crystal,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,crystal,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,crystal,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,crystal,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,crystal,Cafetería,2026-09,"Apariencia del personal",personal,2
+sucursal,crystal,Cafetería,2026-09,"Uso de tableta",personal,1
+sucursal,crystal,Cafetería,2026-09,"Pin personalizador",personal,3
+sucursal,crystal,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,crystal,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+sucursal,crystal,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+sucursal,crystal,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,crystal,Cafetería,2026-09,"Existencia",presentacion_producto,5
+sucursal,crystal,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,crystal,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,crystal,Cafetería,2026-09,"Iluminación",interiores,2
+sucursal,crystal,Cafetería,2026-09,"Música y volumen",interiores,2
+sucursal,crystal,Cafetería,2026-09,"Área de mostrador",interiores,2
+sucursal,crystal,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+sucursal,crystal,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+sucursal,crystal,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+sucursal,crystal,Cafetería,2026-09,"Limpieza de barra",interiores,2
+sucursal,crystal,Cafetería,2026-09,"Climatización",interiores,4
+sucursal,crystal,Cafetería,2026-09,"Estado de muebles",interiores,2
+sucursal,crystal,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,crystal,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,crystal,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,crystal,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+sucursal,crystal,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,crystal,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,crystal,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,crystal,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+sucursal,crystal,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,crystal,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,crystal,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,crystal,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,crystal,Cafetería,2026-10,"Apariencia del personal",personal,2
+sucursal,crystal,Cafetería,2026-10,"Uso de tableta",personal,1
+sucursal,crystal,Cafetería,2026-10,"Pin personalizador",personal,4
+sucursal,crystal,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,crystal,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,crystal,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,crystal,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,crystal,Cafetería,2026-10,"Existencia",presentacion_producto,3
+sucursal,crystal,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,crystal,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,crystal,Cafetería,2026-10,"Iluminación",interiores,2
+sucursal,crystal,Cafetería,2026-10,"Música y volumen",interiores,1
+sucursal,crystal,Cafetería,2026-10,"Área de mostrador",interiores,3
+sucursal,crystal,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+sucursal,crystal,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+sucursal,crystal,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+sucursal,crystal,Cafetería,2026-10,"Limpieza de barra",interiores,2
+sucursal,crystal,Cafetería,2026-10,"Climatización",interiores,4
+sucursal,crystal,Cafetería,2026-10,"Estado de muebles",interiores,3
+sucursal,deportiva,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,deportiva,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,deportiva,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,deportiva,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+sucursal,deportiva,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,deportiva,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,deportiva,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,deportiva,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+sucursal,deportiva,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,deportiva,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,deportiva,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,deportiva,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,deportiva,Cafetería,2026-09,"Apariencia del personal",personal,2
+sucursal,deportiva,Cafetería,2026-09,"Uso de tableta",personal,1
+sucursal,deportiva,Cafetería,2026-09,"Pin personalizador",personal,3
+sucursal,deportiva,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,deportiva,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+sucursal,deportiva,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+sucursal,deportiva,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,deportiva,Cafetería,2026-09,"Existencia",presentacion_producto,5
+sucursal,deportiva,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,deportiva,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,deportiva,Cafetería,2026-09,"Jardineras y macetas",exteriores,2
+sucursal,deportiva,Cafetería,2026-09,"Iluminación",interiores,2
+sucursal,deportiva,Cafetería,2026-09,"Música y volumen",interiores,2
+sucursal,deportiva,Cafetería,2026-09,"Área de mostrador",interiores,2
+sucursal,deportiva,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+sucursal,deportiva,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+sucursal,deportiva,Cafetería,2026-09,"Estado de baños",interiores,4
+sucursal,deportiva,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+sucursal,deportiva,Cafetería,2026-09,"Limpieza de barra",interiores,2
+sucursal,deportiva,Cafetería,2026-09,"Climatización",interiores,4
+sucursal,deportiva,Cafetería,2026-09,"Estado de muebles",interiores,2
+sucursal,deportiva,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,deportiva,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,deportiva,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,deportiva,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+sucursal,deportiva,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,deportiva,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,deportiva,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,deportiva,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+sucursal,deportiva,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,deportiva,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,deportiva,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,deportiva,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,deportiva,Cafetería,2026-10,"Apariencia del personal",personal,2
+sucursal,deportiva,Cafetería,2026-10,"Uso de tableta",personal,1
+sucursal,deportiva,Cafetería,2026-10,"Pin personalizador",personal,4
+sucursal,deportiva,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,deportiva,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,deportiva,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,deportiva,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,deportiva,Cafetería,2026-10,"Existencia",presentacion_producto,3
+sucursal,deportiva,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,deportiva,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,deportiva,Cafetería,2026-10,"Jardineras y macetas",exteriores,2
+sucursal,deportiva,Cafetería,2026-10,"Iluminación",interiores,2
+sucursal,deportiva,Cafetería,2026-10,"Música y volumen",interiores,1
+sucursal,deportiva,Cafetería,2026-10,"Área de mostrador",interiores,3
+sucursal,deportiva,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+sucursal,deportiva,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+sucursal,deportiva,Cafetería,2026-10,"Estado de baños",interiores,3
+sucursal,deportiva,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+sucursal,deportiva,Cafetería,2026-10,"Limpieza de barra",interiores,2
+sucursal,deportiva,Cafetería,2026-10,"Climatización",interiores,4
+sucursal,deportiva,Cafetería,2026-10,"Estado de muebles",interiores,3
+sucursal,walmart-deportiva,Express,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,walmart-deportiva,Express,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,walmart-deportiva,Express,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,walmart-deportiva,Express,2026-09,"Producto del mes",producto_ventas,3
+sucursal,walmart-deportiva,Express,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,walmart-deportiva,Express,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,walmart-deportiva,Express,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,walmart-deportiva,Express,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,walmart-deportiva,Express,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,walmart-deportiva,Express,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,walmart-deportiva,Express,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,walmart-deportiva,Express,2026-09,"Apariencia del personal",personal,2
+sucursal,walmart-deportiva,Express,2026-09,"Pin personalizador",personal,4
+sucursal,walmart-deportiva,Express,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,walmart-deportiva,Express,2026-09,"Presentación del café",presentacion_producto,3
+sucursal,walmart-deportiva,Express,2026-09,"Presentación de alimentos",presentacion_producto,3
+sucursal,walmart-deportiva,Express,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,walmart-deportiva,Express,2026-09,"Existencia",presentacion_producto,5
+sucursal,walmart-deportiva,Express,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,walmart-deportiva,Express,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,walmart-deportiva,Express,2026-09,"Iluminación",interiores,2
+sucursal,walmart-deportiva,Express,2026-09,"Área de mostrador",interiores,2
+sucursal,walmart-deportiva,Express,2026-09,"Limpieza de barra",interiores,2
+sucursal,walmart-deportiva,Express,2026-09,"Climatización",interiores,4
+sucursal,walmart-deportiva,Express,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,walmart-deportiva,Express,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,walmart-deportiva,Express,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,walmart-deportiva,Express,2026-10,"Producto del mes",producto_ventas,4
+sucursal,walmart-deportiva,Express,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,walmart-deportiva,Express,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,walmart-deportiva,Express,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,walmart-deportiva,Express,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,walmart-deportiva,Express,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,walmart-deportiva,Express,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,walmart-deportiva,Express,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,walmart-deportiva,Express,2026-10,"Apariencia del personal",personal,2
+sucursal,walmart-deportiva,Express,2026-10,"Pin personalizador",personal,4
+sucursal,walmart-deportiva,Express,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,walmart-deportiva,Express,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,walmart-deportiva,Express,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,walmart-deportiva,Express,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,walmart-deportiva,Express,2026-10,"Existencia",presentacion_producto,3
+sucursal,walmart-deportiva,Express,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,walmart-deportiva,Express,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,walmart-deportiva,Express,2026-10,"Iluminación",interiores,2
+sucursal,walmart-deportiva,Express,2026-10,"Área de mostrador",interiores,3
+sucursal,walmart-deportiva,Express,2026-10,"Limpieza de barra",interiores,2
+sucursal,walmart-deportiva,Express,2026-10,"Climatización",interiores,4
+sucursal,walmart-carrizal,Express,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,walmart-carrizal,Express,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,walmart-carrizal,Express,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,walmart-carrizal,Express,2026-09,"Producto del mes",producto_ventas,3
+sucursal,walmart-carrizal,Express,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,walmart-carrizal,Express,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,walmart-carrizal,Express,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,walmart-carrizal,Express,2026-09,"Atención en mesa",atencion_mesa,2
+sucursal,walmart-carrizal,Express,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,walmart-carrizal,Express,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,walmart-carrizal,Express,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,walmart-carrizal,Express,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,walmart-carrizal,Express,2026-09,"Apariencia del personal",personal,2
+sucursal,walmart-carrizal,Express,2026-09,"Pin personalizador",personal,4
+sucursal,walmart-carrizal,Express,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,walmart-carrizal,Express,2026-09,"Presentación del café",presentacion_producto,3
+sucursal,walmart-carrizal,Express,2026-09,"Presentación de alimentos",presentacion_producto,3
+sucursal,walmart-carrizal,Express,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,walmart-carrizal,Express,2026-09,"Existencia",presentacion_producto,5
+sucursal,walmart-carrizal,Express,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,walmart-carrizal,Express,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,walmart-carrizal,Express,2026-09,"Iluminación",interiores,2
+sucursal,walmart-carrizal,Express,2026-09,"Área de mostrador",interiores,2
+sucursal,walmart-carrizal,Express,2026-09,"Limpieza de mesas y sillas",interiores,2
+sucursal,walmart-carrizal,Express,2026-09,"Limpieza de pisos",interiores,2
+sucursal,walmart-carrizal,Express,2026-09,"Estado de botes de basura",interiores,2
+sucursal,walmart-carrizal,Express,2026-09,"Limpieza de barra",interiores,2
+sucursal,walmart-carrizal,Express,2026-09,"Climatización",interiores,4
+sucursal,walmart-carrizal,Express,2026-09,"Estado de muebles",interiores,2
+sucursal,walmart-carrizal,Express,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,walmart-carrizal,Express,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,walmart-carrizal,Express,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,walmart-carrizal,Express,2026-10,"Producto del mes",producto_ventas,4
+sucursal,walmart-carrizal,Express,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,walmart-carrizal,Express,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,walmart-carrizal,Express,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,walmart-carrizal,Express,2026-10,"Atención en mesa",atencion_mesa,2
+sucursal,walmart-carrizal,Express,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,walmart-carrizal,Express,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,walmart-carrizal,Express,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,walmart-carrizal,Express,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,walmart-carrizal,Express,2026-10,"Apariencia del personal",personal,2
+sucursal,walmart-carrizal,Express,2026-10,"Pin personalizador",personal,4
+sucursal,walmart-carrizal,Express,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,walmart-carrizal,Express,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,walmart-carrizal,Express,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,walmart-carrizal,Express,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,walmart-carrizal,Express,2026-10,"Existencia",presentacion_producto,3
+sucursal,walmart-carrizal,Express,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,walmart-carrizal,Express,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,walmart-carrizal,Express,2026-10,"Iluminación",interiores,2
+sucursal,walmart-carrizal,Express,2026-10,"Área de mostrador",interiores,3
+sucursal,walmart-carrizal,Express,2026-10,"Limpieza de mesas y sillas",interiores,3
+sucursal,walmart-carrizal,Express,2026-10,"Limpieza de pisos",interiores,3
+sucursal,walmart-carrizal,Express,2026-10,"Estado de botes de basura",interiores,2
+sucursal,walmart-carrizal,Express,2026-10,"Limpieza de barra",interiores,2
+sucursal,walmart-carrizal,Express,2026-10,"Climatización",interiores,4
+sucursal,walmart-carrizal,Express,2026-10,"Estado de muebles",interiores,3
+sucursal,walmart-universidad,Express,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,walmart-universidad,Express,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,walmart-universidad,Express,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,walmart-universidad,Express,2026-09,"Producto del mes",producto_ventas,3
+sucursal,walmart-universidad,Express,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,walmart-universidad,Express,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,walmart-universidad,Express,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,walmart-universidad,Express,2026-09,"Atención en mesa",atencion_mesa,2
+sucursal,walmart-universidad,Express,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,walmart-universidad,Express,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,walmart-universidad,Express,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,walmart-universidad,Express,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,walmart-universidad,Express,2026-09,"Apariencia del personal",personal,2
+sucursal,walmart-universidad,Express,2026-09,"Pin personalizador",personal,4
+sucursal,walmart-universidad,Express,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,walmart-universidad,Express,2026-09,"Presentación del café",presentacion_producto,3
+sucursal,walmart-universidad,Express,2026-09,"Presentación de alimentos",presentacion_producto,3
+sucursal,walmart-universidad,Express,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,walmart-universidad,Express,2026-09,"Existencia",presentacion_producto,5
+sucursal,walmart-universidad,Express,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,walmart-universidad,Express,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,walmart-universidad,Express,2026-09,"Iluminación",interiores,2
+sucursal,walmart-universidad,Express,2026-09,"Área de mostrador",interiores,2
+sucursal,walmart-universidad,Express,2026-09,"Limpieza de mesas y sillas",interiores,2
+sucursal,walmart-universidad,Express,2026-09,"Limpieza de pisos",interiores,2
+sucursal,walmart-universidad,Express,2026-09,"Estado de botes de basura",interiores,2
+sucursal,walmart-universidad,Express,2026-09,"Limpieza de barra",interiores,2
+sucursal,walmart-universidad,Express,2026-09,"Climatización",interiores,4
+sucursal,walmart-universidad,Express,2026-09,"Estado de muebles",interiores,2
+sucursal,walmart-universidad,Express,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,walmart-universidad,Express,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,walmart-universidad,Express,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,walmart-universidad,Express,2026-10,"Producto del mes",producto_ventas,4
+sucursal,walmart-universidad,Express,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,walmart-universidad,Express,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,walmart-universidad,Express,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,walmart-universidad,Express,2026-10,"Atención en mesa",atencion_mesa,2
+sucursal,walmart-universidad,Express,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,walmart-universidad,Express,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,walmart-universidad,Express,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,walmart-universidad,Express,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,walmart-universidad,Express,2026-10,"Apariencia del personal",personal,2
+sucursal,walmart-universidad,Express,2026-10,"Pin personalizador",personal,4
+sucursal,walmart-universidad,Express,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,walmart-universidad,Express,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,walmart-universidad,Express,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,walmart-universidad,Express,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,walmart-universidad,Express,2026-10,"Existencia",presentacion_producto,3
+sucursal,walmart-universidad,Express,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,walmart-universidad,Express,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,walmart-universidad,Express,2026-10,"Iluminación",interiores,2
+sucursal,walmart-universidad,Express,2026-10,"Área de mostrador",interiores,3
+sucursal,walmart-universidad,Express,2026-10,"Limpieza de mesas y sillas",interiores,3
+sucursal,walmart-universidad,Express,2026-10,"Limpieza de pisos",interiores,3
+sucursal,walmart-universidad,Express,2026-10,"Estado de botes de basura",interiores,2
+sucursal,walmart-universidad,Express,2026-10,"Limpieza de barra",interiores,2
+sucursal,walmart-universidad,Express,2026-10,"Climatización",interiores,4
+sucursal,walmart-universidad,Express,2026-10,"Estado de muebles",interiores,3
+sucursal,movil-deportiva,Móvil,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,movil-deportiva,Móvil,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,movil-deportiva,Móvil,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,movil-deportiva,Móvil,2026-09,"Producto del mes",producto_ventas,3
+sucursal,movil-deportiva,Móvil,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,movil-deportiva,Móvil,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,movil-deportiva,Móvil,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,movil-deportiva,Móvil,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,movil-deportiva,Móvil,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,movil-deportiva,Móvil,2026-09,"Tiempo en fila",tiempos,3
+sucursal,movil-deportiva,Móvil,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,movil-deportiva,Móvil,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,movil-deportiva,Móvil,2026-09,"Apariencia del personal",personal,2
+sucursal,movil-deportiva,Móvil,2026-09,"Pin personalizador",personal,4
+sucursal,movil-deportiva,Móvil,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,movil-deportiva,Móvil,2026-09,"Presentación del café",presentacion_producto,3
+sucursal,movil-deportiva,Móvil,2026-09,"Presentación de alimentos",presentacion_producto,3
+sucursal,movil-deportiva,Móvil,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,movil-deportiva,Móvil,2026-09,"Existencia",presentacion_producto,5
+sucursal,movil-deportiva,Móvil,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,movil-deportiva,Móvil,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,movil-deportiva,Móvil,2026-09,"Jardineras y macetas",exteriores,2
+sucursal,movil-deportiva,Móvil,2026-09,"Iluminación",interiores,2
+sucursal,movil-deportiva,Móvil,2026-09,"Área de mostrador",interiores,2
+sucursal,movil-deportiva,Móvil,2026-09,"Limpieza de pisos",interiores,2
+sucursal,movil-deportiva,Móvil,2026-09,"Climatización",interiores,4
+sucursal,movil-deportiva,Móvil,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,movil-deportiva,Móvil,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,movil-deportiva,Móvil,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,movil-deportiva,Móvil,2026-10,"Producto del mes",producto_ventas,4
+sucursal,movil-deportiva,Móvil,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,movil-deportiva,Móvil,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,movil-deportiva,Móvil,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,movil-deportiva,Móvil,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,movil-deportiva,Móvil,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,movil-deportiva,Móvil,2026-10,"Tiempo en fila",tiempos,3
+sucursal,movil-deportiva,Móvil,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,movil-deportiva,Móvil,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,movil-deportiva,Móvil,2026-10,"Apariencia del personal",personal,2
+sucursal,movil-deportiva,Móvil,2026-10,"Pin personalizador",personal,4
+sucursal,movil-deportiva,Móvil,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,movil-deportiva,Móvil,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,movil-deportiva,Móvil,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,movil-deportiva,Móvil,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,movil-deportiva,Móvil,2026-10,"Existencia",presentacion_producto,3
+sucursal,movil-deportiva,Móvil,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,movil-deportiva,Móvil,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,movil-deportiva,Móvil,2026-10,"Jardineras y macetas",exteriores,2
+sucursal,movil-deportiva,Móvil,2026-10,"Interfón",exteriores,4
+sucursal,movil-deportiva,Móvil,2026-10,"Iluminación",interiores,2
+sucursal,movil-deportiva,Móvil,2026-10,"Área de mostrador",interiores,3
+sucursal,movil-deportiva,Móvil,2026-10,"Limpieza de pisos",interiores,3
+sucursal,movil-deportiva,Móvil,2026-10,"Climatización",interiores,4
+sucursal,movil-la-venta,Móvil,2026-09,"Contacto visual y saludo",bienvenida,4
+sucursal,movil-la-venta,Móvil,2026-09,"Agradecimiento y despedida",bienvenida,2
+sucursal,movil-la-venta,Móvil,2026-09,"Conocimiento de productos",producto_ventas,2
+sucursal,movil-la-venta,Móvil,2026-09,"Producto del mes",producto_ventas,3
+sucursal,movil-la-venta,Móvil,2026-09,"Venta cruzada",producto_ventas,5
+sucursal,movil-la-venta,Móvil,2026-09,"APP Cabaña Cash",producto_ventas,9
+sucursal,movil-la-venta,Móvil,2026-09,"Menciona promociones",producto_ventas,3
+sucursal,movil-la-venta,Móvil,2026-09,"Entrega de ticket",atencion_mesa,3
+sucursal,movil-la-venta,Móvil,2026-09,"Tiempo de espera de atención",tiempos,3
+sucursal,movil-la-venta,Móvil,2026-09,"Tiempo en fila",tiempos,3
+sucursal,movil-la-venta,Móvil,2026-09,"Tiempo de preparación",tiempos,4
+sucursal,movil-la-venta,Móvil,2026-09,"Cantidad de colaboradores",personal,1
+sucursal,movil-la-venta,Móvil,2026-09,"Apariencia del personal",personal,2
+sucursal,movil-la-venta,Móvil,2026-09,"Pin personalizador",personal,4
+sucursal,movil-la-venta,Móvil,2026-09,"Presentación del vaso",presentacion_producto,2
+sucursal,movil-la-venta,Móvil,2026-09,"Presentación del café",presentacion_producto,3
+sucursal,movil-la-venta,Móvil,2026-09,"Presentación de alimentos",presentacion_producto,3
+sucursal,movil-la-venta,Móvil,2026-09,"Estado de la panera",presentacion_producto,2
+sucursal,movil-la-venta,Móvil,2026-09,"Existencia",presentacion_producto,5
+sucursal,movil-la-venta,Móvil,2026-09,"Limpieza de fachada",exteriores,2
+sucursal,movil-la-venta,Móvil,2026-09,"Letrero/anuncio",exteriores,2
+sucursal,movil-la-venta,Móvil,2026-09,"Iluminación",interiores,2
+sucursal,movil-la-venta,Móvil,2026-09,"Área de mostrador",interiores,2
+sucursal,movil-la-venta,Móvil,2026-09,"Climatización",interiores,4
+sucursal,movil-la-venta,Móvil,2026-10,"Contacto visual y saludo",bienvenida,6
+sucursal,movil-la-venta,Móvil,2026-10,"Agradecimiento y despedida",bienvenida,4
+sucursal,movil-la-venta,Móvil,2026-10,"Conocimiento de productos",producto_ventas,4
+sucursal,movil-la-venta,Móvil,2026-10,"Producto del mes",producto_ventas,4
+sucursal,movil-la-venta,Móvil,2026-10,"Venta cruzada",producto_ventas,7
+sucursal,movil-la-venta,Móvil,2026-10,"APP Cabaña Cash",producto_ventas,5
+sucursal,movil-la-venta,Móvil,2026-10,"Menciona promociones",producto_ventas,4
+sucursal,movil-la-venta,Móvil,2026-10,"Entrega de ticket",atencion_mesa,3
+sucursal,movil-la-venta,Móvil,2026-10,"Tiempo de espera de atención",tiempos,3
+sucursal,movil-la-venta,Móvil,2026-10,"Tiempo en fila",tiempos,3
+sucursal,movil-la-venta,Móvil,2026-10,"Tiempo de preparación",tiempos,4
+sucursal,movil-la-venta,Móvil,2026-10,"Cantidad de colaboradores",personal,1
+sucursal,movil-la-venta,Móvil,2026-10,"Apariencia del personal",personal,2
+sucursal,movil-la-venta,Móvil,2026-10,"Pin personalizador",personal,4
+sucursal,movil-la-venta,Móvil,2026-10,"Presentación del vaso",presentacion_producto,2
+sucursal,movil-la-venta,Móvil,2026-10,"Presentación del café",presentacion_producto,7
+sucursal,movil-la-venta,Móvil,2026-10,"Presentación de alimentos",presentacion_producto,4
+sucursal,movil-la-venta,Móvil,2026-10,"Estado de la panera",presentacion_producto,2
+sucursal,movil-la-venta,Móvil,2026-10,"Existencia",presentacion_producto,3
+sucursal,movil-la-venta,Móvil,2026-10,"Limpieza de fachada",exteriores,4
+sucursal,movil-la-venta,Móvil,2026-10,"Letrero/anuncio",exteriores,2
+sucursal,movil-la-venta,Móvil,2026-10,"Iluminación",interiores,2
+sucursal,movil-la-venta,Móvil,2026-10,"Área de mostrador",interiores,3
+sucursal,movil-la-venta,Móvil,2026-10,"Climatización",interiores,4
+franquicia,via2,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+franquicia,via2,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+franquicia,via2,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+franquicia,via2,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+franquicia,via2,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+franquicia,via2,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+franquicia,via2,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+franquicia,via2,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+franquicia,via2,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+franquicia,via2,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+franquicia,via2,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+franquicia,via2,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+franquicia,via2,Cafetería,2026-09,"Apariencia del personal",personal,2
+franquicia,via2,Cafetería,2026-09,"Pin personalizador",personal,3
+franquicia,via2,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+franquicia,via2,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+franquicia,via2,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+franquicia,via2,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+franquicia,via2,Cafetería,2026-09,"Existencia",presentacion_producto,5
+franquicia,via2,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+franquicia,via2,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+franquicia,via2,Cafetería,2026-09,"Iluminación",interiores,2
+franquicia,via2,Cafetería,2026-09,"Área de mostrador",interiores,2
+franquicia,via2,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+franquicia,via2,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+franquicia,via2,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+franquicia,via2,Cafetería,2026-09,"Limpieza de barra",interiores,2
+franquicia,via2,Cafetería,2026-09,"Climatización",interiores,4
+franquicia,via2,Cafetería,2026-09,"Estado de muebles",interiores,2
+franquicia,via2,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+franquicia,via2,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+franquicia,via2,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+franquicia,via2,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+franquicia,via2,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+franquicia,via2,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+franquicia,via2,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+franquicia,via2,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+franquicia,via2,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+franquicia,via2,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+franquicia,via2,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+franquicia,via2,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+franquicia,via2,Cafetería,2026-10,"Apariencia del personal",personal,2
+franquicia,via2,Cafetería,2026-10,"Pin personalizador",personal,4
+franquicia,via2,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+franquicia,via2,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+franquicia,via2,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+franquicia,via2,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+franquicia,via2,Cafetería,2026-10,"Existencia",presentacion_producto,3
+franquicia,via2,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+franquicia,via2,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+franquicia,via2,Cafetería,2026-10,"Iluminación",interiores,2
+franquicia,via2,Cafetería,2026-10,"Área de mostrador",interiores,3
+franquicia,via2,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+franquicia,via2,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+franquicia,via2,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+franquicia,via2,Cafetería,2026-10,"Limpieza de barra",interiores,2
+franquicia,via2,Cafetería,2026-10,"Climatización",interiores,4
+franquicia,via2,Cafetería,2026-10,"Estado de muebles",interiores,3
+franquicia,citycenter,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+franquicia,citycenter,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+franquicia,citycenter,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+franquicia,citycenter,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+franquicia,citycenter,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+franquicia,citycenter,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+franquicia,citycenter,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+franquicia,citycenter,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+franquicia,citycenter,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+franquicia,citycenter,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+franquicia,citycenter,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+franquicia,citycenter,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+franquicia,citycenter,Cafetería,2026-09,"Apariencia del personal",personal,2
+franquicia,citycenter,Cafetería,2026-09,"Pin personalizador",personal,3
+franquicia,citycenter,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+franquicia,citycenter,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+franquicia,citycenter,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+franquicia,citycenter,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+franquicia,citycenter,Cafetería,2026-09,"Existencia",presentacion_producto,5
+franquicia,citycenter,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+franquicia,citycenter,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+franquicia,citycenter,Cafetería,2026-09,"Iluminación",interiores,2
+franquicia,citycenter,Cafetería,2026-09,"Área de mostrador",interiores,2
+franquicia,citycenter,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+franquicia,citycenter,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+franquicia,citycenter,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+franquicia,citycenter,Cafetería,2026-09,"Limpieza de barra",interiores,2
+franquicia,citycenter,Cafetería,2026-09,"Climatización",interiores,4
+franquicia,citycenter,Cafetería,2026-09,"Estado de muebles",interiores,2
+franquicia,citycenter,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+franquicia,citycenter,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+franquicia,citycenter,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+franquicia,citycenter,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+franquicia,citycenter,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+franquicia,citycenter,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+franquicia,citycenter,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+franquicia,citycenter,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+franquicia,citycenter,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+franquicia,citycenter,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+franquicia,citycenter,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+franquicia,citycenter,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+franquicia,citycenter,Cafetería,2026-10,"Apariencia del personal",personal,2
+franquicia,citycenter,Cafetería,2026-10,"Pin personalizador",personal,4
+franquicia,citycenter,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+franquicia,citycenter,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+franquicia,citycenter,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+franquicia,citycenter,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+franquicia,citycenter,Cafetería,2026-10,"Existencia",presentacion_producto,3
+franquicia,citycenter,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+franquicia,citycenter,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+franquicia,citycenter,Cafetería,2026-10,"Iluminación",interiores,2
+franquicia,citycenter,Cafetería,2026-10,"Área de mostrador",interiores,3
+franquicia,citycenter,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+franquicia,citycenter,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+franquicia,citycenter,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+franquicia,citycenter,Cafetería,2026-10,"Limpieza de barra",interiores,2
+franquicia,citycenter,Cafetería,2026-10,"Climatización",interiores,4
+franquicia,citycenter,Cafetería,2026-10,"Estado de muebles",interiores,3
+franquicia,cardenas,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+franquicia,cardenas,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+franquicia,cardenas,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+franquicia,cardenas,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+franquicia,cardenas,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+franquicia,cardenas,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+franquicia,cardenas,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+franquicia,cardenas,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+franquicia,cardenas,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+franquicia,cardenas,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+franquicia,cardenas,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+franquicia,cardenas,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+franquicia,cardenas,Cafetería,2026-09,"Apariencia del personal",personal,2
+franquicia,cardenas,Cafetería,2026-09,"Pin personalizador",personal,3
+franquicia,cardenas,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+franquicia,cardenas,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+franquicia,cardenas,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+franquicia,cardenas,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+franquicia,cardenas,Cafetería,2026-09,"Existencia",presentacion_producto,5
+franquicia,cardenas,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+franquicia,cardenas,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+franquicia,cardenas,Cafetería,2026-09,"Iluminación",interiores,2
+franquicia,cardenas,Cafetería,2026-09,"Área de mostrador",interiores,2
+franquicia,cardenas,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+franquicia,cardenas,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+franquicia,cardenas,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+franquicia,cardenas,Cafetería,2026-09,"Limpieza de barra",interiores,2
+franquicia,cardenas,Cafetería,2026-09,"Climatización",interiores,4
+franquicia,cardenas,Cafetería,2026-09,"Estado de muebles",interiores,2
+franquicia,cardenas,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+franquicia,cardenas,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+franquicia,cardenas,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+franquicia,cardenas,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+franquicia,cardenas,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+franquicia,cardenas,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+franquicia,cardenas,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+franquicia,cardenas,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+franquicia,cardenas,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+franquicia,cardenas,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+franquicia,cardenas,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+franquicia,cardenas,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+franquicia,cardenas,Cafetería,2026-10,"Apariencia del personal",personal,2
+franquicia,cardenas,Cafetería,2026-10,"Pin personalizador",personal,4
+franquicia,cardenas,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+franquicia,cardenas,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+franquicia,cardenas,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+franquicia,cardenas,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+franquicia,cardenas,Cafetería,2026-10,"Existencia",presentacion_producto,3
+franquicia,cardenas,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+franquicia,cardenas,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+franquicia,cardenas,Cafetería,2026-10,"Iluminación",interiores,2
+franquicia,cardenas,Cafetería,2026-10,"Área de mostrador",interiores,3
+franquicia,cardenas,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+franquicia,cardenas,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+franquicia,cardenas,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+franquicia,cardenas,Cafetería,2026-10,"Limpieza de barra",interiores,2
+franquicia,cardenas,Cafetería,2026-10,"Climatización",interiores,4
+franquicia,cardenas,Cafetería,2026-10,"Estado de muebles",interiores,3
+franquicia,paraiso,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+franquicia,paraiso,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+franquicia,paraiso,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+franquicia,paraiso,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+franquicia,paraiso,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+franquicia,paraiso,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+franquicia,paraiso,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+franquicia,paraiso,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+franquicia,paraiso,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+franquicia,paraiso,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+franquicia,paraiso,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+franquicia,paraiso,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+franquicia,paraiso,Cafetería,2026-09,"Apariencia del personal",personal,2
+franquicia,paraiso,Cafetería,2026-09,"Pin personalizador",personal,3
+franquicia,paraiso,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+franquicia,paraiso,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+franquicia,paraiso,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+franquicia,paraiso,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+franquicia,paraiso,Cafetería,2026-09,"Existencia",presentacion_producto,5
+franquicia,paraiso,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+franquicia,paraiso,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+franquicia,paraiso,Cafetería,2026-09,"Iluminación",interiores,2
+franquicia,paraiso,Cafetería,2026-09,"Área de mostrador",interiores,2
+franquicia,paraiso,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+franquicia,paraiso,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+franquicia,paraiso,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+franquicia,paraiso,Cafetería,2026-09,"Limpieza de barra",interiores,2
+franquicia,paraiso,Cafetería,2026-09,"Climatización",interiores,4
+franquicia,paraiso,Cafetería,2026-09,"Estado de muebles",interiores,2
+franquicia,paraiso,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+franquicia,paraiso,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+franquicia,paraiso,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+franquicia,paraiso,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+franquicia,paraiso,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+franquicia,paraiso,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+franquicia,paraiso,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+franquicia,paraiso,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+franquicia,paraiso,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+franquicia,paraiso,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+franquicia,paraiso,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+franquicia,paraiso,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+franquicia,paraiso,Cafetería,2026-10,"Apariencia del personal",personal,2
+franquicia,paraiso,Cafetería,2026-10,"Pin personalizador",personal,4
+franquicia,paraiso,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+franquicia,paraiso,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+franquicia,paraiso,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+franquicia,paraiso,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+franquicia,paraiso,Cafetería,2026-10,"Existencia",presentacion_producto,3
+franquicia,paraiso,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+franquicia,paraiso,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+franquicia,paraiso,Cafetería,2026-10,"Iluminación",interiores,2
+franquicia,paraiso,Cafetería,2026-10,"Área de mostrador",interiores,3
+franquicia,paraiso,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+franquicia,paraiso,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+franquicia,paraiso,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+franquicia,paraiso,Cafetería,2026-10,"Limpieza de barra",interiores,2
+franquicia,paraiso,Cafetería,2026-10,"Climatización",interiores,4
+franquicia,paraiso,Cafetería,2026-10,"Estado de muebles",interiores,3
+franquicia,dosbocas,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+franquicia,dosbocas,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+franquicia,dosbocas,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+franquicia,dosbocas,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+franquicia,dosbocas,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+franquicia,dosbocas,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+franquicia,dosbocas,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+franquicia,dosbocas,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+franquicia,dosbocas,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+franquicia,dosbocas,Cafetería,2026-09,"Tiempo en fila",tiempos,3
+franquicia,dosbocas,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+franquicia,dosbocas,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+franquicia,dosbocas,Cafetería,2026-09,"Apariencia del personal",personal,2
+franquicia,dosbocas,Cafetería,2026-09,"Uso de tableta",personal,1
+franquicia,dosbocas,Cafetería,2026-09,"Pin personalizador",personal,3
+franquicia,dosbocas,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+franquicia,dosbocas,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+franquicia,dosbocas,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+franquicia,dosbocas,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+franquicia,dosbocas,Cafetería,2026-09,"Existencia",presentacion_producto,5
+franquicia,dosbocas,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+franquicia,dosbocas,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+franquicia,dosbocas,Cafetería,2026-09,"Iluminación",interiores,2
+franquicia,dosbocas,Cafetería,2026-09,"Área de mostrador",interiores,2
+franquicia,dosbocas,Cafetería,2026-09,"Climatización",interiores,4
+franquicia,dosbocas,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+franquicia,dosbocas,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+franquicia,dosbocas,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+franquicia,dosbocas,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+franquicia,dosbocas,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+franquicia,dosbocas,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+franquicia,dosbocas,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+franquicia,dosbocas,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+franquicia,dosbocas,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+franquicia,dosbocas,Cafetería,2026-10,"Tiempo en fila",tiempos,3
+franquicia,dosbocas,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+franquicia,dosbocas,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+franquicia,dosbocas,Cafetería,2026-10,"Apariencia del personal",personal,2
+franquicia,dosbocas,Cafetería,2026-10,"Uso de tableta",personal,1
+franquicia,dosbocas,Cafetería,2026-10,"Pin personalizador",personal,4
+franquicia,dosbocas,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+franquicia,dosbocas,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+franquicia,dosbocas,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+franquicia,dosbocas,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+franquicia,dosbocas,Cafetería,2026-10,"Existencia",presentacion_producto,3
+franquicia,dosbocas,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+franquicia,dosbocas,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+franquicia,dosbocas,Cafetería,2026-10,"Iluminación",interiores,2
+franquicia,dosbocas,Cafetería,2026-10,"Área de mostrador",interiores,3
+franquicia,dosbocas,Cafetería,2026-10,"Climatización",interiores,4
+franquicia,cumuapa,Móvil,2026-09,"Contacto visual y saludo",bienvenida,4
+franquicia,cumuapa,Móvil,2026-09,"Agradecimiento y despedida",bienvenida,2
+franquicia,cumuapa,Móvil,2026-09,"Conocimiento de productos",producto_ventas,2
+franquicia,cumuapa,Móvil,2026-09,"Producto del mes",producto_ventas,3
+franquicia,cumuapa,Móvil,2026-09,"Venta cruzada",producto_ventas,5
+franquicia,cumuapa,Móvil,2026-09,"APP Cabaña Cash",producto_ventas,9
+franquicia,cumuapa,Móvil,2026-09,"Menciona promociones",producto_ventas,3
+franquicia,cumuapa,Móvil,2026-09,"Entrega de ticket",atencion_mesa,3
+franquicia,cumuapa,Móvil,2026-09,"Tiempo de espera de atención",tiempos,3
+franquicia,cumuapa,Móvil,2026-09,"Tiempo en fila",tiempos,3
+franquicia,cumuapa,Móvil,2026-09,"Tiempo de preparación",tiempos,4
+franquicia,cumuapa,Móvil,2026-09,"Cantidad de colaboradores",personal,1
+franquicia,cumuapa,Móvil,2026-09,"Apariencia del personal",personal,2
+franquicia,cumuapa,Móvil,2026-09,"Pin personalizador",personal,4
+franquicia,cumuapa,Móvil,2026-09,"Presentación del vaso",presentacion_producto,2
+franquicia,cumuapa,Móvil,2026-09,"Presentación del café",presentacion_producto,3
+franquicia,cumuapa,Móvil,2026-09,"Presentación de alimentos",presentacion_producto,3
+franquicia,cumuapa,Móvil,2026-09,"Estado de la panera",presentacion_producto,2
+franquicia,cumuapa,Móvil,2026-09,"Existencia",presentacion_producto,5
+franquicia,cumuapa,Móvil,2026-09,"Limpieza de fachada",exteriores,2
+franquicia,cumuapa,Móvil,2026-09,"Letrero/anuncio",exteriores,2
+franquicia,cumuapa,Móvil,2026-09,"Iluminación",interiores,2
+franquicia,cumuapa,Móvil,2026-09,"Área de mostrador",interiores,2
+franquicia,cumuapa,Móvil,2026-09,"Climatización",interiores,4
+franquicia,cumuapa,Móvil,2026-10,"Contacto visual y saludo",bienvenida,6
+franquicia,cumuapa,Móvil,2026-10,"Agradecimiento y despedida",bienvenida,4
+franquicia,cumuapa,Móvil,2026-10,"Conocimiento de productos",producto_ventas,4
+franquicia,cumuapa,Móvil,2026-10,"Producto del mes",producto_ventas,4
+franquicia,cumuapa,Móvil,2026-10,"Venta cruzada",producto_ventas,7
+franquicia,cumuapa,Móvil,2026-10,"APP Cabaña Cash",producto_ventas,5
+franquicia,cumuapa,Móvil,2026-10,"Menciona promociones",producto_ventas,4
+franquicia,cumuapa,Móvil,2026-10,"Entrega de ticket",atencion_mesa,3
+franquicia,cumuapa,Móvil,2026-10,"Tiempo de espera de atención",tiempos,3
+franquicia,cumuapa,Móvil,2026-10,"Tiempo en fila",tiempos,3
+franquicia,cumuapa,Móvil,2026-10,"Tiempo de preparación",tiempos,4
+franquicia,cumuapa,Móvil,2026-10,"Cantidad de colaboradores",personal,1
+franquicia,cumuapa,Móvil,2026-10,"Apariencia del personal",personal,2
+franquicia,cumuapa,Móvil,2026-10,"Pin personalizador",personal,4
+franquicia,cumuapa,Móvil,2026-10,"Presentación del vaso",presentacion_producto,2
+franquicia,cumuapa,Móvil,2026-10,"Presentación del café",presentacion_producto,7
+franquicia,cumuapa,Móvil,2026-10,"Presentación de alimentos",presentacion_producto,4
+franquicia,cumuapa,Móvil,2026-10,"Estado de la panera",presentacion_producto,2
+franquicia,cumuapa,Móvil,2026-10,"Existencia",presentacion_producto,3
+franquicia,cumuapa,Móvil,2026-10,"Limpieza de fachada",exteriores,4
+franquicia,cumuapa,Móvil,2026-10,"Letrero/anuncio",exteriores,2
+franquicia,cumuapa,Móvil,2026-10,"Iluminación",interiores,2
+franquicia,cumuapa,Móvil,2026-10,"Área de mostrador",interiores,3
+franquicia,cumuapa,Móvil,2026-10,"Climatización",interiores,4
+franquicia,cunduacan,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+franquicia,cunduacan,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+franquicia,cunduacan,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+franquicia,cunduacan,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+franquicia,cunduacan,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+franquicia,cunduacan,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+franquicia,cunduacan,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+franquicia,cunduacan,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+franquicia,cunduacan,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+franquicia,cunduacan,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+franquicia,cunduacan,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+franquicia,cunduacan,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+franquicia,cunduacan,Cafetería,2026-09,"Apariencia del personal",personal,2
+franquicia,cunduacan,Cafetería,2026-09,"Pin personalizador",personal,3
+franquicia,cunduacan,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+franquicia,cunduacan,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+franquicia,cunduacan,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+franquicia,cunduacan,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+franquicia,cunduacan,Cafetería,2026-09,"Existencia",presentacion_producto,5
+franquicia,cunduacan,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+franquicia,cunduacan,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+franquicia,cunduacan,Cafetería,2026-09,"Iluminación",interiores,2
+franquicia,cunduacan,Cafetería,2026-09,"Área de mostrador",interiores,2
+franquicia,cunduacan,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+franquicia,cunduacan,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+franquicia,cunduacan,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+franquicia,cunduacan,Cafetería,2026-09,"Limpieza de barra",interiores,2
+franquicia,cunduacan,Cafetería,2026-09,"Climatización",interiores,4
+franquicia,cunduacan,Cafetería,2026-09,"Estado de muebles",interiores,2
+franquicia,cunduacan,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+franquicia,cunduacan,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+franquicia,cunduacan,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+franquicia,cunduacan,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+franquicia,cunduacan,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+franquicia,cunduacan,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+franquicia,cunduacan,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+franquicia,cunduacan,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+franquicia,cunduacan,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+franquicia,cunduacan,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+franquicia,cunduacan,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+franquicia,cunduacan,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+franquicia,cunduacan,Cafetería,2026-10,"Apariencia del personal",personal,2
+franquicia,cunduacan,Cafetería,2026-10,"Pin personalizador",personal,4
+franquicia,cunduacan,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+franquicia,cunduacan,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+franquicia,cunduacan,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+franquicia,cunduacan,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+franquicia,cunduacan,Cafetería,2026-10,"Existencia",presentacion_producto,3
+franquicia,cunduacan,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+franquicia,cunduacan,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+franquicia,cunduacan,Cafetería,2026-10,"Iluminación",interiores,2
+franquicia,cunduacan,Cafetería,2026-10,"Área de mostrador",interiores,3
+franquicia,cunduacan,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+franquicia,cunduacan,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+franquicia,cunduacan,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+franquicia,cunduacan,Cafetería,2026-10,"Limpieza de barra",interiores,2
+franquicia,cunduacan,Cafetería,2026-10,"Climatización",interiores,4
+franquicia,cunduacan,Cafetería,2026-10,"Estado de muebles",interiores,3
+franquicia,senderos,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+franquicia,senderos,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+franquicia,senderos,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+franquicia,senderos,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+franquicia,senderos,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+franquicia,senderos,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+franquicia,senderos,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+franquicia,senderos,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+franquicia,senderos,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+franquicia,senderos,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+franquicia,senderos,Cafetería,2026-09,"Tiempo en fila",tiempos,3
+franquicia,senderos,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+franquicia,senderos,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+franquicia,senderos,Cafetería,2026-09,"Apariencia del personal",personal,2
+franquicia,senderos,Cafetería,2026-09,"Pin personalizador",personal,3
+franquicia,senderos,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+franquicia,senderos,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+franquicia,senderos,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+franquicia,senderos,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+franquicia,senderos,Cafetería,2026-09,"Existencia",presentacion_producto,5
+franquicia,senderos,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+franquicia,senderos,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+franquicia,senderos,Cafetería,2026-09,"Jardineras y macetas",exteriores,2
+franquicia,senderos,Cafetería,2026-09,"Iluminación",interiores,2
+franquicia,senderos,Cafetería,2026-09,"Puertas y vidrios",interiores,2
+franquicia,senderos,Cafetería,2026-09,"Música y volumen",interiores,2
+franquicia,senderos,Cafetería,2026-09,"Área de mostrador",interiores,2
+franquicia,senderos,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+franquicia,senderos,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+franquicia,senderos,Cafetería,2026-09,"Estado de baños",interiores,4
+franquicia,senderos,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+franquicia,senderos,Cafetería,2026-09,"Limpieza de barra",interiores,2
+franquicia,senderos,Cafetería,2026-09,"Climatización",interiores,4
+franquicia,senderos,Cafetería,2026-09,"Estado de muebles",interiores,2
+franquicia,senderos,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+franquicia,senderos,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+franquicia,senderos,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+franquicia,senderos,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+franquicia,senderos,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+franquicia,senderos,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+franquicia,senderos,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+franquicia,senderos,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+franquicia,senderos,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+franquicia,senderos,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+franquicia,senderos,Cafetería,2026-10,"Tiempo en fila",tiempos,3
+franquicia,senderos,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+franquicia,senderos,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+franquicia,senderos,Cafetería,2026-10,"Apariencia del personal",personal,2
+franquicia,senderos,Cafetería,2026-10,"Pin personalizador",personal,4
+franquicia,senderos,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+franquicia,senderos,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+franquicia,senderos,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+franquicia,senderos,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+franquicia,senderos,Cafetería,2026-10,"Existencia",presentacion_producto,3
+franquicia,senderos,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+franquicia,senderos,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+franquicia,senderos,Cafetería,2026-10,"Jardineras y macetas",exteriores,2
+franquicia,senderos,Cafetería,2026-10,"Iluminación",interiores,2
+franquicia,senderos,Cafetería,2026-10,"Puertas y vidrios",interiores,2
+franquicia,senderos,Cafetería,2026-10,"Música y volumen",interiores,1
+franquicia,senderos,Cafetería,2026-10,"Área de mostrador",interiores,3
+franquicia,senderos,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+franquicia,senderos,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+franquicia,senderos,Cafetería,2026-10,"Estado de baños",interiores,3
+franquicia,senderos,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+franquicia,senderos,Cafetería,2026-10,"Limpieza de barra",interiores,2
+franquicia,senderos,Cafetería,2026-10,"Climatización",interiores,4
+franquicia,senderos,Cafetería,2026-10,"Estado de muebles",interiores,3
+franquicia,jalpa,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+franquicia,jalpa,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+franquicia,jalpa,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+franquicia,jalpa,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+franquicia,jalpa,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+franquicia,jalpa,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+franquicia,jalpa,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+franquicia,jalpa,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+franquicia,jalpa,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+franquicia,jalpa,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+franquicia,jalpa,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+franquicia,jalpa,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+franquicia,jalpa,Cafetería,2026-09,"Apariencia del personal",personal,2
+franquicia,jalpa,Cafetería,2026-09,"Pin personalizador",personal,3
+franquicia,jalpa,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+franquicia,jalpa,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+franquicia,jalpa,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+franquicia,jalpa,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+franquicia,jalpa,Cafetería,2026-09,"Existencia",presentacion_producto,5
+franquicia,jalpa,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+franquicia,jalpa,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+franquicia,jalpa,Cafetería,2026-09,"Iluminación",interiores,2
+franquicia,jalpa,Cafetería,2026-09,"Área de mostrador",interiores,2
+franquicia,jalpa,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+franquicia,jalpa,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+franquicia,jalpa,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+franquicia,jalpa,Cafetería,2026-09,"Limpieza de barra",interiores,2
+franquicia,jalpa,Cafetería,2026-09,"Climatización",interiores,4
+franquicia,jalpa,Cafetería,2026-09,"Estado de muebles",interiores,2
+franquicia,jalpa,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+franquicia,jalpa,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+franquicia,jalpa,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+franquicia,jalpa,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+franquicia,jalpa,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+franquicia,jalpa,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+franquicia,jalpa,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+franquicia,jalpa,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+franquicia,jalpa,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+franquicia,jalpa,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+franquicia,jalpa,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+franquicia,jalpa,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+franquicia,jalpa,Cafetería,2026-10,"Apariencia del personal",personal,2
+franquicia,jalpa,Cafetería,2026-10,"Pin personalizador",personal,4
+franquicia,jalpa,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+franquicia,jalpa,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+franquicia,jalpa,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+franquicia,jalpa,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+franquicia,jalpa,Cafetería,2026-10,"Existencia",presentacion_producto,3
+franquicia,jalpa,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+franquicia,jalpa,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+franquicia,jalpa,Cafetería,2026-10,"Iluminación",interiores,2
+franquicia,jalpa,Cafetería,2026-10,"Área de mostrador",interiores,3
+franquicia,jalpa,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+franquicia,jalpa,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+franquicia,jalpa,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+franquicia,jalpa,Cafetería,2026-10,"Limpieza de barra",interiores,2
+franquicia,jalpa,Cafetería,2026-10,"Climatización",interiores,4
+franquicia,jalpa,Cafetería,2026-10,"Estado de muebles",interiores,3
+franquicia,cd-carmen,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+franquicia,cd-carmen,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+franquicia,cd-carmen,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+franquicia,cd-carmen,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+franquicia,cd-carmen,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+franquicia,cd-carmen,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+franquicia,cd-carmen,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+franquicia,cd-carmen,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+franquicia,cd-carmen,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+franquicia,cd-carmen,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+franquicia,cd-carmen,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+franquicia,cd-carmen,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+franquicia,cd-carmen,Cafetería,2026-09,"Apariencia del personal",personal,2
+franquicia,cd-carmen,Cafetería,2026-09,"Pin personalizador",personal,3
+franquicia,cd-carmen,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+franquicia,cd-carmen,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+franquicia,cd-carmen,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+franquicia,cd-carmen,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+franquicia,cd-carmen,Cafetería,2026-09,"Existencia",presentacion_producto,5
+franquicia,cd-carmen,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+franquicia,cd-carmen,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+franquicia,cd-carmen,Cafetería,2026-09,"Iluminación",interiores,2
+franquicia,cd-carmen,Cafetería,2026-09,"Área de mostrador",interiores,2
+franquicia,cd-carmen,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+franquicia,cd-carmen,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+franquicia,cd-carmen,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+franquicia,cd-carmen,Cafetería,2026-09,"Limpieza de barra",interiores,2
+franquicia,cd-carmen,Cafetería,2026-09,"Climatización",interiores,4
+franquicia,cd-carmen,Cafetería,2026-09,"Estado de muebles",interiores,2
+franquicia,cd-carmen,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+franquicia,cd-carmen,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+franquicia,cd-carmen,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+franquicia,cd-carmen,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+franquicia,cd-carmen,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+franquicia,cd-carmen,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+franquicia,cd-carmen,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+franquicia,cd-carmen,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+franquicia,cd-carmen,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+franquicia,cd-carmen,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+franquicia,cd-carmen,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+franquicia,cd-carmen,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+franquicia,cd-carmen,Cafetería,2026-10,"Apariencia del personal",personal,2
+franquicia,cd-carmen,Cafetería,2026-10,"Pin personalizador",personal,4
+franquicia,cd-carmen,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+franquicia,cd-carmen,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+franquicia,cd-carmen,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+franquicia,cd-carmen,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+franquicia,cd-carmen,Cafetería,2026-10,"Existencia",presentacion_producto,3
+franquicia,cd-carmen,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+franquicia,cd-carmen,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+franquicia,cd-carmen,Cafetería,2026-10,"Iluminación",interiores,2
+franquicia,cd-carmen,Cafetería,2026-10,"Área de mostrador",interiores,3
+franquicia,cd-carmen,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+franquicia,cd-carmen,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+franquicia,cd-carmen,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+franquicia,cd-carmen,Cafetería,2026-10,"Limpieza de barra",interiores,2
+franquicia,cd-carmen,Cafetería,2026-10,"Climatización",interiores,4
+franquicia,cd-carmen,Cafetería,2026-10,"Estado de muebles",interiores,3
+franquicia,ujat,Cafetería,2026-09,"Contacto visual y saludo",bienvenida,4
+franquicia,ujat,Cafetería,2026-09,"Agradecimiento y despedida",bienvenida,2
+franquicia,ujat,Cafetería,2026-09,"Conocimiento de productos",producto_ventas,2
+franquicia,ujat,Cafetería,2026-09,"Producto del mes",producto_ventas,3
+franquicia,ujat,Cafetería,2026-09,"Venta cruzada",producto_ventas,5
+franquicia,ujat,Cafetería,2026-09,"APP Cabaña Cash",producto_ventas,9
+franquicia,ujat,Cafetería,2026-09,"Menciona promociones",producto_ventas,3
+franquicia,ujat,Cafetería,2026-09,"Atención en mesa",atencion_mesa,2
+franquicia,ujat,Cafetería,2026-09,"Entrega de ticket",atencion_mesa,3
+franquicia,ujat,Cafetería,2026-09,"Tiempo de espera de atención",tiempos,3
+franquicia,ujat,Cafetería,2026-09,"Tiempo en fila",tiempos,3
+franquicia,ujat,Cafetería,2026-09,"Tiempo de preparación",tiempos,4
+franquicia,ujat,Cafetería,2026-09,"Cantidad de colaboradores",personal,1
+franquicia,ujat,Cafetería,2026-09,"Apariencia del personal",personal,2
+franquicia,ujat,Cafetería,2026-09,"Pin personalizador",personal,3
+franquicia,ujat,Cafetería,2026-09,"Presentación del vaso",presentacion_producto,2
+franquicia,ujat,Cafetería,2026-09,"Presentación del café",presentacion_producto,4
+franquicia,ujat,Cafetería,2026-09,"Presentación de alimentos",presentacion_producto,4
+franquicia,ujat,Cafetería,2026-09,"Estado de la panera",presentacion_producto,2
+franquicia,ujat,Cafetería,2026-09,"Existencia",presentacion_producto,5
+franquicia,ujat,Cafetería,2026-09,"Limpieza de fachada",exteriores,2
+franquicia,ujat,Cafetería,2026-09,"Letrero/anuncio",exteriores,2
+franquicia,ujat,Cafetería,2026-09,"Jardineras y macetas",exteriores,2
+franquicia,ujat,Cafetería,2026-09,"Iluminación",interiores,2
+franquicia,ujat,Cafetería,2026-09,"Puertas y vidrios",interiores,2
+franquicia,ujat,Cafetería,2026-09,"Música y volumen",interiores,2
+franquicia,ujat,Cafetería,2026-09,"Área de mostrador",interiores,2
+franquicia,ujat,Cafetería,2026-09,"Limpieza de mesas y sillas",interiores,2
+franquicia,ujat,Cafetería,2026-09,"Limpieza de pisos",interiores,2
+franquicia,ujat,Cafetería,2026-09,"Estado de baños",interiores,4
+franquicia,ujat,Cafetería,2026-09,"Estado de botes de basura",interiores,2
+franquicia,ujat,Cafetería,2026-09,"Limpieza de barra",interiores,2
+franquicia,ujat,Cafetería,2026-09,"Climatización",interiores,4
+franquicia,ujat,Cafetería,2026-09,"Estado de muebles",interiores,2
+franquicia,ujat,Cafetería,2026-10,"Contacto visual y saludo",bienvenida,6
+franquicia,ujat,Cafetería,2026-10,"Agradecimiento y despedida",bienvenida,4
+franquicia,ujat,Cafetería,2026-10,"Conocimiento de productos",producto_ventas,4
+franquicia,ujat,Cafetería,2026-10,"Producto del mes",producto_ventas,4
+franquicia,ujat,Cafetería,2026-10,"Venta cruzada",producto_ventas,7
+franquicia,ujat,Cafetería,2026-10,"APP Cabaña Cash",producto_ventas,5
+franquicia,ujat,Cafetería,2026-10,"Menciona promociones",producto_ventas,4
+franquicia,ujat,Cafetería,2026-10,"Atención en mesa",atencion_mesa,2
+franquicia,ujat,Cafetería,2026-10,"Entrega de ticket",atencion_mesa,3
+franquicia,ujat,Cafetería,2026-10,"Tiempo de espera de atención",tiempos,3
+franquicia,ujat,Cafetería,2026-10,"Tiempo en fila",tiempos,3
+franquicia,ujat,Cafetería,2026-10,"Tiempo de preparación",tiempos,4
+franquicia,ujat,Cafetería,2026-10,"Cantidad de colaboradores",personal,1
+franquicia,ujat,Cafetería,2026-10,"Apariencia del personal",personal,2
+franquicia,ujat,Cafetería,2026-10,"Pin personalizador",personal,4
+franquicia,ujat,Cafetería,2026-10,"Presentación del vaso",presentacion_producto,2
+franquicia,ujat,Cafetería,2026-10,"Presentación del café",presentacion_producto,7
+franquicia,ujat,Cafetería,2026-10,"Presentación de alimentos",presentacion_producto,4
+franquicia,ujat,Cafetería,2026-10,"Estado de la panera",presentacion_producto,2
+franquicia,ujat,Cafetería,2026-10,"Existencia",presentacion_producto,3
+franquicia,ujat,Cafetería,2026-10,"Limpieza de fachada",exteriores,4
+franquicia,ujat,Cafetería,2026-10,"Letrero/anuncio",exteriores,2
+franquicia,ujat,Cafetería,2026-10,"Jardineras y macetas",exteriores,2
+franquicia,ujat,Cafetería,2026-10,"Iluminación",interiores,2
+franquicia,ujat,Cafetería,2026-10,"Puertas y vidrios",interiores,2
+franquicia,ujat,Cafetería,2026-10,"Música y volumen",interiores,1
+franquicia,ujat,Cafetería,2026-10,"Área de mostrador",interiores,3
+franquicia,ujat,Cafetería,2026-10,"Limpieza de mesas y sillas",interiores,3
+franquicia,ujat,Cafetería,2026-10,"Limpieza de pisos",interiores,3
+franquicia,ujat,Cafetería,2026-10,"Estado de baños",interiores,3
+franquicia,ujat,Cafetería,2026-10,"Estado de botes de basura",interiores,2
+franquicia,ujat,Cafetería,2026-10,"Limpieza de barra",interiores,2
+franquicia,ujat,Cafetería,2026-10,"Climatización",interiores,4
+franquicia,ujat,Cafetería,2026-10,"Estado de muebles",interiores,3

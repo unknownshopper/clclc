@@ -4,20 +4,34 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /evaluaciones/{document} {
       // Lecturas:
-      // - Requiere Firebase Auth
+      // - Requiere Firebase Auth con correo (bloquea usuarios anónimos)
       // - Usuarios autenticados: solo 'publicado'
       // - Admin: puede leer TODO (incluye borradores)
-      allow read: if request.auth != null
+      allow read: if request.auth != null && request.auth.token.email is string
                   && (resource.data.estadoPublicacion == 'publicado'
                       || request.auth.token.email == 'unknownshoppersmx@gmail.com');
 
-      // Escrituras: solo la cuenta admin
-      allow create, update, delete: if request.auth != null
-                                    && request.auth.token.email == 'unknownshoppersmx@gmail.com';
+      // Escrituras: solo la cuenta admin puede crear/eliminar
+      allow create, delete: if request.auth != null
+                            && request.auth.token.email == 'unknownshoppersmx@gmail.com';
+
+      // Actualizar: admin puede todo; dgaux SOLO puede modificar el campo
+      // bonoActitud (bonificación "Actitud de servicio") y con formato válido.
+      allow update: if request.auth != null && request.auth.token.email is string
+                    && (
+                         request.auth.token.email == 'unknownshoppersmx@gmail.com'
+                         || (
+                              request.auth.token.email == 'dgaux@cafelacabana.com'
+                              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bonoActitud'])
+                              && request.resource.data.bonoActitud is map
+                              && request.resource.data.bonoActitud.otorgado is bool
+                              && request.resource.data.bonoActitud.otorgadoPor == 'dgaux@cafelacabana.com'
+                            )
+                       );
     }
 
     match /configuracion/{document} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && request.auth.token.email is string;
       allow create, update, delete: if request.auth != null
                                     && request.auth.token.email == 'unknownshoppersmx@gmail.com';
     }
