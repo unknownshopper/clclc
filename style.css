@@ -1365,3 +1365,40 @@ footer a:focus {
   cursor: pointer; transition: border-color .12s ease, color .12s ease;
 }
 .pond-btn-descartar:hover { border-color: #dc3545; color: #dc3545; }
+
+.pond-btn-exportar {
+  background: linear-gradient(135deg, #0077cc 0%, #005fa3 100%);
+  color: #fff; border: none; border-radius: 10px;
+  padding: 13px 26px; font-size: 15px; font-weight: 800; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,119,204,.35);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.pond-btn-exportar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,119,204,.45);
+}
+
+/* Botón dividido de exportación */
+.pond-split { position: relative; display: inline-flex; }
+.pond-split .pond-split-main { border-radius: 10px 0 0 10px; }
+.pond-split .pond-split-caret {
+  border-radius: 0 10px 10px 0; padding: 13px 15px; margin-left: 2px;
+}
+.pond-export-menu {
+  display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 60;
+  background: #fff; border: 1px solid #d6e2ef; border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0,40,80,.18); min-width: 300px; overflow: hidden;
+}
+.pond-export-menu.abierto { display: block; }
+.pond-export-menu button {
+  display: block; width: 100%; text-align: left; border: none; background: #fff;
+  padding: 11px 16px; font-size: 13px; font-weight: 600; color: #2d3e50; cursor: pointer;
+}
+.pond-export-menu button:hover { background: #eef4fb; }
+.pond-export-menu button i { width: 20px; color: #0077cc; }
+.pond-btn-respaldo {
+  background: #fff; color: #0077cc; border: 2px solid #b3d4f0;
+  border-radius: 10px; padding: 13px 22px; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: background .12s ease, border-color .12s ease;
+}
+.pond-btn-respaldo:hover { background: #eaf4fd; border-color: #0077cc; }

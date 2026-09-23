@@ -329,6 +329,19 @@ const definirParametros = [
     peso: 1,
     aplicaATodas: false
   },
+  {
+    id: 'interfon',
+    categoriaId: 'exteriores',
+    nombre: 'Interfón',
+    descripcion: 'Interfón de atención a vehículos funcionando correctamente',
+    tipo: 'booleano',
+    peso: 1,
+    vigenteDesde: '2026-10',
+    soloKPI2: true,
+    aplicaATodas: false,
+    aplicaASucursales: ['movil-deportiva'],
+    aplicaAFranquicias: []
+  },
 
   // Instalaciones - Interiores
   {

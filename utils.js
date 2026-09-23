@@ -299,7 +299,8 @@ window.kpi2Utils = (function() {
             basura_estado: 2,
             barra_limpieza: 2,
             clima_funcionando: 4,
-            mesas_sillas_estado: 2
+            mesas_sillas_estado: 2,
+            interfon: 4
         },
         'Express': {
             bienvenida_contacto_visual: 4,
@@ -336,7 +337,8 @@ window.kpi2Utils = (function() {
             basura_estado: 2,
             barra_limpieza: 2,
             clima_funcionando: 4,
-            mesas_sillas_estado: 2
+            mesas_sillas_estado: 2,
+            interfon: 4
         },
         'Móvil': {
             bienvenida_contacto_visual: 4,
@@ -373,7 +375,8 @@ window.kpi2Utils = (function() {
             basura_estado: 2,
             barra_limpieza: 2,
             clima_funcionando: 4,
-            mesas_sillas_estado: 2
+            mesas_sillas_estado: 2,
+            interfon: 4
         }
     };
 

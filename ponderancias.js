@@ -16,11 +16,11 @@
             titulo: 'Impulso comercial',
             desc: 'Concentra el puntaje en conversión y lealtad: App, venta cruzada, promociones, producto del mes y existencia. Reduce el peso de instalaciones.',
             pesos: {
-                app_cabana: 10,
+                app_cabana: 8,
                 venta_cruzada: 7,
                 existencia: 6,
-                producto_mes: 4,
-                mencion_promociones: 4,
+                producto_mes: 5,
+                mencion_promociones: 5,
                 pin_personalizador: 4,
                 entrega_ticket: 4,
                 conocimiento_productos: 3,
@@ -189,7 +189,7 @@
                 excluidos[tipo][e.id] = estadoExcluidosActual(e.id, tipo);
             });
         });
-        return {
+        const d = {
             pesos: pesosVigentes(),
             excluidos,
             inicial: {
@@ -200,13 +200,301 @@
                     )
                 ))
             },
-            tocado: false
+            tocado: false,
+            recuperadoEn: null
         };
+        // Si hay un borrador guardado localmente (p.ej. se cerró la página sin
+        // guardar), se recupera sobre la configuración vigente recién calculada.
+        const guardado = cargarDraftLS();
+        if (guardado) {
+            d.pesos = guardado.pesos;
+            d.excluidos = guardado.excluidos;
+            d.recuperadoEn = guardado.guardadoEn;
+        }
+        return d;
     }
 
     function asegurarDraft() {
         if (!draft) draft = crearDraft();
         return draft;
+    }
+
+    // ===== Respaldo local del borrador (localStorage + exportar JSON) =====
+    const LS_KEY = 'ponderanciasDraft_v1';
+
+    function draftAJSON() {
+        return {
+            tipo: 'ponderanciasKPI2-borrador',
+            exportadoEn: new Date().toISOString(),
+            pesos: draft.pesos,
+            excluidos: Object.fromEntries(Object.entries(draft.excluidos).map(([t, m]) =>
+                [t, Object.fromEntries(Object.entries(m).map(([eid, s]) => [eid, [...s]]))]))
+        };
+    }
+
+    function persistirDraft() {
+        if (!draft) return;
+        try {
+            const c = contarCambios();
+            if (c.pesos + c.aplica === 0) { limpiarDraftLS(); return; }
+            const d = draftAJSON();
+            d.guardadoEn = d.exportadoEn;
+            localStorage.setItem(LS_KEY, JSON.stringify(d));
+        } catch (e) { /* localStorage no disponible */ }
+    }
+
+    function limpiarDraftLS() {
+        try { localStorage.removeItem(LS_KEY); } catch (e) {}
+    }
+
+    function cargarDraftLS() {
+        try {
+            const raw = localStorage.getItem(LS_KEY);
+            if (!raw) return null;
+            const d = JSON.parse(raw);
+            if (!d || !d.pesos || !d.excluidos) return null;
+            const excluidos = {};
+            Object.entries(d.excluidos).forEach(([t, m]) => {
+                excluidos[t] = {};
+                Object.entries(m).forEach(([eid, arr]) => { excluidos[t][eid] = new Set(arr); });
+            });
+            return { pesos: d.pesos, excluidos, guardadoEn: d.guardadoEn || d.exportadoEn };
+        } catch (e) { return null; }
+    }
+
+    function nombreArchivo(ext) {
+        const f = new Date();
+        return `ponderancias-borrador-${f.getFullYear()}${String(f.getMonth() + 1).padStart(2, '0')}${String(f.getDate()).padStart(2, '0')}.${ext}`;
+    }
+
+    function descargar(blob, nombre) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = nombre;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    // Filas de la tabla de pesos con marca de cambio vs. vigente
+    function filasPesos() {
+        const filas = [];
+        categoriasOrdenadas().forEach(cat => {
+            catalogo().filter(p => (p.categoriaId || 'otros') === cat.id).forEach(p => {
+                const pesos = {};
+                MODELOS.forEach(m => { pesos[m] = Number(draft.pesos[m][p.id]) || 0; });
+                filas.push({
+                    cat: cat.nombre, id: p.id, nombre: p.nombre, pesos,
+                    cambio: MODELOS.some(m => Number(draft.pesos[m][p.id]) !== Number(draft.inicial.pesos[m][p.id]))
+                });
+            });
+        });
+        return filas;
+    }
+
+    function totalModelo(m) {
+        return catalogo().reduce((s, p) => s + (Number(draft.pesos[m][p.id]) || 0), 0);
+    }
+
+    function exportarJSON() {
+        descargar(new Blob([JSON.stringify(draftAJSON(), null, 2)], { type: 'application/json' }), nombreArchivo('json'));
+    }
+
+    function exportarCSV() {
+        const esc = s => `"${String(s).replace(/"/g, '""')}"`;
+        let out = 'Categoría,Parámetro,Cafetería,Express,Móvil\n';
+        filasPesos().forEach(f => {
+            out += [esc(f.cat), esc(f.nombre), ...MODELOS.map(m => f.pesos[m])].join(',') + '\n';
+        });
+        out += `,TOTAL si todo cumple,${MODELOS.map(totalModelo).join(',')}\n`;
+        descargar(new Blob(['﻿' + out], { type: 'text/csv;charset=utf-8' }), nombreArchivo('csv'));
+    }
+
+    async function exportarXLSX() {
+        if (typeof ExcelJS === 'undefined') {
+            alert('ExcelJS no está cargado.');
+            return;
+        }
+        const mes = window.mesSeleccionado || obtenerMesActual();
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet('Ponderancias');
+        ws.columns = [{ width: 30 }, { width: 36 }, { width: 12 }, { width: 12 }, { width: 12 }];
+        ws.getCell('A1').value = 'Ponderancias — borrador de configuración';
+        ws.getCell('A1').font = { size: 14, bold: true, color: { argb: 'FF0077CC' } };
+        ws.getCell('A2').value = `Generado: ${new Date().toLocaleString('es-MX')} · Mes de referencia: ${formatearMesLegible(mes)} · Amarillo = cambio vs. vigente`;
+        const hdr = ws.getRow(4);
+        hdr.values = ['Categoría', 'Parámetro', ...MODELOS];
+        hdr.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        hdr.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2D3E50' } }; });
+        let r = 5;
+        filasPesos().forEach(f => {
+            const row = ws.getRow(r++);
+            row.values = [f.cat, f.nombre, ...MODELOS.map(m => f.pesos[m])];
+            if (f.cambio) {
+                [3, 4, 5].forEach(c => {
+                    row.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF3CD' } };
+                });
+            }
+        });
+        const tot = ws.getRow(r);
+        tot.values = ['', 'TOTAL si todo cumple', ...MODELOS.map(totalModelo)];
+        tot.font = { bold: true };
+
+        [['sucursal', 'Aplicabilidad sucursales'], ['franquicia', 'Aplicabilidad franquicias']].forEach(([tipo, nombre]) => {
+            const w = wb.addWorksheet(nombre);
+            const ents = entidadesPorTipo(tipo);
+            const plist = catalogoVigente(mes);
+            w.getRow(1).values = ['Parámetro', ...ents.map(e => e.nombre)];
+            w.getRow(1).font = { bold: true };
+            w.getColumn(1).width = 34;
+            plist.forEach((p, i) => {
+                w.getRow(i + 2).values = [p.nombre, ...ents.map(e =>
+                    draft.excluidos[tipo][e.id].has(normId(p.id)) ? '—' : '✓')];
+            });
+            const frow = w.getRow(plist.length + 2);
+            frow.values = ['Máx. puntos', ...ents.map(e => maximoDraft(e.id, tipo, mes))];
+            frow.font = { bold: true };
+        });
+
+        const buf = await wb.xlsx.writeBuffer();
+        descargar(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), nombreArchivo('xlsx'));
+    }
+
+    // PDF: abre una ventana con el documento formateado y dispara imprimir
+    // (desde ahí se guarda como PDF con el diálogo del navegador).
+    // Cada categoría es un bloque independiente que no se parte entre páginas.
+    function exportarPDF() {
+        const mes = window.mesSeleccionado || obtenerMesActual();
+        const ahora = new Date();
+        const logoUrl = `${location.origin}/logch.png`;
+        const confidencial = 'DOCUMENTO CONFIDENCIAL — Uso exclusivo de la Dirección de Café La Cabaña. Contiene criterios internos de evaluación. Prohibida su reproducción o distribución fuera de la organización.';
+
+        let html = `<html><head><title>Ponderancias — Café La Cabaña</title><style>
+            @page { margin: 14mm 12mm 18mm; }
+            * { box-sizing: border-box; }
+            body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #222; margin: 0; padding-bottom: 26mm; }
+            .encabezado { display: flex; align-items: center; gap: 18px; border-bottom: 3px solid #0077cc; padding-bottom: 12px; margin-bottom: 10px; }
+            .encabezado img { height: 62px; }
+            .encabezado .tit { flex: 1; }
+            .encabezado h1 { font-size: 19px; color: #2d3e50; margin: 0 0 2px; }
+            .encabezado .sub { color: #0077cc; font-size: 12px; font-weight: bold; }
+            .meta { display: flex; flex-wrap: wrap; gap: 6px 26px; color: #555; font-size: 10px; margin: 8px 0 12px; }
+            .meta b { color: #2d3e50; }
+            .aviso { background: #fdf3d7; border: 1px solid #e8c96a; border-radius: 6px; padding: 8px 12px; font-size: 9.5px; color: #7a5d00; text-align: center; margin-bottom: 14px; }
+            .bloque { page-break-inside: avoid; break-inside: avoid; margin: 0 auto 16px; max-width: 150mm; }
+            .bloque h2 { font-size: 12px; color: #2d3e50; margin: 0 0 5px; text-align: center; background: #eef4fb; border: 1px solid #d6e2ef; border-bottom: none; border-radius: 6px 6px 0 0; padding: 6px; }
+            table { border-collapse: collapse; width: 100%; }
+            thead { display: table-header-group; }
+            th { background: #2d3e50; color: #fff; padding: 5px 6px; border: 1px solid #b9c4d0; font-size: 10px; }
+            td { padding: 4px 6px; border: 1px solid #ddd; text-align: center; }
+            td.l { text-align: left; }
+            td.chg { background: #fff3cd; font-weight: bold; }
+            tr.total td { background: #eef4fb; font-weight: bold; }
+            .pie { position: fixed; bottom: 0; left: 0; right: 0; border-top: 2px solid #0077cc; background: #fff; padding: 6px 0; text-align: center; font-size: 9px; color: #666; }
+            @media print { body { padding-bottom: 0; } }
+        </style></head><body>`;
+
+        html += `<div class="encabezado">
+            <img src="${logoUrl}" alt="Café La Cabaña" onerror="this.style.display='none'">
+            <div class="tit">
+                <h1>Ponderancias de Evaluación</h1>
+                <div class="sub">Propuesta de configuración — Sistema de Evaluaciones</div>
+            </div>
+        </div>
+        <div class="meta">
+            <span><b>Fecha de emisión:</b> ${ahora.toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            <span><b>Hora:</b> ${ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</span>
+            <span><b>Mes de referencia:</b> ${formatearMesLegible(mes)}</span>
+            <span><b>Elaboró:</b> ${(window.usuarioActual && window.usuarioActual.nombre) || 'Administrador'}</span>
+            <span><b>Celdas amarillas:</b> cambios respecto a la ponderancia vigente</span>
+        </div>
+        <div class="aviso"><i class="fas fa-lock"></i> ${confidencial}</div>`;
+
+        // Una tabla por categoría: cada bloque se mantiene intacto en la página
+        categoriasOrdenadas().forEach(cat => {
+            const plist = catalogo().filter(p => (p.categoriaId || 'otros') === cat.id);
+            if (!plist.length) return;
+            html += `<div class="bloque"><h2>${cat.nombre}</h2><table>
+                <thead><tr><th style="text-align:left">Parámetro</th>${MODELOS.map(m => `<th>${m}</th>`).join('')}</tr></thead><tbody>`;
+            plist.forEach(p => {
+                html += `<tr><td class="l">${p.nombre}</td>${MODELOS.map(m => {
+                    const v = Number(draft.pesos[m][p.id]) || 0;
+                    const chg = v !== Number(draft.inicial.pesos[m][p.id]);
+                    return `<td class="${chg ? 'chg' : ''}">${v}</td>`;
+                }).join('')}</tr>`;
+            });
+            html += `</tbody></table></div>`;
+        });
+
+        html += `<div class="bloque"><h2>Resumen</h2><table><tbody>
+            <tr class="total"><td class="l">Total de puntos si todo cumple</td>${MODELOS.map(m => `<td>${totalModelo(m)}</td>`).join('')}</tr>
+            </tbody></table></div>`;
+
+        html += `<div class="bloque"><h2>Parámetros aplicables por entidad — ${formatearMesLegible(mes)}</h2>
+            <table><thead><tr><th style="text-align:left">Entidad</th><th>Tipo</th><th>Modelo</th><th>Parámetros</th><th>Máx. puntos</th></tr></thead><tbody>`;
+        ['sucursal', 'franquicia'].forEach(tipo => {
+            entidadesPorTipo(tipo).forEach(e => {
+                html += `<tr><td class="l">${e.nombre}</td><td>${tipo}</td><td>${window.kpi2Utils.getModeloEntidad(e.id, tipo) || '—'}</td><td>${paramsAplicablesDraft(e.id, tipo, mes).length}</td><td>${maximoDraft(e.id, tipo, mes)}</td></tr>`;
+            });
+        });
+        html += `</tbody></table></div>`;
+
+        html += `<div class="pie">${confidencial}<br>Emitido el ${ahora.toLocaleString('es-MX')} — Café La Cabaña · Sistema de Evaluaciones</div>`;
+        html += `</body></html>`;
+
+        const w = window.open('', '_blank');
+        if (!w) { alert('El navegador bloqueó la ventana. Permite ventanas emergentes.'); return; }
+        w.document.write(html);
+        w.document.close();
+        w.focus();
+        setTimeout(() => w.print(), 500);
+    }
+
+    function toggleExportMenu(ev) {
+        ev.stopPropagation();
+        const menu = document.getElementById('pondExportMenu');
+        if (!menu) return;
+        if (menu.classList.toggle('abierto')) {
+            setTimeout(() => document.addEventListener('click', cerrarMenuExportar, { once: true }), 0);
+        }
+    }
+
+    function cerrarMenuExportar() {
+        const m = document.getElementById('pondExportMenu');
+        if (m) m.classList.remove('abierto');
+    }
+
+    function exportar(formato) {
+        asegurarDraft();
+        cerrarMenuExportar();
+        if (formato === 'xlsx') exportarXLSX();
+        else if (formato === 'csv') exportarCSV();
+        else if (formato === 'pdf') exportarPDF();
+        else exportarJSON();
+    }
+
+    function importarBorrador(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const d = JSON.parse(reader.result);
+                if (!d || d.tipo !== 'ponderanciasKPI2-borrador' || !d.pesos || !d.excluidos) {
+                    alert('El archivo no es un borrador de ponderancias válido.');
+                    return;
+                }
+                const base = asegurarDraft(); // conserva `inicial` (estado vigente)
+                base.pesos = d.pesos;
+                Object.entries(d.excluidos).forEach(([t, m]) => {
+                    if (!base.excluidos[t]) base.excluidos[t] = {};
+                    Object.entries(m).forEach(([eid, arr]) => { base.excluidos[t][eid] = new Set(arr); });
+                });
+                persistirDraft();
+                renderPonderancias();
+            } catch (e) {
+                alert('No se pudo leer el archivo.');
+            }
+        };
+        reader.readAsText(file);
     }
 
     function contarCambios() {
@@ -232,6 +520,7 @@
     function marcarCambio() {
         if (!draft) return;
         draft.tocado = true;
+        persistirDraft();
         const c = contarCambios();
         const el = document.getElementById('pondResumenCambios');
         if (el) {
@@ -360,7 +649,7 @@
             params.forEach(p => {
                 num++;
                 html += `<tr>
-                    <td style="text-align:left"><span class="pond-num">${num}</span> ${p.nombre}${p.soloKPI2 ? ' <span class="pond-tag">solo KPI2</span>' : ''}</td>
+                    <td style="text-align:left"><span class="pond-num">${num}</span> ${p.nombre}</td>
                     ${MODELOS.map(m => {
                         const dif = Number(draft.pesos[m][p.id]) !== Number(draft.inicial.pesos[m][p.id]);
                         return `<td><input type="number" min="0" max="99" step="1"
@@ -458,6 +747,7 @@
                     <strong>Versiones guardadas:</strong> ${versiones.length - 1 > 0 ? versiones.slice(1).map(v => `${v.nombre || 'ajuste'} (desde ${v.vigenteDesde})`).join(', ') : 'ninguna — usando ponderancia base del código'}<br>
                     <strong>Aplicabilidad:</strong> ${hayOverride ? 'configuración remota activa' : 'listas del catálogo + parametros_excluidos.js'}<br>
                     <span id="pondResumenCambios">Sin cambios pendientes</span>
+                    ${draft.recuperadoEn ? `<br><span class="pond-badge" style="background:#fff3cd;color:#856404"><i class="fas fa-history"></i> Borrador recuperado del guardado local (${new Date(draft.recuperadoEn).toLocaleString('es-MX')})</span>` : ''}
                     <p class="pond-nota" style="margin-top:10px">
                         <i class="fas fa-info-circle"></i> Las <strong>ponderancias</strong> entran en vigor desde el mes elegido al guardar y no alteran meses anteriores.
                         La <strong>aplicabilidad</strong> (qué parámetros cuenta cada entidad) se aplica de inmediato a todos los meses.
@@ -485,13 +775,32 @@
                         </label>
                     </div>
                     <div class="pond-guardar-btns">
+                        <div class="pond-split">
+                            <button class="pond-btn-exportar pond-split-main" onclick="window.ponderanciasUI.exportar('json')">
+                                <i class="fas fa-download"></i> Exportar borrador
+                            </button>
+                            <button class="pond-btn-exportar pond-split-caret" onclick="window.ponderanciasUI.toggleExportMenu(event)" title="Elegir formato">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="pond-export-menu" id="pondExportMenu">
+                                <button onclick="window.ponderanciasUI.exportar('json')"><i class="fas fa-file-code"></i> JSON — respaldo reimportable</button>
+                                <button onclick="window.ponderanciasUI.exportar('xlsx')"><i class="fas fa-file-excel"></i> Excel — pesos + aplicabilidad</button>
+                                <button onclick="window.ponderanciasUI.exportar('csv')"><i class="fas fa-file-csv"></i> CSV — solo ponderancias</button>
+                                <button onclick="window.ponderanciasUI.exportar('pdf')"><i class="fas fa-file-pdf"></i> PDF — documento para imprimir</button>
+                            </div>
+                        </div>
                         <button class="pond-btn-guardar" onclick="window.ponderanciasUI.guardar()" ${puedeEscribir() ? '' : 'disabled title="Requiere sesión admin en Firebase"'}>
                             <i class="fas fa-save"></i> Guardar configuración
                         </button>
                         <button class="pond-btn-descartar" onclick="window.ponderanciasUI.descartar()">
                             <i class="fas fa-undo"></i> Descartar cambios
                         </button>
+                        <button class="pond-btn-respaldo" onclick="document.getElementById('pondImportFile').click()">
+                            <i class="fas fa-upload"></i> Importar borrador
+                        </button>
+                        <input type="file" id="pondImportFile" accept=".json" style="display:none" onchange="window.ponderanciasUI.importar(this.files[0]); this.value=''">
                     </div>
+                    <p class="pond-nota" style="margin:12px 0 0 0"><i class="fas fa-shield-alt"></i> El borrador se respalda automáticamente en este navegador aunque se cierre la página — el archivo exportado es el respaldo definitivo por si algo falla al guardar.</p>
                 </div>
             </div>
         `;
@@ -630,6 +939,7 @@
             await window.firebaseDB.guardarPonderanciasKPI2(payload);
             window.kpi2Utils.aplicarConfiguracionKPI2(payload);
             draft = null;
+            limpiarDraftLS();
             renderPonderancias();
             alert('Configuración guardada. Los cambios ya están activos en todos los cálculos.');
         } catch (e) {
@@ -640,9 +950,10 @@
 
     function descartar() {
         draft = null;
+        limpiarDraftLS();
         renderPonderancias();
     }
 
-    window.ponderanciasUI = { setPeso, setAplica, aplicarPropuesta, restaurarVigente, simular, guardar, descartar };
+    window.ponderanciasUI = { setPeso, setAplica, aplicarPropuesta, restaurarVigente, simular, guardar, descartar, exportar, importar: importarBorrador, toggleExportMenu };
     window.renderPonderancias = renderPonderancias;
 })();
