@@ -785,6 +785,12 @@ async function renderEvaluacionesBase({
         const opKPI = (campoActivo === 'kpi') ? '1' : '0.35';
         const opKPI2 = (campoActivo === 'kpi2') ? '1' : '0.35';
 
+        // Vigencia y permiso del bono "Actitud de servicio"
+        const paramBono = (window.parametros || []).find(p => p && p.id === 'actitud_servicio');
+        const bonoVigente = !paramBono || !paramBono.vigenteDesde
+            || !window.mesSeleccionado || window.mesSeleccionado >= paramBono.vigenteDesde;
+        const usuarioPuedeBono = typeof puedeOtorgarBono === 'function' && puedeOtorgarBono();
+
         html += `
             <div style="background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                 <table class="evaluaciones-table" style="width: 100%; border-collapse: collapse;">
@@ -840,6 +846,13 @@ async function renderEvaluacionesBase({
             const kpi2 = debeMostrarKPI2(window.mesSeleccionado) ? calcularKPI2(evaluacion.entidadId, evaluacion.tipo, evalParaKPI2) : null;
             const kpi2Porcentaje = (typeof kpi2 === 'number') ? (kpi2 * 100).toFixed(1) : null;
 
+            // Bono "Actitud de servicio" (vive en el documento KPI2)
+            const evKpi2Bono = (evalLocal && evalLocal.modalidades && evalLocal.modalidades.kpi2)
+                ? evalLocal.modalidades.kpi2
+                : (evalLocal && evalLocal._kpi2 ? evalLocal._kpi2 : null);
+            const bonoInfo = (evKpi2Bono && evKpi2Bono.bonoActitud && evKpi2Bono.bonoActitud.otorgado) ? evKpi2Bono.bonoActitud : null;
+            const puedeBono = usuarioPuedeBono && bonoVigente && evKpi2Bono && evKpi2Bono.firebaseId;
+
             const puntosMalos = (!tienePermiso('admin') && debeMostrarKPI2(window.mesSeleccionado))
                 ? listarPuntosAMejorarKPI2(evaluacion.entidadId, evaluacion.tipo, evalParaKPI2)
                 : [];
@@ -873,7 +886,7 @@ async function renderEvaluacionesBase({
                     ` : ''}
                     ${debeMostrarKPI2(window.mesSeleccionado) ? `
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center; font-weight: bold; color: ${kpi2Porcentaje !== null ? (parseFloat(kpi2Porcentaje) >= 95 ? '#28a745' : parseFloat(kpi2Porcentaje) >= 90 ? '#ffc107' : '#dc3545') : '#2d3e50'}; font-size: 16px; opacity:${opKPI2};" title="KPI2 usa ponderación competitividad (PONDERA IA).">
-                        ${kpi2Porcentaje !== null ? (kpi2Porcentaje + '%') : '—'}
+                        ${kpi2Porcentaje !== null ? (kpi2Porcentaje + '%') : '—'}${bonoInfo ? ` <span title="Bono Actitud de servicio — ${bonoInfo.otorgadoPor || 'Dirección de Operaciones'}" style="color:#b8860b;">★</span>` : ''}
                     </td>
                     ` : ''}
                     <td style="padding: 12px; border-bottom: 1px solid #ddd; text-align: center;">
@@ -905,11 +918,19 @@ async function renderEvaluacionesBase({
                                 <i class="fas fa-eye"></i>
                             </button>
                             <button onclick="manejarVideo('${evaluacion.entidadId}', '${evaluacion.tipo}')"
-                                    class="btn-action btn-video" 
+                                    class="btn-action btn-video"
                                     title="${hasVideo ? 'Ver video de evaluación' : 'Agregar enlace de video'}"
                                     style="${hasVideo ? 'background:#28a745;color:#fff;' : 'background:#6c757d;color:#fff;'}">
                                 <i class="fas fa-video"></i>
                             </button>
+                            ${puedeBono ? `
+                            <button onclick="toggleBonoActitud('${evaluacion.entidadId}', '${evaluacion.tipo}')"
+                                    class="btn-action btn-bono"
+                                    title="${bonoInfo ? 'Quitar bono Actitud de servicio' : 'Otorgar bono Actitud de servicio'}"
+                                    style="background:${bonoInfo ? '#b8860b' : '#e0a800'};color:#fff;${bonoInfo ? 'box-shadow:0 0 0 2px #ffe8a3 inset;' : ''}">
+                                <i class="fas fa-star"></i>
+                            </button>
+                            ` : ''}
                             ${(usuarioActual?.rol === 'admin') ? `
                             <button 
                                     onclick="${adminPuedeEscribir ? `editarEvaluacion('${evaluacion.entidadId}', '${evaluacion.tipo}', 'kpi2')` : `alert('Para editar necesitas iniciar sesión como admin con Firebase Auth (email admin).')`}" 
@@ -3901,7 +3922,9 @@ async function toggleBonoActitud(entidadId, tipo) {
     try {
         await window.firebaseDB.actualizarBonoActitud(target.firebaseId, bono);
         target.bonoActitud = bono;
-        mostrarEvaluaciones();
+        try { if (typeof renderEvaluaciones === 'function') await renderEvaluaciones(); } catch (e) {}
+        try { if (typeof renderEvaluacionesFranquicias === 'function') await renderEvaluacionesFranquicias(); } catch (e) {}
+        try { if (typeof mostrarEvaluaciones === 'function') mostrarEvaluaciones(); } catch (e) {}
     } catch (e) {
         console.error('Error actualizando bono:', e);
         alert('No se pudo actualizar la bonificación: ' + (e && e.message ? e.message : e));

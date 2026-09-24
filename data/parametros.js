@@ -154,7 +154,6 @@ const definirParametros = [
     descripcion: 'Bonificación por atención amable y disposición extraordinaria; la otorga Dirección de Operaciones',
     tipo: 'booleano',
     peso: 3,
-    vigenteDesde: '2026-10',
     soloKPI2: true,
     bono: true,
     aplicaATodas: false,
