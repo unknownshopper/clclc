@@ -3342,8 +3342,9 @@ function descargarEvaluacionPDF(entidadId, tipo, mod) {
         return (Number(v) > 0) ? { txt: 'Cumple', cls: 'ok' } : { txt: 'No cumple', cls: 'bad' };
     };
 
-    const pesoDe = (p, aplica) => (!aplica) ? '—'
-        : (esKpi2 && kpi2Utils && typeof kpi2Utils.getPesoKPI2Param === 'function'
+    // El peso se muestra siempre (aunque el parámetro no aplique a la entidad):
+    // es el valor con que contaría si aplicara.
+    const pesoDe = (p) => (esKpi2 && kpi2Utils && typeof kpi2Utils.getPesoKPI2Param === 'function'
             ? kpi2Utils.getPesoKPI2Param(p, entidadId, tipo, mesEval, modelos)
             : (Number(p.peso) || 0));
 
@@ -3365,8 +3366,10 @@ function descargarEvaluacionPDF(entidadId, tipo, mod) {
             .resumen { background: #eef4fb; border: 1px solid #d6e2ef; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; font-size: 13px; }
             .resumen .kpi { font-size: 20px; font-weight: bold; color: ${kpiPct >= 95 ? '#1e7e34' : kpiPct >= 90 ? '#b8860b' : '#bd2130'}; }
             .bono { color: #b8860b; font-weight: bold; }
-            h2 { font-size: 12px; color: #2d3e50; background: #eef4fb; border: 1px solid #d6e2ef; padding: 5px 8px; margin: 14px 0 0; page-break-after: avoid; }
+            .bloque { page-break-inside: avoid; break-inside: avoid; margin-top: 14px; }
+            h2 { font-size: 12px; color: #2d3e50; background: #eef4fb; border: 1px solid #d6e2ef; padding: 5px 8px; margin: 0; page-break-after: avoid; }
             table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
+            thead { display: table-header-group; }
             th { background: #2d3e50; color: #fff; padding: 4px 6px; border: 1px solid #b9c4d0; font-size: 10px; text-align: left; }
             td { padding: 4px 6px; border: 1px solid #ddd; font-size: 10.5px; vertical-align: top; }
             .st { font-weight: bold; white-space: nowrap; }
@@ -3399,7 +3402,7 @@ function descargarEvaluacionPDF(entidadId, tipo, mod) {
     let num = 0;
     catOrden.forEach(cid => {
         const nombre = (typeof getCategoriaName === 'function') ? getCategoriaName(cid) : cid;
-        html += `<h2>${nombre}</h2><table><thead><tr>
+        html += `<div class="bloque"><h2>${nombre}</h2><table><thead><tr>
             <th style="width:24px">#</th><th>Parámetro</th><th style="width:90px">Estado</th>
             <th style="width:50px">Peso</th><th style="width:32%">Observación</th></tr></thead><tbody>`;
         filasPorCategoria[cid].forEach(p => {
@@ -3408,15 +3411,15 @@ function descargarEvaluacionPDF(entidadId, tipo, mod) {
             const obs = (st.cls === 'bad' && observaciones[p.id]) ? observaciones[p.id] : '';
             html += `<tr class="${st.cls === 'na' ? 'na-row' : ''}">
                 <td>${num}</td><td><b>${p.nombre}</b><br><span style="font-size:9px;color:#888">${p.descripcion || ''}</span></td>
-                <td class="st ${st.cls}">${st.txt}</td><td style="text-align:center">${pesoDe(p, st.cls !== 'na')}</td><td>${obs}</td></tr>`;
+                <td class="st ${st.cls}">${st.txt}</td><td style="text-align:center">${pesoDe(p)}</td><td>${obs}</td></tr>`;
         });
-        html += `</tbody></table>`;
+        html += `</tbody></table></div>`;
     });
 
     if (extraCapturados.length) {
-        html += `<h2>Parámetros capturados fuera del catálogo actual</h2><table><thead><tr><th>ID</th><th>Valor</th></tr></thead><tbody>`;
+        html += `<div class="bloque"><h2>Parámetros capturados fuera del catálogo actual</h2><table><thead><tr><th>ID</th><th>Valor</th></tr></thead><tbody>`;
         extraCapturados.forEach(id => { html += `<tr><td>${id}</td><td>${ev.parametros[id]}</td></tr>`; });
-        html += `</tbody></table>`;
+        html += `</tbody></table></div>`;
     }
 
     html += `<div class="pie">${confidencial}<br>${nombreEntidad} · ${formatearMesLegible(mesEval)} · Emitido el ${ahora.toLocaleString('es-MX')}</div></body></html>`;

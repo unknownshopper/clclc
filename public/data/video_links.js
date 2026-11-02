@@ -92,10 +92,7 @@ export const videoLinks = {
     "walmart-carrizal": "https://youtu.be/cJINaCCuImA",
     "walmart-deportiva": "https://youtu.be/6p5rwBlVWWE",
     "walmart-universidad": "https://youtu.be/9cktEGZrjvA"
-    }
-    
-    
-    
+    },
 
     "2026-10": { // Octubre 2026 — ronda de franquicias (enlaces fijos)
       "via2": "https://youtu.be/wNNoPMYqJBg",
@@ -112,7 +109,8 @@ export const videoLinks = {
       "cd-carmen": "https://youtu.be/6HSu0GshPco",
       "cumuapa": "https://youtube.com/shorts/N0fjGBqpOtI",
       "cardenas": "https://youtube.com/shorts/9A7MFmIPCLk?feature=share",
-      "dosbocas": "https://youtube.com/shorts/-lS0chQM4sA"
+      "dosbocas": "https://youtube.com/shorts/-lS0chQM4sA",
+      "senderos": "https://youtu.be/BaEOq0_gYbY"
     }
 
     // En el futuro puedes agregar más meses así:
