@@ -142,8 +142,11 @@ function renderMatrizCompleta() {
     
     console.log(`Mostrando ${window.parametros.length} parámetros para ${entidades.length} entidades`);
 
-    const paramsKPI = (window.parametros || []).filter(p => p && !p.soloKPI2);
-    const paramsKPI2 = (window.parametros || []).slice();
+    const vigenteEnMes = (p) => (typeof window.parametroVigenteEnMes === 'function')
+        ? window.parametroVigenteEnMes(p, window.mesSeleccionado)
+        : (!p.vigenteDesde || !window.mesSeleccionado || window.mesSeleccionado >= p.vigenteDesde);
+    const paramsKPI = (window.parametros || []).filter(p => p && !p.soloKPI2 && !p.bono && vigenteEnMes(p));
+    const paramsKPI2 = (window.parametros || []).filter(p => p && !p.bono && vigenteEnMes(p));
 
     const soloKPI2 = (typeof window.debeUsarSoloKPI2 === 'function')
         ? (window.debeUsarSoloKPI2(window.mesSeleccionado) || forzarSoloKPI2)

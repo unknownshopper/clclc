@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Sistema de Evaluaciones - Café La Cabaña</title>
-    <link rel="stylesheet" href="style.css?v=ponderancias-12">
+    <link rel="stylesheet" href="style.css?v=ponderancias-13">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Chart.js CDN para gráficas -->
 
@@ -517,20 +517,20 @@
             <canvas id="graficoHistorico" width="800" height="380" style="max-width:100%;"></canvas>
         </section>
     </main>
-    <script src="data/sucursales.js"></script>
-    <script src="data/franquicias.js"></script>
-    <script src="data/parametros.js?v=ponderancias-12"></script>
-    <script src="data/parametros_excluidos.js?v=ponderancias-12"></script>
+    <script src="data/sucursales.js?v=ponderancias-13"></script>
+    <script src="data/franquicias.js?v=ponderancias-13"></script>
+    <script src="data/parametros.js?v=ponderancias-13"></script>
+    <script src="data/parametros_excluidos.js?v=ponderancias-13"></script>
     <script src="data/competencia.js?v=competencia-sync-2"></script>
-    <script src="data/usuarios.js?v=ponderancias-12"></script>
-    <script src="matriz.js?v=ponderancias-12"></script>
-    <script src="auth.js?v=ponderancias-12"></script>
-    <script src="utils.js?v=ponderancias-12"></script>
-    <script src="dashboard.js?v=ponderancias-12"></script>
-    <script src="ponderancias.js?v=ponderancias-12"></script>
-    <script src="data/historico.js?v=ponderancias-12"></script>
+    <script src="data/usuarios.js?v=ponderancias-13"></script>
+    <script src="matriz.js?v=ponderancias-13"></script>
+    <script src="auth.js?v=ponderancias-13"></script>
+    <script src="utils.js?v=ponderancias-13"></script>
+    <script src="dashboard.js?v=ponderancias-13"></script>
+    <script src="ponderancias.js?v=ponderancias-13"></script>
+    <script src="data/historico.js?v=ponderancias-13"></script>
     <script src="competencia.js?v=competencia-reporte-operativo-2"></script>
-    <script src="script.js?v=ponderancias-12"></script>
+    <script src="script.js?v=ponderancias-13"></script>
     <style>
         /* Estilos para la tabla de evaluaciones */
         .evaluaciones-table {
@@ -613,6 +613,18 @@
           <option value="">Selecciona una opción</option>
           <!-- Opciones generadas por JS -->
         </select>
+        <div id="eval-modelo-wrap" style="display:none;margin-bottom:16px;">
+          <label for="select-modelo-evaluacion">Modelo evaluado:</label>
+          <select id="select-modelo-evaluacion" style="width:100%;" onchange="cambiarModeloEvaluacion()">
+            <option value="Cafetería">Cafetería</option>
+            <option value="Express">Express</option>
+            <option value="Móvil">Móvil</option>
+          </select>
+          <label id="eval-movil-wrap" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;cursor:pointer;">
+            <input type="checkbox" id="chk-eval-movil" onchange="cambiarModeloEvaluacion()">
+            Incluye formato Móvil (auto-servicio / drive-thru)
+          </label>
+        </div>
         <div id="parametros-evaluacion-container"></div>
         <div id="total-puntos-evaluacion" style="margin:18px 0 0 0;font-weight:600;font-size:1.08em;color:#0077cc;">Total de puntos: 0</div>
         <button id="btn-guardar-evaluacion" style="margin-top:16px;display:none;">Guardar evaluación</button>

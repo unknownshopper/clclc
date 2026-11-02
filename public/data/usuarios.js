@@ -8,35 +8,42 @@ window.usuarios = [
   },
   {
     id: 2,
-    nombre: "Usuario Sucursales",
+    nombre: "Gop",
     email: "gop@cafelacabana.com",
     password: "acceso123", // Placeholder
     rol: "gop"
   },
   {
     id: 3,
-    nombre: "Usuario Franquicias",
+    nombre: "Franquicias",
     email: "franquicias@cafelacabana.com",
     password: "acceso123", // Placeholder
     rol: "franquicias"
   },
   {
     id: 4,
-    nombre: "Usuario Dirección",
+    nombre: "DG",
     email: "dg@cafelacabana.com",
     password: "acceso123", // Placeholder
     rol: "dg"
   },
-
   {
     id: 5,
+    nombre: "Capacitación",
+    email: "capacitacion@cafelacabana.com",
+    password: "acceso123", // Placeholder
+    rol: "capacitacion"
+  },
+
+  {
+    id: 6,
     nombre: "DirGral",
     email: "dirgral@cafelacabana.com",
     password: "acceso123", // Placeholder
     rol: "dg"
   },
   {
-    id: 6,
+    id: 7,
     nombre: "DGAux",
     email: "dgaux@cafelacabana.com",
     password: "acceso123", // Placeholder

@@ -76,13 +76,24 @@ window.obtenerAplicabilidadOverride = obtenerAplicabilidadOverride;
 // entidad está en su lista específica, o si no tiene listas (back-compat).
 // Lo que "no aplica" se controla exclusivamente vía parametros_excluidos.js,
 // salvo que exista override de aplicabilidad (Firestore) para la entidad.
-function parametroAplicaAEntidad(param, tipo, entidadId) {
+function parametroAplicaAEntidad(param, tipo, entidadId, modelos) {
     if (!param) return false;
     // Los parámetros de bonificación (p.ej. actitud_servicio) nunca se capturan
     // en el formulario ni cuentan en el máximo: se otorgan aparte vía bonoActitud.
     // También los protege de overrides de aplicabilidad guardados antes de que
     // existieran (los overrides solo listan excluidos conocidos).
     if (param.bono) return false;
+    // Alcance por modelo: parámetros ligados a un formato (p.ej. Interfón → Móvil)
+    // solo aplican si la entidad/evaluación incluye ese modelo. Es compuerta dura:
+    // ni el override ni las listas pueden activarlo donde no hay ese formato.
+    if (Array.isArray(param.aplicaAModelos) && param.aplicaAModelos.length) {
+        const norm = (typeof window.normalizarModelos === 'function') ? window.normalizarModelos : (x => Array.isArray(x) ? x : [x]);
+        const scope = norm(param.aplicaAModelos);
+        const ms = (Array.isArray(modelos) && modelos.length)
+            ? norm(modelos)
+            : ((typeof window.getModelosEntidad === 'function') ? window.getModelosEntidad(entidadId, tipo) : []);
+        if (!ms.some(m => scope.includes(m))) return false;
+    }
     const override = obtenerAplicabilidadOverride(entidadId, tipo);
     if (override) {
         const idNorm = param.id.toLowerCase().replace(/[-_]/g, '');
@@ -98,6 +109,17 @@ function parametroAplicaAEntidad(param, tipo, entidadId) {
     return true;
 }
 window.parametroAplicaAEntidad = parametroAplicaAEntidad;
+
+// Vigencia de un parámetro en un mes: respeta vigenteDesde (entrada) y
+// vigenteHasta (retiro). Con mes desconocido solo se excluye por vigenteDesde,
+// igual que el comportamiento previo.
+function parametroVigenteEnMes(param, mes) {
+    if (!param) return false;
+    if (param.vigenteDesde && (!mes || mes < param.vigenteDesde)) return false;
+    if (param.vigenteHasta && mes && mes > param.vigenteHasta) return false;
+    return true;
+}
+window.parametroVigenteEnMes = parametroVigenteEnMes;
 
 // IDs normalizados de los parámetros excluidos para una entidad
 // (las listas en parametros_excluidos.js vienen por nombre).
@@ -268,6 +290,55 @@ window.kpi2Utils = (function() {
         return '';
     }
 
+    // Lista de modelos: acepta 'Móvil', ['Cafetería','Móvil'] o 'Cafetería+Móvil'.
+    function normalizarModelos(modeloOLista) {
+        const lista = Array.isArray(modeloOLista) ? modeloOLista : String(modeloOLista || '').split('+');
+        const out = [];
+        lista.forEach(x => {
+            const m = normalizarModelo(x);
+            if (m && !out.includes(m)) out.push(m);
+        });
+        return out;
+    }
+
+    // Modelos de la entidad: `modelos` (arreglo, para combinadas) o `modelo`.
+    function getModelosEntidad(entidadId, tipo) {
+        try {
+            const lista = tipo === 'sucursal' ? window.sucursales : window.franquicias;
+            const e = Array.isArray(lista) ? lista.find(x => x.id === entidadId) : null;
+            return normalizarModelos(e && (e.modelos || e.modelo));
+        } catch (e) {}
+        return [];
+    }
+
+    // Modelos con que se evaluó: primero lo guardado en la evaluación
+    // (congela el modelo al momento de captura), si no el de la entidad.
+    function getModelosEvaluacion(ev, entidadId, tipo) {
+        const ms = normalizarModelos(ev && ev.modelos);
+        return ms.length ? ms : getModelosEntidad(entidadId, tipo);
+    }
+
+    // Columna de ponderación por parámetro: si el parámetro está restringido a
+    // un modelo (aplicaAModelos, p.ej. Interfón → Móvil) pesa con la columna de
+    // ese modelo; el resto pesa con el modelo principal de la evaluación.
+    function getModeloPesoParam(param, modelos) {
+        const ms = normalizarModelos(modelos);
+        const principal = ms[0] || '';
+        const scope = Array.isArray(param && param.aplicaAModelos) ? normalizarModelos(param.aplicaAModelos) : [];
+        if (scope.length && !scope.includes(principal)) {
+            const m = ms.find(x => scope.includes(x));
+            if (m) return m;
+        }
+        return principal;
+    }
+
+    // Peso KPI2 de un parámetro considerando modelos combinados.
+    function getPesoKPI2Param(param, entidadId, tipo, mes, modelos) {
+        const ms = normalizarModelos(modelos);
+        const efectivos = ms.length ? ms : getModelosEntidad(entidadId, tipo);
+        return getPesoKPI2(param.id, param.peso, getModeloPesoParam(param, efectivos), mes);
+    }
+
     const PONDERA_IA_PESOS_POR_MODELO = {
         'Cafetería': {
             bienvenida_contacto_visual: 4,
@@ -305,7 +376,9 @@ window.kpi2Utils = (function() {
             barra_limpieza: 2,
             clima_funcionando: 4,
             mesas_sillas_estado: 2,
-            interfon: 4
+            interfon: 4,
+            presentacion_tienda: 3,
+            actitud_servicio: 3
         },
         'Express': {
             bienvenida_contacto_visual: 4,
@@ -343,7 +416,9 @@ window.kpi2Utils = (function() {
             barra_limpieza: 2,
             clima_funcionando: 4,
             mesas_sillas_estado: 2,
-            interfon: 4
+            interfon: 4,
+            presentacion_tienda: 3,
+            actitud_servicio: 3
         },
         'Móvil': {
             bienvenida_contacto_visual: 4,
@@ -381,7 +456,9 @@ window.kpi2Utils = (function() {
             barra_limpieza: 2,
             clima_funcionando: 4,
             mesas_sillas_estado: 2,
-            interfon: 4
+            interfon: 4,
+            presentacion_tienda: 3,
+            actitud_servicio: 3
         }
     };
 
@@ -454,7 +531,8 @@ window.kpi2Utils = (function() {
 
             const mesEval = evaluacionLocal.mes || window.mesSeleccionado || null;
 
-            const modelo = getModeloEntidad(entidadId, tipo);
+            const modelos = getModelosEvaluacion(evaluacionLocal, entidadId, tipo);
+            const modelo = modelos[0] || getModeloEntidad(entidadId, tipo);
             const tablaPesos = (opts.tablaPesos && typeof opts.tablaPesos === 'object') ? opts.tablaPesos : null;
 
             const parametrosExcluidos = obtenerIdsParametrosExcluidos(entidadId, tipo);
@@ -466,19 +544,17 @@ window.kpi2Utils = (function() {
                     : !parametrosExcluidos.includes(param.id.toLowerCase().replace(/[-_]/g, ''))
             );
 
-            // Respetar vigencia de parámetros (p.ej. existencia desde 2026-03)
+            // Respetar vigencia de parámetros (p.ej. existencia desde 2026-03,
+            // pin_personalizador retirado al cierre de 2026-09)
             if (mesEval) {
-                parametrosAplicables = parametrosAplicables.filter(p => {
-                    if (!p || !p.vigenteDesde) return true;
-                    return mesEval >= p.vigenteDesde;
-                });
+                parametrosAplicables = parametrosAplicables.filter(p => parametroVigenteEnMes(p, mesEval));
             }
 
             // Misma regla de aplicabilidad que la Matriz: lo que no está excluido
             // por nombre en parametros_excluidos.js cuenta en el KPI2.
             // (Con esAplicable custom o override Firestore ya viene resuelto.)
             if (!conAplicableCustom && (tipo === 'sucursal' || tipo === 'franquicia')) {
-                parametrosAplicables = parametrosAplicables.filter(p => parametroAplicaAEntidad(p, tipo, entidadId));
+                parametrosAplicables = parametrosAplicables.filter(p => parametroAplicaAEntidad(p, tipo, entidadId, modelos));
             }
 
             let totalMax = 0;
@@ -497,9 +573,10 @@ window.kpi2Utils = (function() {
                     }
                 }
 
-                const peso2 = (tablaPesos && modelo && tablaPesos[modelo] && typeof tablaPesos[modelo][param.id] === 'number')
-                    ? tablaPesos[modelo][param.id]
-                    : getPesoKPI2(param.id, param.peso, modelo, mesEval);
+                const modeloPeso = getModeloPesoParam(param, modelos);
+                const peso2 = (tablaPesos && modeloPeso && tablaPesos[modeloPeso] && typeof tablaPesos[modeloPeso][param.id] === 'number')
+                    ? tablaPesos[modeloPeso][param.id]
+                    : getPesoKPI2(param.id, param.peso, modeloPeso, mesEval);
                 if (peso2 <= 0) return;
                 totalMax += peso2;
 
@@ -549,7 +626,12 @@ return {
     debeMostrarKPI2,
     getModeloEntidad,
     normalizarModelo,
+    normalizarModelos,
+    getModelosEntidad,
+    getModelosEvaluacion,
+    getModeloPesoParam,
     getPesoKPI2,
+    getPesoKPI2Param,
     obtenerVersionPesos,
     listarVersionesPonderancia,
     aplicarConfiguracionKPI2,
@@ -559,3 +641,13 @@ return {
     calcularDetalleKPI2
 };
 })();
+// Helpers de modelos combinados también fuera del módulo KPI2 (los usa
+// parametroAplicaAEntidad, que vive a nivel toplevel de este archivo).
+window.normalizarModelos = function (m) {
+    return (window.kpi2Utils && typeof window.kpi2Utils.normalizarModelos === 'function')
+        ? window.kpi2Utils.normalizarModelos(m) : [];
+};
+window.getModelosEntidad = function (entidadId, tipo) {
+    return (window.kpi2Utils && typeof window.kpi2Utils.getModelosEntidad === 'function')
+        ? window.kpi2Utils.getModelosEntidad(entidadId, tipo) : [];
+};

@@ -622,10 +622,11 @@ async function renderEvaluacionesBase({
             );
 
             if (mesEval) {
-                parametrosAplicables = parametrosAplicables.filter(p => {
-                    if (!p || !p.vigenteDesde) return true;
-                    return mesEval >= p.vigenteDesde;
-                });
+                parametrosAplicables = parametrosAplicables.filter(p =>
+                    (typeof window.parametroVigenteEnMes === 'function')
+                        ? window.parametroVigenteEnMes(p, mesEval)
+                        : (!p.vigenteDesde || mesEval >= p.vigenteDesde)
+                );
             }
 
             if (tipo === 'sucursal') {
@@ -1041,6 +1042,21 @@ function abrirModalNuevaEvaluacion() {
     window.modoEdicion = { activo: false, modalidad: 'kpi2' };
 }
 
+// Cambio de modelo evaluado (selector + checkbox "incluye Móvil"):
+// recalcula la lista de parámetros y las ponderaciones mostradas.
+function cambiarModeloEvaluacion() {
+    const sel = document.getElementById('select-modelo-evaluacion');
+    const chk = document.getElementById('chk-eval-movil');
+    const principal = (sel && sel.value) || 'Cafetería';
+    const ms = [principal];
+    if (chk && chk.checked && principal !== 'Móvil' && !ms.includes('Móvil')) ms.push('Móvil');
+    window.__evalModelos = ms;
+    const wrapChk = document.getElementById('eval-movil-wrap');
+    if (wrapChk) wrapChk.style.display = (principal === 'Móvil') ? 'none' : 'flex';
+    const ent = document.getElementById('select-entidad-evaluacion');
+    if (ent && ent.value) cargarParametrosEvaluacion(ent.value);
+}
+
 // Función para cargar parámetros según la entidad seleccionada
 function cargarParametrosEvaluacion(entidadValue) {
     const parametrosContainer = document.getElementById('parametros-evaluacion-container');
@@ -1060,7 +1076,30 @@ function cargarParametrosEvaluacion(entidadValue) {
     const entidadId = entidadValue.substring(firstDashIndex + 1);
     
     console.log(`Cargando parámetros para ${tipo}: ${entidadId}`);
-    
+
+    // === Modelo evaluado (queda guardado en el doc KPI2) ===
+    // Por defecto los modelos de la entidad; en edición, los guardados en la eval.
+    const selModelo = document.getElementById('select-modelo-evaluacion');
+    const chkMovil = document.getElementById('chk-eval-movil');
+    const wrapModelo = document.getElementById('eval-modelo-wrap');
+    const wrapChkMovil = document.getElementById('eval-movil-wrap');
+    if (window.__evalModelosEntidad !== entidadValue) {
+        window.__evalModelosEntidad = entidadValue;
+        const guardados = (window.modoEdicion && window.modoEdicion.activo && Array.isArray(window.modoEdicion.modelosPrecarga))
+            ? window.modoEdicion.modelosPrecarga
+            : null;
+        window.__evalModelos = (guardados && window.normalizarModelos(guardados).length)
+            ? window.normalizarModelos(guardados)
+            : (window.getModelosEntidad ? window.getModelosEntidad(entidadId, tipo) : []);
+        if (selModelo && window.__evalModelos[0]) selModelo.value = window.__evalModelos[0];
+        if (chkMovil) chkMovil.checked = window.__evalModelos.length > 1 && window.__evalModelos.includes('Móvil');
+    }
+    const modelosEval = (Array.isArray(window.__evalModelos) && window.__evalModelos.length)
+        ? window.__evalModelos
+        : (window.getModelosEntidad ? window.getModelosEntidad(entidadId, tipo) : []);
+    if (wrapModelo) wrapModelo.style.display = 'block';
+    if (wrapChkMovil && selModelo) wrapChkMovil.style.display = (selModelo.value === 'Móvil') ? 'none' : 'flex';
+
     // Obtener parámetros aplicables - SOLUCIÓN SIMPLE Y CORRECTA
     let parametrosAplicables;
     
@@ -1072,14 +1111,16 @@ function cargarParametrosEvaluacion(entidadValue) {
     try {
         const mes = window.mesSeleccionado;
         parametrosAplicables = parametrosAplicables.filter(p => {
-            if (!p || !p.vigenteDesde) return true;
+            if (!p) return false;
             // En edición KPI2 permitimos mostrar parámetros soloKPI2 aunque el mes sea anterior,
             // para poder capturarlos sin dejar el modal incompleto.
             const modEdicion = (window.modoEdicion && window.modoEdicion.activo && window.modoEdicion.modalidad)
                 ? String(window.modoEdicion.modalidad).toLowerCase().trim()
                 : 'kpi';
-            if (modEdicion === 'kpi2' && p.soloKPI2) return true;
-            return !!mes && mes >= p.vigenteDesde;
+            if (modEdicion === 'kpi2' && p.soloKPI2 && (!p.vigenteDesde || !mes || mes >= p.vigenteDesde)) return true;
+            return (typeof window.parametroVigenteEnMes === 'function')
+                ? window.parametroVigenteEnMes(p, mes)
+                : (!p.vigenteDesde || (!!mes && mes >= p.vigenteDesde));
         });
     } catch (e) {}
 
@@ -1102,7 +1143,7 @@ function cargarParametrosEvaluacion(entidadValue) {
     parametrosAplicables = parametrosAplicables.filter(p => {
         const idN = String(p.id || '').toLowerCase().replace(/[-_]/g, '');
         if (excluidosIds.includes(idN)) return false;
-        if (typeof parametroAplicaAEntidad === 'function' && !parametroAplicaAEntidad(p, tipo, entidadId)) return false;
+        if (typeof parametroAplicaAEntidad === 'function' && !parametroAplicaAEntidad(p, tipo, entidadId, modelosEval)) return false;
         return true;
     });
     console.log(`Parámetros filtrados para ${tipo} ${entidadId}: ${parametrosAntesDelFiltro} -> ${parametrosAplicables.length}`);
@@ -1167,8 +1208,8 @@ function cargarParametrosEvaluacion(entidadValue) {
         `;
         
         categoria.forEach(param => {
-            const pesoMostrar = (modalidadForm === 'kpi2' && window.kpi2Utils && typeof window.kpi2Utils.getPesoKPI2 === 'function')
-                ? window.kpi2Utils.getPesoKPI2(param.id, param.peso, window.kpi2Utils.getModeloEntidad(entidadId, tipo), window.mesSeleccionado)
+            const pesoMostrar = (modalidadForm === 'kpi2' && window.kpi2Utils && typeof window.kpi2Utils.getPesoKPI2Param === 'function')
+                ? window.kpi2Utils.getPesoKPI2Param(param, entidadId, tipo, window.mesSeleccionado, modelosEval)
                 : param.peso;
             html += `
                 <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f9f9f9; border-radius: 4px;">
@@ -1262,14 +1303,19 @@ function cargarParametrosEvaluacion(entidadValue) {
 // Función para obtener nombre de categoría
 function getCategoriaName(categoriaId) {
     const categorias = {
-        'bienvenida': 'Bienvenida y Atención al Cliente',
-        'producto_ventas': 'Conocimiento del Producto y Ventas',
-        'atencion_mesa': 'Atención en Mesa',
-        'tiempos': 'Tiempos de Espera',
-        'personal': 'Personal y Presentación',
-        'presentacion_producto': 'Presentación del Producto',
-        'exteriores': 'Instalaciones - Exteriores',
-        'interiores': 'Instalaciones - Interiores'
+        'experiencia_servicio': 'Experiencia y servicio al cliente',
+        'producto_calidad': 'Producto y calidad',
+        'desempeno_comercial': 'Desempeño comercial',
+        'operacion_orden': 'Operación, orden e imagen',
+        // IDs anteriores (por si persisten en datos viejos)
+        'bienvenida': 'Experiencia y servicio al cliente',
+        'producto_ventas': 'Desempeño comercial',
+        'atencion_mesa': 'Experiencia y servicio al cliente',
+        'tiempos': 'Experiencia y servicio al cliente',
+        'personal': 'Experiencia y servicio al cliente',
+        'presentacion_producto': 'Producto y calidad',
+        'exteriores': 'Operación, orden e imagen',
+        'interiores': 'Operación, orden e imagen'
     };
     return categorias[categoriaId] || categoriaId;
 }
@@ -1286,20 +1332,29 @@ function actualizarTotalPuntos() {
     // igual que el KPI que se calculará al guardar.
     const esKPI2 = !!(window.modoEdicion && String(window.modoEdicion.modalidad).toLowerCase() === 'kpi2')
         && window.kpi2Utils && typeof window.kpi2Utils.getPesoKPI2 === 'function';
-    let modeloEntidad = null;
+    let modelosEval = null;
+    let evalTipo = null, evalEntidadId = null;
     if (esKPI2) {
         const entidadValue = (document.getElementById('select-entidad-evaluacion') || {}).value || '';
         const di = entidadValue.indexOf('-');
-        if (di > 0 && typeof window.kpi2Utils.getModeloEntidad === 'function') {
-            modeloEntidad = window.kpi2Utils.getModeloEntidad(entidadValue.substring(di + 1), entidadValue.substring(0, di));
+        if (di > 0) {
+            evalTipo = entidadValue.substring(0, di);
+            evalEntidadId = entidadValue.substring(di + 1);
         }
+        modelosEval = (Array.isArray(window.__evalModelos) && window.__evalModelos.length)
+            ? window.__evalModelos
+            : (window.getModelosEntidad && evalEntidadId ? window.getModelosEntidad(evalEntidadId, evalTipo) : null);
     }
 
     checkboxes.forEach(checkbox => {
         const pesoRaw = Number(checkbox.getAttribute('data-peso'));
         const pesoBase = Number.isFinite(pesoRaw) ? pesoRaw : 0;
+        const paramId = checkbox.id.replace('param-', '');
+        const paramObj = (window.parametros || []).find(p => p.id === paramId);
         const peso = esKPI2
-            ? window.kpi2Utils.getPesoKPI2(checkbox.id.replace('param-', ''), pesoBase, modeloEntidad, window.mesSeleccionado)
+            ? (typeof window.kpi2Utils.getPesoKPI2Param === 'function' && paramObj
+                ? window.kpi2Utils.getPesoKPI2Param(paramObj, evalEntidadId, evalTipo, window.mesSeleccionado, modelosEval)
+                : window.kpi2Utils.getPesoKPI2(paramId, pesoBase, window.kpi2Utils.getModeloEntidad(evalEntidadId, evalTipo), window.mesSeleccionado))
             : pesoBase;
         if (checkbox.checked) {
             totalObtenido += peso;
@@ -1380,12 +1435,20 @@ async function guardarEvaluacion(entidadValue) {
         : window.franquicias.find(f => f.id === entidadId);
     
     // Estructura de datos para Firebase
+    // Modelos con que se evalúa (p.ej. ['Cafetería','Móvil'] en combinadas):
+    // quedan guardados para que el KPI2 pese con esos modelos aunque el
+    // catálogo de la entidad cambie después.
+    const modelosEval = (Array.isArray(window.__evalModelos) && window.__evalModelos.length)
+        ? window.__evalModelos.slice()
+        : (window.getModelosEntidad ? window.getModelosEntidad(entidadId, tipo) : []);
+
     const evaluacionData = {
         modalidad: modalidadEdicion,
         tipo: tipo,
         entidadId: entidadId,
         entidadNombre: entidadInfo?.nombre || 'Desconocido',
         mes: window.mesSeleccionado,
+        ...(modalidadEdicion === 'kpi2' && modelosEval.length ? { modelos: modelosEval } : {}),
         parametros: evaluacion,
         ...(modalidadEdicion === 'kpi2' ? { observaciones } : {}),
         totalObtenido: totalObtenido,
@@ -1401,6 +1464,7 @@ async function guardarEvaluacion(entidadValue) {
     if (modalidadEdicion === 'kpi2' && window.kpi2Utils && typeof window.kpi2Utils.calcularDetalleKPI2 === 'function') {
         const detalleKPI2 = window.kpi2Utils.calcularDetalleKPI2(entidadId, tipo, {
             mes: window.mesSeleccionado,
+            modelos: modelosEval,
             parametros: evaluacion
         });
         if (detalleKPI2 && typeof detalleKPI2.kpi === 'number') {
@@ -1453,6 +1517,7 @@ async function guardarEvaluacion(entidadValue) {
         const evaluacionLocal = {
             modalidad: modalidadEdicion,
             parametros: evaluacion,
+            ...(modalidadEdicion === 'kpi2' && modelosEval.length ? { modelos: modelosEval } : {}),
             ...(modalidadEdicion === 'kpi2' ? { observaciones } : {}),
             totalObtenido: evaluacionData.totalObtenido,
             totalMaximo: evaluacionData.totalMaximo,
@@ -1585,6 +1650,12 @@ function cerrarModalEvaluacion() {
     if (container) {
         container.innerHTML = '';
     }
+
+    // Restablecer selector de modelo evaluado
+    const wrapModelo = document.getElementById('eval-modelo-wrap');
+    if (wrapModelo) wrapModelo.style.display = 'none';
+    window.__evalModelosEntidad = null;
+    window.__evalModelos = null;
 }
 
 // Función para seleccionar/deseleccionar todos los parámetros
@@ -1832,8 +1903,8 @@ function generarTopDriversKPI2() {
         if (!entidadId || !tipo || !evLocal) return;
         if (!window.parametros || !Array.isArray(window.parametros)) return;
 
-        const modelo = (typeof kpi2Utils.getModeloEntidad === 'function')
-            ? kpi2Utils.getModeloEntidad(entidadId, tipo)
+        const modelosEval = (typeof kpi2Utils.getModelosEvaluacion === 'function')
+            ? kpi2Utils.getModelosEvaluacion(evLocal, entidadId, tipo)
             : null;
 
         const parametrosExcluidos = (typeof window.obtenerIdsParametrosExcluidos === 'function')
@@ -1852,7 +1923,7 @@ function generarTopDriversKPI2() {
 
         const aplicaEntidad = (p) => {
             if (typeof window.parametroAplicaAEntidad === 'function') {
-                return window.parametroAplicaAEntidad(p, tipoLower, entidadId);
+                return window.parametroAplicaAEntidad(p, tipoLower, entidadId, modelosEval);
             }
             if (!p) return false;
             if (p.aplicaATodas) return true;
@@ -1883,7 +1954,9 @@ function generarTopDriversKPI2() {
         window.parametros.forEach(p => {
             if (!p || esExcluido(p)) return;
 
-            const peso2 = kpi2Utils.getPesoKPI2(p.id, p.peso, modelo, window.mesSeleccionado);
+            const peso2 = (typeof kpi2Utils.getPesoKPI2Param === 'function')
+                ? kpi2Utils.getPesoKPI2Param(p, entidadId, tipoLower, (evLocal && evLocal.mes) || window.mesSeleccionado, modelosEval)
+                : kpi2Utils.getPesoKPI2(p.id, p.peso, modelosEval && modelosEval[0], window.mesSeleccionado);
             if (!peso2 || peso2 <= 0) return;
 
             const pesoOriginal = Number(p.peso) || 0;
@@ -2966,8 +3039,8 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
     const kpi2Calculado = (mod === 'kpi2' && kpi2Utils && typeof kpi2Utils.calcularKPI2 === 'function')
         ? kpi2Utils.calcularKPI2(entidadId, tipo, evalParaKPI2)
         : null;
-    const modeloEntidad = (kpi2Utils && typeof kpi2Utils.getModeloEntidad === 'function')
-        ? kpi2Utils.getModeloEntidad(entidadId, tipo)
+    const modelosEval = (kpi2Utils && typeof kpi2Utils.getModelosEvaluacion === 'function')
+        ? kpi2Utils.getModelosEvaluacion(evalParaKPI2, entidadId, tipo)
         : null;
     const detalleKPI2 = (mod === 'kpi2' && kpi2Utils && typeof kpi2Utils.calcularDetalleKPI2 === 'function')
         ? kpi2Utils.calcularDetalleKPI2(entidadId, tipo, evalParaKPI2)
@@ -3002,14 +3075,15 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
             // parámetros nuevos aunque el mes sea anterior (p.ej. menciona_promociones).
             parametrosAplicables = parametrosAplicables.filter(p => {
                 if (!p) return false;
-                if (!p.vigenteDesde) return true;
-                if (p.soloKPI2) return true;
-                return !!mes && mes >= p.vigenteDesde;
+                if (p.soloKPI2 && (!p.vigenteDesde || !mes || mes >= p.vigenteDesde)) return true;
+                return (typeof window.parametroVigenteEnMes === 'function')
+                    ? window.parametroVigenteEnMes(p, mes)
+                    : (!p.vigenteDesde || (!!mes && mes >= p.vigenteDesde));
             });
 
             // Filtrar por aplicación a entidad (misma regla que la Matriz y calcularKPI2)
             if (tipo === 'sucursal' || tipo === 'franquicia') {
-                parametrosAplicables = parametrosAplicables.filter(p => parametroAplicaAEntidad(p, tipo, entidadId));
+                parametrosAplicables = parametrosAplicables.filter(p => parametroAplicaAEntidad(p, tipo, entidadId, modelosEval));
             }
 
             // Los parámetros excluidos (celdas negras de la Matriz) no son auditables
@@ -3051,7 +3125,9 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
     const totalFilasParametros = parametrosParaMostrar.length;
     const totalParametrosContados = parametrosParaMostrar.filter(([, v]) => v !== null && v !== undefined).length;
     const catalogoVigente = (window.parametros || []).filter(p =>
-        !p.bono && (!p.vigenteDesde || (window.mesSeleccionado && window.mesSeleccionado >= p.vigenteDesde))
+        !p.bono && ((typeof window.parametroVigenteEnMes === 'function')
+            ? window.parametroVigenteEnMes(p, window.mesSeleccionado)
+            : (!p.vigenteDesde || (window.mesSeleccionado && window.mesSeleccionado >= p.vigenteDesde)))
     ).length;
     const noAplican = Math.max(0, catalogoVigente - totalFilasParametros);
     const noCapturados = Math.max(0, totalFilasParametros - totalParametrosContados);
@@ -3069,6 +3145,7 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                             <h3 style="color: #555; margin-bottom: 15px;">Información General</h3>
                             <p><strong>Entidad:</strong> ${nombreEntidad}</p>
                             <p><strong>Tipo:</strong> ${tipo ? (String(tipo).charAt(0).toUpperCase() + String(tipo).slice(1)) : ''}</p>
+                            ${(mod === 'kpi2' && modelosEval && modelosEval.length) ? `<p><strong>Modelo evaluado:</strong> ${modelosEval.join(' + ')}</p>` : ''}
                             <p><strong>Mes:</strong> ${formatearMesLegible(window.mesSeleccionado)}</p>
                             <p><strong>Fecha:</strong> ${fechaCorta}</p>
                         </div>
@@ -3102,8 +3179,8 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                                 ${parametrosParaMostrar.map(([paramId, valor], idx) => {
                                     const param = window.parametros?.find(p => p.id === paramId);
                                     const nombreParam = param ? param.nombre : paramId;
-                                    const peso = (mod === 'kpi2' && kpi2Utils && typeof kpi2Utils.getPesoKPI2 === 'function')
-                                        ? kpi2Utils.getPesoKPI2(paramId, param ? param.peso : valor, modeloEntidad, (evalParaKPI2 && evalParaKPI2.mes) || window.mesSeleccionado)
+                                    const peso = (mod === 'kpi2' && kpi2Utils && typeof kpi2Utils.getPesoKPI2Param === 'function' && param)
+                                        ? kpi2Utils.getPesoKPI2Param(param, entidadId, tipo, (evalParaKPI2 && evalParaKPI2.mes) || window.mesSeleccionado, modelosEval)
                                         : (param ? param.peso : valor);
                                     const noCapturado = (valor === null || valor === undefined);
                                     const cumple = !noCapturado && (Number(valor) > 0);
@@ -3155,6 +3232,10 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                         Evaluación del ${formatearMesLegible(window.mesSeleccionado)}
                     </div>
                     <div style="display: flex; gap: 10px;">
+                        <button onclick="descargarEvaluacionPDF('${entidadId}', '${tipo}', '${mod}')"
+                                style="background: linear-gradient(135deg, #2d3e50 0%, #1a252f 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                            <i class="fas fa-file-pdf"></i>Descargar PDF
+                        </button>
                         ${tienePermiso('editar') ? `
                         <button onclick="editarEvaluacion('${entidadId}', '${tipo}')" 
                                 style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,123,255,0.3);"
@@ -3195,6 +3276,147 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
     } else {
         console.error('Modal no se pudo crear');
     }
+}
+
+// Descarga la evaluación como documento PDF (ventana de impresión).
+// Documento COMPLETO: lista todo el catálogo vigente del mes, incluyendo los
+// parámetros que no aplican a la entidad (marcados "No aplica") — nada oculto.
+function descargarEvaluacionPDF(entidadId, tipo, mod) {
+    const mes = window.mesSeleccionado;
+    const base = (typeof obtenerEvaluacion === 'function')
+        ? obtenerEvaluacion(entidadId, tipo, mes)
+        : (tipo === 'sucursal'
+            ? window.evaluaciones?.sucursales?.[entidadId]?.[mes]
+            : window.evaluaciones?.franquicias?.[entidadId]?.[mes]);
+    if (!base) { alert('No se encontró la evaluación.'); return; }
+
+    const kpi2Utils = window.kpi2Utils || null;
+    const esKpi2 = mod === 'kpi2';
+    const evalParaKPI2 = (base.modalidades && base.modalidades.kpi2) ? base.modalidades.kpi2
+        : (base._kpi2 ? base._kpi2 : base);
+    const ev = esKpi2 ? evalParaKPI2 : base;
+    const modelos = (kpi2Utils && typeof kpi2Utils.getModelosEvaluacion === 'function')
+        ? kpi2Utils.getModelosEvaluacion(ev, entidadId, tipo) : [];
+    const detalle = (esKpi2 && kpi2Utils && typeof kpi2Utils.calcularDetalleKPI2 === 'function')
+        ? kpi2Utils.calcularDetalleKPI2(entidadId, tipo, ev) : null;
+    const kpiPct = detalle ? (detalle.kpi * 100) : ((ev.kpi || 0) * 100);
+    const entidad = (tipo === 'sucursal' ? window.sucursales : window.franquicias || [])
+        .find(e => e.id === entidadId);
+    const nombreEntidad = entidad ? entidad.nombre : entidadId;
+    const observaciones = (ev.observaciones && typeof ev.observaciones === 'object') ? ev.observaciones : {};
+    const excluidosIds = (typeof obtenerIdsParametrosExcluidos === 'function')
+        ? obtenerIdsParametrosExcluidos(entidadId, tipo) : [];
+
+    // Catálogo completo vigente en el mes + parámetros capturados fuera de catálogo.
+    const mesEval = ev.mes || mes;
+    const catalogo = (window.parametros || []).filter(p =>
+        p && !p.bono && (typeof window.parametroVigenteEnMes === 'function'
+            ? window.parametroVigenteEnMes(p, mesEval)
+            : (!p.vigenteDesde || mesEval >= p.vigenteDesde)));
+    const enCatalogo = new Set(catalogo.map(p => p.id));
+    const extraCapturados = Object.keys(ev.parametros || {}).filter(id => !enCatalogo.has(id));
+
+    const filasPorCategoria = {};
+    catalogo.forEach(p => {
+        const cid = p.categoriaId || 'otros';
+        (filasPorCategoria[cid] = filasPorCategoria[cid] || []).push(p);
+    });
+
+    const estadoDe = (p) => {
+        const idNorm = String(p.id).toLowerCase().replace(/[-_]/g, '');
+        const aplica = !excluidosIds.includes(idNorm)
+            && (typeof parametroAplicaAEntidad !== 'function' || parametroAplicaAEntidad(p, tipo, entidadId, modelos));
+        if (!aplica) return { txt: 'No aplica', cls: 'na' };
+        const v = ev.parametros ? ev.parametros[p.id] : undefined;
+        if (v === undefined) return { txt: 'Sin capturar', cls: 'nc' };
+        return (Number(v) > 0) ? { txt: 'Cumple', cls: 'ok' } : { txt: 'No cumple', cls: 'bad' };
+    };
+
+    const pesoDe = (p, aplica) => (!aplica) ? '—'
+        : (esKpi2 && kpi2Utils && typeof kpi2Utils.getPesoKPI2Param === 'function'
+            ? kpi2Utils.getPesoKPI2Param(p, entidadId, tipo, mesEval, modelos)
+            : (Number(p.peso) || 0));
+
+    const ahora = new Date();
+    const logoUrl = `${location.origin}/logch.png`;
+    const confidencial = 'Documento confidencial — Uso interno de Café La Cabaña y The Unknown Shopper.';
+    const bonoInfo = (ev.bonoActitud && ev.bonoActitud.otorgado) ? ev.bonoActitud : null;
+
+    let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Evaluación ${nombreEntidad} — ${mesEval}</title>
+        <style>
+            body { font-family: Arial, sans-serif; color: #222; padding: 24px 30px 60px; font-size: 12px; }
+            .encabezado { display: flex; align-items: center; gap: 16px; border-bottom: 3px solid #0077cc; padding-bottom: 12px; }
+            .encabezado img { height: 60px; }
+            .encabezado .tit { flex: 1; }
+            .encabezado h1 { font-size: 19px; color: #2d3e50; margin: 0 0 2px; }
+            .encabezado .sub { color: #0077cc; font-size: 12px; font-weight: bold; }
+            .meta { display: flex; flex-wrap: wrap; gap: 6px 26px; color: #555; font-size: 11px; margin: 10px 0 14px; }
+            .meta b { color: #2d3e50; }
+            .resumen { background: #eef4fb; border: 1px solid #d6e2ef; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; font-size: 13px; }
+            .resumen .kpi { font-size: 20px; font-weight: bold; color: ${kpiPct >= 95 ? '#1e7e34' : kpiPct >= 90 ? '#b8860b' : '#bd2130'}; }
+            .bono { color: #b8860b; font-weight: bold; }
+            h2 { font-size: 12px; color: #2d3e50; background: #eef4fb; border: 1px solid #d6e2ef; padding: 5px 8px; margin: 14px 0 0; page-break-after: avoid; }
+            table { border-collapse: collapse; width: 100%; page-break-inside: auto; }
+            th { background: #2d3e50; color: #fff; padding: 4px 6px; border: 1px solid #b9c4d0; font-size: 10px; text-align: left; }
+            td { padding: 4px 6px; border: 1px solid #ddd; font-size: 10.5px; vertical-align: top; }
+            .st { font-weight: bold; white-space: nowrap; }
+            .ok { color: #1e7e34; } .bad { color: #bd2130; } .nc { color: #856404; } .na { color: #999; }
+            tr.na-row td { color: #999; background: #fafafa; }
+            .pie { position: fixed; bottom: 0; left: 0; right: 0; border-top: 2px solid #0077cc; background: #fff; padding: 6px 0; text-align: center; font-size: 9px; color: #666; }
+            .aviso { background: #fdf3d7; border: 1px solid #e8c96a; border-radius: 6px; padding: 7px 12px; font-size: 9.5px; color: #7a5d00; text-align: center; margin-bottom: 12px; }
+        </style></head><body>
+        <div class="encabezado">
+            <img src="${logoUrl}" alt="Café La Cabaña" onerror="this.style.display='none'">
+            <div class="tit"><h1>Evaluación de Desempeño</h1><div class="sub">Documento oficial de auditoría — Sistema de Evaluaciones</div></div>
+        </div>
+        <div class="meta">
+            <span><b>Entidad:</b> ${nombreEntidad}</span>
+            <span><b>Tipo:</b> ${tipo}</span>
+            <span><b>Mes evaluado:</b> ${formatearMesLegible(mesEval)}</span>
+            ${modelos.length ? `<span><b>Modelo evaluado:</b> ${modelos.join(' + ')}</span>` : ''}
+            <span><b>Modalidad:</b> ${esKpi2 ? 'KPI2' : 'KPI'}</span>
+            <span><b>Emitido:</b> ${ahora.toLocaleString('es-MX')}</span>
+        </div>
+        <div class="aviso">${confidencial}</div>
+        <div class="resumen">
+            <span class="kpi">${kpiPct.toFixed(1)}%</span> &nbsp;·&nbsp;
+            Obtenido: <b>${detalle ? detalle.totalObt : (ev.totalObtenido || 0)}</b> / Máximo: <b>${detalle ? detalle.totalMax : (ev.totalMaximo || 0)}</b>
+            ${bonoInfo ? ` &nbsp;·&nbsp; <span class="bono">★ Bono Actitud de servicio: +${detalle && detalle.bono ? detalle.bono : ''} pts (${bonoInfo.otorgadoPor || 'Dirección de Operaciones'})</span>` : ''}
+        </div>`;
+
+    const catOrden = Object.keys(filasPorCategoria).sort((a, b) =>
+        filasPorCategoria[b].length - filasPorCategoria[a].length);
+    let num = 0;
+    catOrden.forEach(cid => {
+        const nombre = (typeof getCategoriaName === 'function') ? getCategoriaName(cid) : cid;
+        html += `<h2>${nombre}</h2><table><thead><tr>
+            <th style="width:24px">#</th><th>Parámetro</th><th style="width:90px">Estado</th>
+            <th style="width:50px">Peso</th><th style="width:32%">Observación</th></tr></thead><tbody>`;
+        filasPorCategoria[cid].forEach(p => {
+            num++;
+            const st = estadoDe(p);
+            const obs = (st.cls === 'bad' && observaciones[p.id]) ? observaciones[p.id] : '';
+            html += `<tr class="${st.cls === 'na' ? 'na-row' : ''}">
+                <td>${num}</td><td><b>${p.nombre}</b><br><span style="font-size:9px;color:#888">${p.descripcion || ''}</span></td>
+                <td class="st ${st.cls}">${st.txt}</td><td style="text-align:center">${pesoDe(p, st.cls !== 'na')}</td><td>${obs}</td></tr>`;
+        });
+        html += `</tbody></table>`;
+    });
+
+    if (extraCapturados.length) {
+        html += `<h2>Parámetros capturados fuera del catálogo actual</h2><table><thead><tr><th>ID</th><th>Valor</th></tr></thead><tbody>`;
+        extraCapturados.forEach(id => { html += `<tr><td>${id}</td><td>${ev.parametros[id]}</td></tr>`; });
+        html += `</tbody></table>`;
+    }
+
+    html += `<div class="pie">${confidencial}<br>${nombreEntidad} · ${formatearMesLegible(mesEval)} · Emitido el ${ahora.toLocaleString('es-MX')}</div></body></html>`;
+
+    const w = window.open('', '_blank');
+    if (!w) { alert('El navegador bloqueó la ventana. Permite ventanas emergentes.'); return; }
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 500);
 }
 
 // Función para cerrar modal de ver evaluación
@@ -3257,6 +3479,7 @@ function editarEvaluacion(entidadId, tipo, modalidad = 'kpi') {
         mes: mes,
         modalidad: mod,
         parametrosPrecarga: (evalPrecarga && evalPrecarga.parametros) ? evalPrecarga.parametros : {},
+        modelosPrecarga: (evalPrecarga && Array.isArray(evalPrecarga.modelos)) ? evalPrecarga.modelos : null,
         observacionesPrecarga: (mod === 'kpi2' && evalPrecarga && evalPrecarga.observaciones && typeof evalPrecarga.observaciones === 'object') ? evalPrecarga.observaciones : {},
         datosOriginales: { ...base },
         entidadInfo: entidadInfo
@@ -3799,6 +4022,7 @@ function integrarDatosFirebase(evaluacionesFirebase) {
             timestamp: evaluacion.timestamp || Date.now(),
             videoUrl: evaluacion.videoUrl || null,
             bonoActitud: evaluacion.bonoActitud || null,
+            modelos: Array.isArray(evaluacion.modelos) ? evaluacion.modelos : null,
             firebaseId: evaluacion.id || evaluacion.firebaseId || null
         };
 

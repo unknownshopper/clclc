@@ -56,7 +56,7 @@
 
   <script>
     (function() {
-      const CATEGORIAS_AV = new Set(['bienvenida', 'producto_ventas', 'atencion_mesa', 'tiempos']);
+      const CATEGORIAS_AV = new Set(['experiencia_servicio', 'desempeno_comercial']);
 
       function pad2(n) { return String(n).padStart(2, '0'); }
       function mesActual() {
@@ -130,9 +130,11 @@
 
       function buildTabla(mes) {
         const ps = Array.isArray(window.parametros) ? window.parametros : [];
-        const paramsAV = ps.filter(p => p && CATEGORIAS_AV.has(p.categoriaId));
+        const paramsAV = ps.filter(p => p && !p.bono && (CATEGORIAS_AV.has(p.categoriaId) || p.id === 'tiempo_espera_cafe'));
 
-        const vigentes = paramsAV.filter(p => !p.vigenteDesde || !mes || mes >= p.vigenteDesde);
+        const vigentes = paramsAV.filter(p =>
+          (!p.vigenteDesde || !mes || mes >= p.vigenteDesde) &&
+          (!p.vigenteHasta || !mes || mes <= p.vigenteHasta));
 
         // Conteo de exclusiones y aplicabilidad por entidad.
         const entidades = getEntidadesActivas();
@@ -221,10 +223,10 @@
 
         rows.forEach((r, idx) => {
           const bg = idx % 2 === 0 ? '#f8f9fa' : 'white';
-          const cat = r.categoriaId === 'bienvenida' ? 'Bienvenida'
-            : r.categoriaId === 'producto_ventas' ? 'Producto/Ventas'
-            : r.categoriaId === 'atencion_mesa' ? 'Atención en mesa'
-            : r.categoriaId === 'tiempos' ? 'Tiempos'
+          const cat = r.categoriaId === 'experiencia_servicio' ? 'Experiencia y servicio'
+            : r.categoriaId === 'desempeno_comercial' ? 'Desempeño comercial'
+            : r.categoriaId === 'producto_calidad' ? 'Producto y calidad'
+            : r.categoriaId === 'operacion_orden' ? 'Operación e imagen'
             : r.categoriaId;
 
           html += `<tr style="background:${bg};">

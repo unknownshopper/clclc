@@ -205,14 +205,18 @@ function getParametrosExcluidosNormalizados(entidadId, tipo) {
 }
 
 function getParametrosAplicablesAtencionVenta(entidadId, tipo, mes) {
-  const categorias = new Set(['bienvenida', 'producto_ventas', 'atencion_mesa', 'tiempos']);
+  // Categorías nuevas equivalentes a bienvenida/producto_ventas/atencion_mesa/tiempos;
+  // tiempo_espera_cafe (ex 'tiempos') ahora vive en producto_calidad pero sigue contando.
+  const categorias = new Set(['experiencia_servicio', 'desempeno_comercial']);
   const excluidos = new Set(getParametrosExcluidosNormalizados(entidadId, tipo));
   const params = Array.isArray(window.parametros) ? window.parametros.slice() : [];
 
   return params.filter(p => {
     if (!p) return false;
-    if (!categorias.has(p.categoriaId)) return false;
+    if (p.bono) return false;
+    if (!categorias.has(p.categoriaId) && p.id !== 'tiempo_espera_cafe') return false;
     if (p.vigenteDesde && (!mes || mes < p.vigenteDesde)) return false;
+    if (p.vigenteHasta && mes && mes > p.vigenteHasta) return false;
     const idNorm = (p.id || '').toString().toLowerCase().replace(/[-_]/g, '');
     if (excluidos.has(idNorm)) return false;
     return true;
@@ -253,14 +257,16 @@ function calcularKPI2AtencionVentaParaEvaluacion(entidadId, tipo, evaluacionLoca
     const kpi2Utils = window.kpi2Utils || null;
     if (!ev || !kpi2Utils || typeof kpi2Utils.getPesoKPI2 !== 'function') return null;
 
-    const modelo = (typeof kpi2Utils.getModeloEntidad === 'function') ? kpi2Utils.getModeloEntidad(entidadId, tipo) : null;
+    const modelos = (typeof kpi2Utils.getModelosEvaluacion === 'function') ? kpi2Utils.getModelosEvaluacion(ev, entidadId, tipo) : [];
     const params = getParametrosAplicablesAtencionVenta(entidadId, tipo, mes);
 
     let totalMax = 0;
     let totalObt = 0;
     params.forEach(p => {
       const pesoOriginal = Number(p.peso) || 0;
-      const peso2 = Number(kpi2Utils.getPesoKPI2(p.id, p.peso, modelo, mes)) || 0;
+      const peso2 = Number((typeof kpi2Utils.getPesoKPI2Param === 'function')
+        ? kpi2Utils.getPesoKPI2Param(p, entidadId, tipo, mes, modelos)
+        : kpi2Utils.getPesoKPI2(p.id, p.peso, modelos[0] || null, mes)) || 0;
       if (peso2 <= 0) return;
 
       if (p?.soloKPI2 && ev.parametros && ev.parametros[p.id] === undefined) return;

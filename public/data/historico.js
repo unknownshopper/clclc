@@ -20,11 +20,13 @@ function calcularKPIGlobalMesConFiltros(mes) {
   const todas = obtenerEvaluacionesDelMes(mes) || [];
   const filtradas = filtrarDatosPorRol(todas) || [];
 
-  const count = filtradas.length;
+  const sinCompetencia = filtradas.filter(ev => String(ev && ev.tipo ? ev.tipo : '').toLowerCase().trim() !== 'competencia');
+
+  const count = sinCompetencia.length;
   if (count === 0) return { kpi: 0, count: 0 };
 
   // kpi viene 0..1 en script.js; convertimos a porcentaje 0..100 para la gráfica
-  const sum = filtradas.reduce((acc, ev) => acc + ((ev.kpi || 0) * 100), 0);
+  const sum = sinCompetencia.reduce((acc, ev) => acc + ((ev.kpi || 0) * 100), 0);
   return { kpi: Math.round(sum / count), count };
 }
 
@@ -33,9 +35,16 @@ function calcularKPI2ParaEvaluacion(entidadId, tipo, evaluacionLocal) {
     const kpi2Utils = window.kpi2Utils || null;
     if (kpi2Utils && typeof kpi2Utils.calcularKPI2 === 'function') {
       const evBase = evaluacionLocal || null;
-      const evParaKPI2 = (evBase && evBase.modalidades && evBase.modalidades.kpi2)
+      const evParaKPI2Raw = (evBase && evBase.modalidades && evBase.modalidades.kpi2)
         ? evBase.modalidades.kpi2
         : (evBase && evBase._kpi2 ? evBase._kpi2 : evBase);
+
+      // Importante para histórico: si la evaluación no trae `mes`, kpi2Utils.calcularKPI2
+      // cae en `window.mesSeleccionado` y eso puede distorsionar meses pasados (p.ej. agosto)
+      // por reglas de vigencia (`vigenteDesde`).
+      const evParaKPI2 = (evParaKPI2Raw && typeof evParaKPI2Raw === 'object')
+        ? evParaKPI2Raw
+        : null;
       return kpi2Utils.calcularKPI2(entidadId, tipo, evParaKPI2);
     }
     return null;
@@ -52,11 +61,34 @@ function calcularKPI2GlobalMesConFiltros(mes) {
   const todas = obtenerEvaluacionesDelMes(mes) || [];
   const filtradas = filtrarDatosPorRol(todas) || [];
 
+  const sinCompetencia = filtradas.filter(ev => String(ev && ev.tipo ? ev.tipo : '').toLowerCase().trim() !== 'competencia');
+
   let sum = 0;
   let count = 0;
 
-  filtradas.forEach(ev => {
-    const kpi2 = calcularKPI2ParaEvaluacion(ev.entidadId, ev.tipo, ev.evaluacion);
+  sinCompetencia.forEach(ev => {
+    // Pasar `mes` para que el cálculo respete vigencia real del mes agregado
+    const base = ev && ev.evaluacion ? ev.evaluacion : null;
+    let evConMes = base;
+    try {
+      const evBase = base || null;
+      const evParaKPI2Raw = (evBase && evBase.modalidades && evBase.modalidades.kpi2)
+        ? evBase.modalidades.kpi2
+        : (evBase && evBase._kpi2 ? evBase._kpi2 : evBase);
+      if (evParaKPI2Raw && typeof evParaKPI2Raw === 'object' && !evParaKPI2Raw.mes && mes) {
+        // Clonar sólo para inyectar mes sin mutar la evaluación en memoria
+        const clonado = { ...evParaKPI2Raw, mes };
+        if (evBase && evBase.modalidades && evBase.modalidades.kpi2) {
+          evConMes = { ...evBase, modalidades: { ...evBase.modalidades, kpi2: clonado } };
+        } else if (evBase && evBase._kpi2) {
+          evConMes = { ...evBase, _kpi2: clonado };
+        } else {
+          evConMes = clonado;
+        }
+      }
+    } catch (e) {}
+
+    const kpi2 = calcularKPI2ParaEvaluacion(ev.entidadId, ev.tipo, evConMes);
     if (typeof kpi2 === 'number') {
       sum += (kpi2 * 100);
       count += 1;
@@ -67,14 +99,73 @@ function calcularKPI2GlobalMesConFiltros(mes) {
   return { kpi: Math.round(sum / count), count };
 }
 
+function debugKPI2Mes(mes) {
+  try {
+    if (typeof obtenerEvaluacionesDelMes !== 'function') return { mes, error: 'obtenerEvaluacionesDelMes no disponible' };
+    if (typeof filtrarDatosPorRol !== 'function') return { mes, error: 'filtrarDatosPorRol no disponible' };
+
+    const todas = obtenerEvaluacionesDelMes(mes) || [];
+    const filtradas = filtrarDatosPorRol(todas) || [];
+
+    const sinCompetencia = filtradas.filter(ev => String(ev && ev.tipo ? ev.tipo : '').toLowerCase().trim() !== 'competencia');
+
+    const kpi2Utils = window.kpi2Utils || null;
+    if (!kpi2Utils || typeof kpi2Utils.calcularKPI2 !== 'function') return { mes, error: 'kpi2Utils.calcularKPI2 no disponible' };
+
+    const rows = sinCompetencia.map(ev => {
+      const base = ev.evaluacion || null;
+      const evParaKPI2 = (base && base.modalidades && base.modalidades.kpi2)
+        ? base.modalidades.kpi2
+        : (base && base._kpi2 ? base._kpi2 : base);
+
+      const kpi2 = kpi2Utils.calcularKPI2(ev.entidadId, ev.tipo, evParaKPI2);
+      const parametros = (evParaKPI2 && evParaKPI2.parametros) ? evParaKPI2.parametros : {};
+      const keys = Object.keys(parametros || {});
+
+      return {
+        entidadId: ev.entidadId,
+        tipo: ev.tipo,
+        entidad: ev.entidad || ev.entidadId,
+        kpi2: (typeof kpi2 === 'number' ? Math.round(kpi2 * 1000) / 10 : null),
+        keys: keys.length,
+        estadoPublicacion: ev.estadoPublicacion || null,
+      };
+    });
+
+    const conKPI2 = rows.filter(r => typeof r.kpi2 === 'number');
+    const avg = conKPI2.length ? Math.round((conKPI2.reduce((a, r) => a + r.kpi2, 0) / conKPI2.length) * 10) / 10 : null;
+    const min = conKPI2.length ? Math.min(...conKPI2.map(r => r.kpi2)) : null;
+    const max = conKPI2.length ? Math.max(...conKPI2.map(r => r.kpi2)) : null;
+
+    const ordenadas = conKPI2.slice().sort((a, b) => a.kpi2 - b.kpi2);
+    return {
+      mes,
+      total: rows.length,
+      conKPI2: conKPI2.length,
+      avg,
+      min,
+      max,
+      peores: ordenadas.slice(0, 5),
+      mejores: ordenadas.slice(-5).reverse(),
+      rows
+    };
+  } catch (e) {
+    return { mes, error: String(e && e.message ? e.message : e) };
+  }
+}
+
+window.debugKPI2Mes = debugKPI2Mes;
+
 function listarParametrosEvaluadosAtencionVentaMes(mes) {
   try {
     if (typeof obtenerEvaluacionesDelMes !== 'function') return [];
     if (typeof filtrarDatosPorRol !== 'function') return [];
     const todas = obtenerEvaluacionesDelMes(mes) || [];
     const filtradas = filtrarDatosPorRol(todas) || [];
+
+    const sinCompetencia = filtradas.filter(ev => String(ev && ev.tipo ? ev.tipo : '').toLowerCase().trim() !== 'competencia');
     const set = new Set();
-    filtradas.forEach(ev => {
+    sinCompetencia.forEach(ev => {
       const params = getParametrosAplicablesAtencionVenta(ev.entidadId, ev.tipo, mes);
       params.forEach(p => {
         const n = (p && p.nombre) ? String(p.nombre).trim() : '';
@@ -94,6 +185,7 @@ function getParametrosExcluidosNormalizados(entidadId, tipo) {
       return (window.obtenerParametrosExcluidos(entidadId, tipoLower) || []).map(x => (x || '').toString().toLowerCase().replace(/[-_]/g, ''));
     }
 
+    // Fallback: usar listas por nombre y mapear a IDs
     let nombres = [];
     if (tipoLower === 'sucursal' && window.parametrosExcluidosPorSucursal && window.parametrosExcluidosPorSucursal[entidadId]) {
       nombres = window.parametrosExcluidosPorSucursal[entidadId] || [];
@@ -113,14 +205,18 @@ function getParametrosExcluidosNormalizados(entidadId, tipo) {
 }
 
 function getParametrosAplicablesAtencionVenta(entidadId, tipo, mes) {
-  const categorias = new Set(['bienvenida', 'producto_ventas', 'atencion_mesa', 'tiempos']);
+  // Categorías nuevas equivalentes a bienvenida/producto_ventas/atencion_mesa/tiempos;
+  // tiempo_espera_cafe (ex 'tiempos') ahora vive en producto_calidad pero sigue contando.
+  const categorias = new Set(['experiencia_servicio', 'desempeno_comercial']);
   const excluidos = new Set(getParametrosExcluidosNormalizados(entidadId, tipo));
   const params = Array.isArray(window.parametros) ? window.parametros.slice() : [];
 
   return params.filter(p => {
     if (!p) return false;
-    if (!categorias.has(p.categoriaId)) return false;
+    if (p.bono) return false;
+    if (!categorias.has(p.categoriaId) && p.id !== 'tiempo_espera_cafe') return false;
     if (p.vigenteDesde && (!mes || mes < p.vigenteDesde)) return false;
+    if (p.vigenteHasta && mes && mes > p.vigenteHasta) return false;
     const idNorm = (p.id || '').toString().toLowerCase().replace(/[-_]/g, '');
     if (excluidos.has(idNorm)) return false;
     return true;
@@ -161,14 +257,16 @@ function calcularKPI2AtencionVentaParaEvaluacion(entidadId, tipo, evaluacionLoca
     const kpi2Utils = window.kpi2Utils || null;
     if (!ev || !kpi2Utils || typeof kpi2Utils.getPesoKPI2 !== 'function') return null;
 
-    const modelo = (typeof kpi2Utils.getModeloEntidad === 'function') ? kpi2Utils.getModeloEntidad(entidadId, tipo) : null;
+    const modelos = (typeof kpi2Utils.getModelosEvaluacion === 'function') ? kpi2Utils.getModelosEvaluacion(ev, entidadId, tipo) : [];
     const params = getParametrosAplicablesAtencionVenta(entidadId, tipo, mes);
 
     let totalMax = 0;
     let totalObt = 0;
     params.forEach(p => {
       const pesoOriginal = Number(p.peso) || 0;
-      const peso2 = Number(kpi2Utils.getPesoKPI2(p.id, p.peso, modelo)) || 0;
+      const peso2 = Number((typeof kpi2Utils.getPesoKPI2Param === 'function')
+        ? kpi2Utils.getPesoKPI2Param(p, entidadId, tipo, mes, modelos)
+        : kpi2Utils.getPesoKPI2(p.id, p.peso, modelos[0] || null, mes)) || 0;
       if (peso2 <= 0) return;
 
       if (p?.soloKPI2 && ev.parametros && ev.parametros[p.id] === undefined) return;
@@ -194,9 +292,11 @@ function calcularKPIAtencionVentaGlobalMesConFiltros(mes) {
   const todas = obtenerEvaluacionesDelMes(mes) || [];
   const filtradas = filtrarDatosPorRol(todas) || [];
 
+  const sinCompetencia = filtradas.filter(ev => String(ev && ev.tipo ? ev.tipo : '').toLowerCase().trim() !== 'competencia');
+
   let sum = 0;
   let count = 0;
-  filtradas.forEach(ev => {
+  sinCompetencia.forEach(ev => {
     const k = calcularKPIAtencionVentaParaEvaluacion(ev.entidadId, ev.tipo, ev.evaluacion, mes);
     if (typeof k === 'number') {
       sum += (k * 100);
@@ -215,9 +315,11 @@ function calcularKPI2AtencionVentaGlobalMesConFiltros(mes) {
   const todas = obtenerEvaluacionesDelMes(mes) || [];
   const filtradas = filtrarDatosPorRol(todas) || [];
 
+  const sinCompetencia = filtradas.filter(ev => String(ev && ev.tipo ? ev.tipo : '').toLowerCase().trim() !== 'competencia');
+
   let sum = 0;
   let count = 0;
-  filtradas.forEach(ev => {
+  sinCompetencia.forEach(ev => {
     const k = calcularKPI2AtencionVentaParaEvaluacion(ev.entidadId, ev.tipo, ev.evaluacion, mes);
     if (typeof k === 'number') {
       sum += (k * 100);
@@ -234,35 +336,50 @@ function renderHistorico() {
   if (!container) return;
 
   const meses = obtenerMesesUltimos(12);
-  const resultados = meses.map(m => ({
-    mes: m,
-    label: (typeof formatearMesLegible === 'function' ? formatearMesLegible(m) : m),
-    res: calcularKPIGlobalMesConFiltros(m),
-    res2: calcularKPI2GlobalMesConFiltros(m)
-  }));
+  const corteFinKPI = (window.kpiCorte && window.kpiCorte.MES_KPI_FIN) ? window.kpiCorte.MES_KPI_FIN : '2026-05';
+  const resultados = meses.map(m => {
+    const resKPI = (typeof window.debeMostrarKPI === 'function' ? window.debeMostrarKPI(m) : (m <= corteFinKPI))
+      ? calcularKPIGlobalMesConFiltros(m)
+      : { kpi: null, count: 0 };
+    const resKPI2 = calcularKPI2GlobalMesConFiltros(m);
+    return {
+      mes: m,
+      label: (typeof formatearMesLegible === 'function' ? formatearMesLegible(m) : m),
+      res: resKPI,
+      res2: resKPI2
+    };
+  });
 
-  const resultadosAV = meses.map(m => ({
-    mes: m,
-    label: (typeof formatearMesLegible === 'function' ? formatearMesLegible(m) : m),
-    res: calcularKPIAtencionVentaGlobalMesConFiltros(m),
-    res2: calcularKPI2AtencionVentaGlobalMesConFiltros(m)
-  }));
+  const resultadosAV = meses.map(m => {
+    const resKPI = (typeof window.debeMostrarKPI === 'function' ? window.debeMostrarKPI(m) : (m <= corteFinKPI))
+      ? calcularKPIAtencionVentaGlobalMesConFiltros(m)
+      : { kpi: null, count: 0 };
+    const resKPI2 = calcularKPI2AtencionVentaGlobalMesConFiltros(m);
+    return {
+      mes: m,
+      label: (typeof formatearMesLegible === 'function' ? formatearMesLegible(m) : m),
+      res: resKPI,
+      res2: resKPI2
+    };
+  });
 
-  const comparables = resultados.filter(r => r.res.count > 0 && r.res2.count > 0);
-  const labelsC = comparables.map(r => r.label);
-  const datosC1 = comparables.map(r => r.res.kpi);
-  const datosC2 = comparables.map(r => r.res2.kpi);
-  const countsC1 = comparables.map(r => r.res.count);
-  const countsC2 = comparables.map(r => r.res2.count);
+  const labelsC = resultados.map(r => r.label);
+  const datosC1 = resultados.map(r => {
+    if (!r || !r.mes) return null;
+    if (r.mes > corteFinKPI) return null;
+    return (r.res && r.res.count > 0 && typeof r.res.kpi === 'number') ? r.res.kpi : null;
+  });
+  const datosC2 = resultados.map(r => (r.res2 && r.res2.count > 0 && typeof r.res2.kpi === 'number' ? r.res2.kpi : null));
+  const countsC1 = resultados.map(r => (r.res && r.res.count > 0) ? r.res.count : 0);
+  const countsC2 = resultados.map(r => (r.res2 && r.res2.count > 0) ? r.res2.count : 0);
 
-  const comparablesAV = resultadosAV.filter(r => r.res.count > 0 && r.res2.count > 0);
-  const labelsAV = comparablesAV.map(r => r.label);
-  const datosAV1 = comparablesAV.map(r => r.res.kpi);
-  const datosAV2 = comparablesAV.map(r => r.res2.kpi);
-  const countsAV1 = comparablesAV.map(r => r.res.count);
-  const countsAV2 = comparablesAV.map(r => r.res2.count);
+  const labelsAV = resultadosAV.map(r => r.label);
+  const datosAV1 = resultadosAV.map(r => (r.res && r.res.count > 0 && typeof r.res.kpi === 'number' ? r.res.kpi : null));
+  const datosAV2 = resultadosAV.map(r => (r.res2 && r.res2.count > 0 && typeof r.res2.kpi === 'number' ? r.res2.kpi : null));
+  const countsAV1 = resultadosAV.map(r => (r.res && r.res.count > 0) ? r.res.count : 0);
+  const countsAV2 = resultadosAV.map(r => (r.res2 && r.res2.count > 0) ? r.res2.count : 0);
 
-  const paramsAV = listarParametrosEvaluadosAtencionVentaMes(comparablesAV.length ? comparablesAV[comparablesAV.length - 1].mes : (meses[meses.length - 1] || null));
+  const paramsAV = listarParametrosEvaluadosAtencionVentaMes(meses[meses.length - 1] || null);
   const chipsAV = (paramsAV || []).map(n => `<span style="display:inline-block; padding:4px 10px; border-radius:999px; background:#f1f5f9; border:1px solid #e2e8f0; color:#334155; font-size:12px; margin:3px 6px 0 0;">${n}</span>`).join('');
   const bloqueParamsAV = chipsAV
     ? `<div style="text-align:center; margin-bottom: 10px;">
@@ -280,7 +397,7 @@ function renderHistorico() {
       <canvas id="graficoHistoricoComparacion" width="800" height="420" style="max-width:100%;"></canvas>
     </div>
 
-    <div style="margin-top: 18px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-height: 420px; position: relative;">
+    <div style="margin-top: 18px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 420px; position: relative;">
       <div style="text-align:center; font-weight: 800; color:#2d3e50; margin-bottom: 6px;">Atención + Venta</div>
       <div style="text-align:center; color:#6c757d; font-size: 12px; margin-bottom: 10px;">(Bienvenida + Producto/Ventas + Atención en mesa + Tiempos de espera)</div>
       ${bloqueParamsAV}
@@ -293,13 +410,7 @@ function renderHistorico() {
   const canvasC = document.getElementById('graficoHistoricoComparacion');
   if (!canvasC) return;
 
-  if (!labelsC.length) {
-    container.innerHTML += `
-      <div style="margin-top:16px; padding:16px; background:#f8f9fa; border-radius:8px; color:#666; text-align:center;">
-        No hay meses con datos simultáneos (KPI y KPI2) para mostrar la comparación.
-      </div>`;
-    return;
-  }
+  if (!labelsC.length) return;
 
   if (window.Chart) {
     const shadowLine = {
@@ -319,121 +430,131 @@ function renderHistorico() {
 
     const ctxC = canvasC.getContext('2d');
 
-    const minC = Math.min(...datosC1, ...datosC2);
-    const maxC = Math.max(...datosC1, ...datosC2);
-    const paddingC = 5;
-    const yMinC = Math.max(0, Math.floor((minC - paddingC) / 5) * 5);
-    const yMaxC = Math.min(100, Math.ceil((maxC + paddingC) / 5) * 5);
+      const valoresC = [...datosC1, ...datosC2].filter(v => typeof v === 'number' && Number.isFinite(v));
+      const minC = valoresC.length ? Math.min(...valoresC) : 0;
+      const maxC = valoresC.length ? Math.max(...valoresC) : 100;
+      const paddingC = 5;
+      const yMinC = Math.max(0, Math.floor((minC - paddingC) / 5) * 5);
+      const yMaxC = Math.min(100, Math.ceil((maxC + paddingC) / 5) * 5);
 
-    try {
-      window.__chartHistoricoComparacion?.destroy?.();
-    } catch (e) {}
+      try {
+        window.__chartHistoricoComparacion?.destroy?.();
+      } catch (e) {}
 
-    window.__chartHistoricoComparacion = new Chart(ctxC, {
-      type: 'line',
-      data: {
-        labels: labelsC,
-        datasets: [
-          {
-            label: 'KPI Global (%)',
-            data: datosC1,
-            borderColor: '#0a84ff',
-            backgroundColor: 'rgba(10,132,255,0.08)',
-            pointBackgroundColor: '#0a84ff',
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            pointRadius: 5,
-            pointHoverRadius: 8,
-            borderWidth: 3,
-            cubicInterpolationMode: 'monotone',
-            tension: 0.35,
-            fill: '+1',
-          },
-          {
-            label: 'KPI2 Global (%)',
-            data: datosC2,
-            borderColor: '#a855f7',
-            backgroundColor: 'rgba(168,85,247,0.08)',
-            pointBackgroundColor: '#a855f7',
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            pointRadius: 5,
-            pointHoverRadius: 8,
-            borderWidth: 3,
-            cubicInterpolationMode: 'monotone',
-            tension: 0.35,
-            fill: false,
-          },
-          {
-            label: 'Meta 95%',
-            data: new Array(labelsC.length).fill(95),
-            borderColor: '#22c55e',
-            borderDash: [6, 6],
-            pointRadius: 0,
-            borderWidth: 2,
-            fill: false,
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: true,
-            labels: { color: '#2c3e50', usePointStyle: true, pointStyle: 'circle' }
-          },
-          tooltip: {
-            mode: 'index',
-            intersect: false,
-            callbacks: {
-              title: (items) => items[0]?.label || '',
-              label: (c) => {
-                const idx = c.dataIndex;
-                const val = c.parsed.y;
-                const cnt = c.datasetIndex === 0 ? countsC1[idx] : countsC2[idx];
-                return ` ${val}%  ·  ${cnt} evals`;
-              },
-              afterBody: (items) => {
-                try {
-                  const idx = items?.[0]?.dataIndex;
-                  if (typeof idx !== 'number') return '';
-                  const kpi = Number(datosC1[idx]);
-                  const kpi2 = Number(datosC2[idx]);
-                  if (!Number.isFinite(kpi) || !Number.isFinite(kpi2)) return '';
-                  const delta = Math.round((kpi - kpi2) * 10) / 10;
-                  const sign = delta >= 0 ? '+' : '';
-                  return `Brecha KPI vs KPI2: ${sign}${delta} pts`;
-                } catch (e) {
-                  return '';
+      window.__chartHistoricoComparacion = new Chart(ctxC, {
+        type: 'line',
+        data: {
+          labels: labelsC,
+          datasets: [
+            {
+              label: 'KPI Global (%)',
+              data: datosC1,
+              borderColor: '#0a84ff',
+              backgroundColor: 'rgba(10,132,255,0.08)',
+              pointBackgroundColor: '#0a84ff',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2,
+              pointRadius: 5,
+              pointHoverRadius: 8,
+              borderWidth: 3,
+              cubicInterpolationMode: 'monotone',
+              tension: 0.35,
+              fill: '+1',
+              spanGaps: false,
+            },
+            {
+              label: 'KPI2 Global (%)',
+              data: datosC2,
+              borderColor: '#a855f7',
+              backgroundColor: 'rgba(168,85,247,0.08)',
+              pointBackgroundColor: '#a855f7',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2,
+              pointRadius: 5,
+              pointHoverRadius: 8,
+              borderWidth: 3,
+              cubicInterpolationMode: 'monotone',
+              tension: 0.35,
+              fill: false,
+              spanGaps: false,
+            },
+            {
+              label: 'Meta 95%',
+              data: new Array(labelsC.length).fill(95),
+              borderColor: '#22c55e',
+              borderDash: [6, 6],
+              pointRadius: 0,
+              borderWidth: 2,
+              fill: false,
+            }
+            ,
+            {
+              label: 'No aceptable 90%',
+              data: new Array(labelsC.length).fill(90),
+              borderColor: '#ef4444',
+              borderDash: [6, 6],
+              pointRadius: 0,
+              borderWidth: 2,
+              fill: false,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              labels: { color: '#2c3e50', usePointStyle: true, pointStyle: 'circle' }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              callbacks: {
+                title: (items) => items[0]?.label || '',
+                label: (c) => {
+                  const idx = c.dataIndex;
+                  const val = c.parsed.y;
+                  if (c.datasetIndex === 2) {
+                    return ` Aceptable: ${val}%`;
+                  }
+                  if (c.datasetIndex === 3) {
+                    return ` No aceptable: ${val}%`;
+                  }
+                  const esKPI = c.datasetIndex === 0;
+                  const cnt = esKPI ? countsC1[idx] : countsC2[idx];
+                  if (esKPI) {
+                    return ` KPI: ${val}%  ·  ${cnt} evals`;
+                  }
+                  return ` KPI2: ${val}%  ·  ${cnt} evals`;
                 }
               }
             }
-          }
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: '#6b7280' }
           },
-          y: {
-            min: yMinC,
-            max: yMaxC,
-            grid: { color: 'rgba(0,0,0,0.06)' },
-            ticks: { color: '#6b7280', callback: (v) => v + '%' }
-          }
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#6b7280' }
+            },
+            y: {
+              min: yMinC,
+              max: yMaxC,
+              grid: { color: 'rgba(0,0,0,0.06)' },
+              ticks: { color: '#6b7280', callback: (v) => v + '%' }
+            }
+          },
+          interaction: { mode: 'nearest', intersect: false },
+          animation: { duration: 800, easing: 'easeOutQuart' }
         },
-        interaction: { mode: 'nearest', intersect: false },
-        animation: { duration: 800, easing: 'easeOutQuart' }
-      },
-      plugins: [shadowLine]
-    });
+        plugins: [shadowLine]
+      });
 
     const canvasAV = document.getElementById('graficoHistoricoComparacionAtencionVenta');
     if (canvasAV && labelsAV.length) {
       const ctxAV = canvasAV.getContext('2d');
-      const minAV = Math.min(...datosAV1, ...datosAV2);
-      const maxAV = Math.max(...datosAV1, ...datosAV2);
+      const valoresAV = [...datosAV1, ...datosAV2].filter(v => typeof v === 'number' && Number.isFinite(v));
+      const minAV = valoresAV.length ? Math.min(...valoresAV) : 0;
+      const maxAV = valoresAV.length ? Math.max(...valoresAV) : 100;
       const paddingAV = 5;
       const yMinAV = Math.max(0, Math.floor((minAV - paddingAV) / 5) * 5);
       const yMaxAV = Math.min(100, Math.ceil((maxAV + paddingAV) / 5) * 5);
@@ -461,6 +582,7 @@ function renderHistorico() {
               cubicInterpolationMode: 'monotone',
               tension: 0.35,
               fill: '+1',
+              spanGaps: false,
             },
             {
               label: 'KPI2 Atención+Venta (%)',
@@ -476,11 +598,22 @@ function renderHistorico() {
               cubicInterpolationMode: 'monotone',
               tension: 0.35,
               fill: false,
+              spanGaps: false,
             },
             {
               label: 'Meta 95%',
               data: new Array(labelsAV.length).fill(95),
               borderColor: '#22c55e',
+              borderDash: [6, 6],
+              pointRadius: 0,
+              borderWidth: 2,
+              fill: false,
+            }
+            ,
+            {
+              label: 'No aceptable 90%',
+              data: new Array(labelsAV.length).fill(90),
+              borderColor: '#ef4444',
               borderDash: [6, 6],
               pointRadius: 0,
               borderWidth: 2,
@@ -504,22 +637,18 @@ function renderHistorico() {
                 label: (c) => {
                   const idx = c.dataIndex;
                   const val = c.parsed.y;
-                  const cnt = c.datasetIndex === 0 ? countsAV1[idx] : countsAV2[idx];
-                  return ` ${val}%  ·  ${cnt} evals`;
-                },
-                afterBody: (items) => {
-                  try {
-                    const idx = items?.[0]?.dataIndex;
-                    if (typeof idx !== 'number') return '';
-                    const kpi = Number(datosAV1[idx]);
-                    const kpi2 = Number(datosAV2[idx]);
-                    if (!Number.isFinite(kpi) || !Number.isFinite(kpi2)) return '';
-                    const delta = Math.round((kpi - kpi2) * 10) / 10;
-                    const sign = delta >= 0 ? '+' : '';
-                    return `Brecha KPI vs KPI2: ${sign}${delta} pts`;
-                  } catch (e) {
-                    return '';
+                  if (c.datasetIndex === 2) {
+                    return ` Aceptable: ${val}%`;
                   }
+                  if (c.datasetIndex === 3) {
+                    return ` No aceptable: ${val}%`;
+                  }
+                  const esKPI = c.datasetIndex === 0;
+                  const cnt = esKPI ? countsAV1[idx] : countsAV2[idx];
+                  if (esKPI) {
+                    return ` KPI: ${val}%  ·  ${cnt} evals`;
+                  }
+                  return ` KPI2: ${val}%  ·  ${cnt} evals`;
                 }
               }
             }

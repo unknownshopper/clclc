@@ -137,7 +137,9 @@
     function catalogoVigente(mes) {
         // Los parámetros bono no aplican por entidad (se otorgan manualmente):
         // se excluyen de matrices y del cálculo de máximos.
-        return catalogo().filter(p => p && !p.bono && (!p.vigenteDesde || (mes && mes >= p.vigenteDesde)));
+        return catalogo().filter(p => p && !p.bono && ((typeof window.parametroVigenteEnMes === 'function')
+            ? window.parametroVigenteEnMes(p, mes)
+            : (!p.vigenteDesde || (mes && mes >= p.vigenteDesde))));
     }
 
     function categoriasOrdenadas() {
@@ -203,6 +205,8 @@
                 ))
             },
             tocado: false,
+            vigencia: obtenerMesSiguiente(),
+            motivo: '',
             recuperadoEn: null
         };
         // Si hay un borrador guardado localmente (p.ej. se cerró la página sin
@@ -212,13 +216,24 @@
             d.pesos = guardado.pesos;
             d.excluidos = guardado.excluidos;
             d.recuperadoEn = guardado.guardadoEn;
+            if (guardado.vigencia) d.vigencia = guardado.vigencia;
+            if (guardado.motivo) d.motivo = guardado.motivo;
         }
         return d;
     }
 
     function asegurarDraft() {
         if (!draft) draft = crearDraft();
+        if (!draft.vigencia) draft.vigencia = obtenerMesSiguiente();
         return draft;
+    }
+
+    // Mes para el que se está configurando: matrices de aplicabilidad y totales
+    // muestran los parámetros vigentes en ESE mes (no el mes en consulta).
+    function mesVigenciaConfig() {
+        return (draft && draft.vigencia)
+            || (document.getElementById('pondVigencia') || {}).value
+            || obtenerMesSiguiente();
     }
 
     // ===== Respaldo local del borrador (localStorage + exportar JSON) =====
@@ -228,6 +243,8 @@
         return {
             tipo: 'ponderanciasKPI2-borrador',
             exportadoEn: new Date().toISOString(),
+            vigencia: draft.vigencia || null,
+            motivo: draft.motivo || '',
             pesos: draft.pesos,
             excluidos: Object.fromEntries(Object.entries(draft.excluidos).map(([t, m]) =>
                 [t, Object.fromEntries(Object.entries(m).map(([eid, s]) => [eid, [...s]]))]))
@@ -260,7 +277,7 @@
                 excluidos[t] = {};
                 Object.entries(m).forEach(([eid, arr]) => { excluidos[t][eid] = new Set(arr); });
             });
-            return { pesos: d.pesos, excluidos, guardadoEn: d.guardadoEn || d.exportadoEn };
+            return { pesos: d.pesos, excluidos, vigencia: d.vigencia || null, motivo: d.motivo || '', guardadoEn: d.guardadoEn || d.exportadoEn };
         } catch (e) { return null; }
     }
 
@@ -316,7 +333,7 @@
             alert('ExcelJS no está cargado.');
             return;
         }
-        const mes = window.mesSeleccionado || obtenerMesActual();
+        const mes = mesVigenciaConfig();
         const wb = new ExcelJS.Workbook();
         const ws = wb.addWorksheet('Ponderancias');
         ws.columns = [{ width: 30 }, { width: 36 }, { width: 12 }, { width: 12 }, { width: 12 }];
@@ -365,7 +382,7 @@
     // (desde ahí se guarda como PDF con el diálogo del navegador).
     // Cada categoría es un bloque independiente que no se parte entre páginas.
     function exportarPDF() {
-        const mes = window.mesSeleccionado || obtenerMesActual();
+        const mes = mesVigenciaConfig();
         const ahora = new Date();
         const logoUrl = `${location.origin}/logch.png`;
         const confidencial = 'DOCUMENTO CONFIDENCIAL — Uso exclusivo de la Dirección de Café La Cabaña. Contiene criterios internos de evaluación. Prohibida su reproducción o distribución fuera de la organización.';
@@ -435,7 +452,7 @@
             <table><thead><tr><th style="text-align:left">Entidad</th><th>Tipo</th><th>Modelo</th><th>Parámetros</th><th>Máx. puntos</th></tr></thead><tbody>`;
         ['sucursal', 'franquicia'].forEach(tipo => {
             entidadesPorTipo(tipo).forEach(e => {
-                html += `<tr><td class="l">${e.nombre}</td><td>${tipo}</td><td>${window.kpi2Utils.getModeloEntidad(e.id, tipo) || '—'}</td><td>${paramsAplicablesDraft(e.id, tipo, mes).length}</td><td>${maximoDraft(e.id, tipo, mes)}</td></tr>`;
+                html += `<tr><td class="l">${e.nombre}</td><td>${tipo}</td><td>${modelosEntidad(e.id, tipo).join('+') || '—'}</td><td>${paramsAplicablesDraft(e.id, tipo, mes).length}</td><td>${maximoDraft(e.id, tipo, mes)}</td></tr>`;
             });
         });
         html += `</tbody></table></div>`;
@@ -503,6 +520,8 @@
                 }
                 const base = asegurarDraft(); // conserva `inicial` (estado vigente)
                 base.pesos = d.pesos;
+                if (d.vigencia) base.vigencia = d.vigencia;
+                if (d.motivo) base.motivo = d.motivo;
                 Object.entries(d.excluidos).forEach(([t, m]) => {
                     if (!base.excluidos[t]) base.excluidos[t] = {};
                     Object.entries(m).forEach(([eid, arr]) => { base.excluidos[t][eid] = new Set(arr); });
@@ -564,6 +583,21 @@
         marcarCambio();
     }
 
+    // Cambiar el mes de vigencia re-dibuja el panel: las matrices muestran los
+    // parámetros vigentes en ese mes (p.ej. Interfón desde 2026-10).
+    function setVigencia(mes) {
+        const d = asegurarDraft();
+        d.vigencia = mes || obtenerMesSiguiente();
+        persistirDraft();
+        renderPonderancias();
+    }
+
+    function setMotivo(texto) {
+        const d = asegurarDraft();
+        d.motivo = String(texto || '');
+        persistirDraft();
+    }
+
     function setAplica(tipo, entidadId, paramId, checked) {
         const d = asegurarDraft();
         const set = d.excluidos[tipo][entidadId];
@@ -581,19 +615,41 @@
         marcarCambio();
     }
 
+    // Compuertas duras del catálogo: el bono nunca es capturable y los parámetros
+    // con aplicaAModelos solo cuentan si la entidad incluye ese modelo. La
+    // aplicabilidad manual (checkboxes) opera sobre el resto.
+    function pasaCompuertaDura(p, modelosE) {
+        if (!p || p.bono) return false;
+        if (Array.isArray(p.aplicaAModelos) && p.aplicaAModelos.length) {
+            const scope = window.normalizarModelos ? window.normalizarModelos(p.aplicaAModelos) : p.aplicaAModelos;
+            if (!(modelosE || []).some(m => scope.includes(m))) return false;
+        }
+        return true;
+    }
+
+    function modelosEntidad(entidadId, tipo) {
+        return (typeof window.getModelosEntidad === 'function')
+            ? window.getModelosEntidad(entidadId, tipo)
+            : [];
+    }
+
     function paramsAplicablesDraft(entidadId, tipo, mes) {
         const excl = draft.excluidos[tipo][entidadId] || new Set();
-        return catalogoVigente(mes).filter(p => !excl.has(normId(p.id)));
+        const modelosE = modelosEntidad(entidadId, tipo);
+        return catalogoVigente(mes).filter(p => pasaCompuertaDura(p, modelosE) && !excl.has(normId(p.id)));
     }
 
     function maximoDraft(entidadId, tipo, mes) {
-        const modelo = window.kpi2Utils.getModeloEntidad(entidadId, tipo);
+        const modelosE = modelosEntidad(entidadId, tipo);
         return paramsAplicablesDraft(entidadId, tipo, mes)
-            .reduce((s, p) => s + (Number(draft.pesos[modelo] && draft.pesos[modelo][p.id]) || 0), 0);
+            .reduce((s, p) => {
+                const mp = window.kpi2Utils.getModeloPesoParam(p, modelosE);
+                return s + (Number(draft.pesos[mp] && draft.pesos[mp][p.id]) || 0);
+            }, 0);
     }
 
     function refrescarTotalesEntidad(tipo, entidadId) {
-        const mes = window.mesSeleccionado || obtenerMesActual();
+        const mes = mesVigenciaConfig();
         const el = document.getElementById(`pond-tot-${tipo}-${entidadId}`);
         if (el) {
             el.textContent = `${paramsAplicablesDraft(entidadId, tipo, mes).length} par · máx ${maximoDraft(entidadId, tipo, mes)}`;
@@ -667,13 +723,23 @@
             html += `<tr class="pond-cat"><td colspan="${1 + MODELOS.length}">${cat.nombre}</td></tr>`;
             params.forEach(p => {
                 num++;
-                html += `<tr>
-                    <td style="text-align:left"><span class="pond-num">${num}</span> ${p.nombre}</td>
+                const retirado = !!p.vigenteHasta;
+                const sustituto = (retirado && p.sustituidoPor)
+                    ? catalogo().find(x => x && x.id === p.sustituidoPor) : null;
+                const vigTag = p.vigenteDesde
+                    ? ` <span style="font-size:10px;color:#0b5ed7;background:#e7f1ff;padding:1px 6px;border-radius:8px;">desde ${p.vigenteDesde}</span>`
+                    : (retirado ? ` <span style="font-size:10px;color:#666;background:#eee;padding:1px 6px;border-radius:8px;">hasta ${p.vigenteHasta}</span>` : '');
+                const sufTag = sustituto
+                    ? ` <span style="font-size:10px;color:#842029;background:#f8d7da;padding:1px 6px;border-radius:8px;">→ ${sustituto.nombre}</span>` : '';
+                const bonoTag = p.bono ? ` <span style="font-size:10px;color:#856404;background:#fff3cd;padding:1px 6px;border-radius:8px;">bono</span>` : '';
+                html += `<tr style="${retirado ? 'opacity:.45;background:#f1f1f1;' : ''}">
+                    <td style="text-align:left;${retirado ? 'text-decoration:line-through;' : ''}"><span class="pond-num">${num}</span> ${p.nombre}${vigTag}${sufTag}${bonoTag}</td>
                     ${MODELOS.map(m => {
                         const dif = Number(draft.pesos[m][p.id]) !== Number(draft.inicial.pesos[m][p.id]);
                         return `<td><input type="number" min="0" max="99" step="1"
                         value="${Number(draft.pesos[m][p.id]) || 0}"
                         ${dif ? 'style="background:#fff3cd;font-weight:700"' : ''}
+                        ${retirado ? 'disabled' : ''}
                         data-pond-peso="${p.id}" data-pond-modelo="${m}"
                         onchange="window.ponderanciasUI.setPeso('${p.id}','${m}',this.value)"></td>`;
                     }).join('')}
@@ -697,11 +763,11 @@
 
     function renderMatrizAplicabilidad(tipo, titulo) {
         const entidades = entidadesPorTipo(tipo);
-        const mes = window.mesSeleccionado || obtenerMesActual();
+        const mes = mesVigenciaConfig();
         let html = `
             <div class="pond-card">
-                <h3><i class="fas fa-th"></i> ${titulo}</h3>
-                <p class="pond-nota">☑ = el parámetro aplica y cuenta en el resultado de esa entidad. Al guardar, la configuración sustituye las exclusiones y listas del catálogo para todas las entidades.</p>
+                <h3><i class="fas fa-th"></i> ${titulo} <span class="pond-badge">vigencia ${formatearMesLegible(mes)}</span></h3>
+                <p class="pond-nota">☑ = el parámetro aplica y cuenta en el resultado de esa entidad, a partir del mes de vigencia. Al guardar, la configuración sustituye las exclusiones y listas del catálogo para todas las entidades.</p>
                 <div class="pond-table-wrap">
                     <table class="pond-table pond-matriz">
                         <thead>
@@ -719,6 +785,11 @@
             params.forEach(p => {
                 html += `<tr><td class="pond-sticky" style="text-align:left">${p.nombre}</td>`;
                 entidades.forEach(e => {
+                    const bloqueado = !pasaCompuertaDura(p, modelosEntidad(e.id, tipo));
+                    if (bloqueado) {
+                        html += `<td style="background:#f4f4f4;color:#bbb;" title="No aplica a este modelo">·</td>`;
+                        return;
+                    }
                     const aplica = !draft.excluidos[tipo][e.id].has(normId(p.id));
                     html += `<td><input type="checkbox" id="pond-ap-${tipo}-${e.id}-${p.id}" ${aplica ? 'checked' : ''}
                         onchange="window.ponderanciasUI.setAplica('${tipo}','${e.id}','${p.id}',this.checked)"></td>`;
@@ -787,10 +858,12 @@
                     <h3><i class="fas fa-save"></i> Guardar configuración</h3>
                     <div class="pond-guardar-campos">
                         <label class="pond-campo">Vigencia de la nueva ponderancia
-                            <input type="month" id="pondVigencia" value="${obtenerMesSiguiente()}">
+                            <input type="month" id="pondVigencia" value="${draft.vigencia || obtenerMesSiguiente()}"
+                                onchange="window.ponderanciasUI.setVigencia(this.value)">
                         </label>
                         <label class="pond-campo">Nombre del ajuste <span class="pond-tag">si se omite, se asigna folio automático</span>
-                            <input type="text" id="pondMotivo" placeholder="Ej. Ajuste directivo oct-2026">
+                            <input type="text" id="pondMotivo" value="${draft.motivo || ''}" placeholder="Ej. Ajuste directivo oct-2026"
+                                oninput="window.ponderanciasUI.setMotivo(this.value)">
                         </label>
                     </div>
                     <div class="pond-guardar-btns">
@@ -829,11 +902,13 @@
     }
 
     function maximoActual(entidadId, tipo, mes) {
-        const modelo = window.kpi2Utils.getModeloEntidad(entidadId, tipo);
+        const modelosE = modelosEntidad(entidadId, tipo);
         const excl = estadoExcluidosActual(entidadId, tipo);
         return catalogoVigente(mes)
-            .filter(p => !excl.has(normId(p.id)))
-            .reduce((s, p) => s + (Number(window.kpi2Utils.getPesoKPI2(p.id, p.peso, modelo, mes)) || 0), 0);
+            .filter(p => pasaCompuertaDura(p, modelosE) && !excl.has(normId(p.id)))
+            .reduce((s, p) => s + (Number(window.kpi2Utils.getPesoKPI2Param
+                ? window.kpi2Utils.getPesoKPI2Param(p, entidadId, tipo, mes, modelosE)
+                : window.kpi2Utils.getPesoKPI2(p.id, p.peso, modelosE[0], mes)) || 0), 0);
     }
 
     function simular() {
@@ -852,15 +927,16 @@
                     : null;
                 if (!evKpi2) return;
 
+                const modelosE = modelosEntidad(e.id, tipo);
                 const actual = window.kpi2Utils.calcularDetalleKPI2(e.id, tipo, evKpi2);
                 const excl = draft.excluidos[tipo][e.id];
                 const sim = window.kpi2Utils.calcularDetalleKPI2(e.id, tipo, evKpi2, {
                     tablaPesos: draft.pesos,
-                    esAplicable: (p) => !excl.has(normId(p.id))
+                    esAplicable: (p) => pasaCompuertaDura(p, modelosE) && !excl.has(normId(p.id))
                 });
                 filas.push({
                     nombre: e.nombre, tipo,
-                    modelo: window.kpi2Utils.getModeloEntidad(e.id, tipo) || '—',
+                    modelo: modelosE.join('+') || '—',
                     maxAct: maximoActual(e.id, tipo, mes),
                     maxSim: maximoDraft(e.id, tipo, mes),
                     kpiAct: actual ? actual.kpi : null,
@@ -974,6 +1050,6 @@
         renderPonderancias();
     }
 
-    window.ponderanciasUI = { setPeso, setAplica, aplicarPropuesta, restaurarVigente, simular, guardar, descartar, exportar, importar: importarBorrador, toggleExportMenu };
+    window.ponderanciasUI = { setPeso, setAplica, setVigencia, setMotivo, aplicarPropuesta, restaurarVigente, simular, guardar, descartar, exportar, importar: importarBorrador, toggleExportMenu };
     window.renderPonderancias = renderPonderancias;
 })();
