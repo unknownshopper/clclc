@@ -446,6 +446,12 @@ async function editarVideo(entidadId, tipo) {
         }
         const mes = window.mesSeleccionado;
         const evalActual = typeof obtenerEvaluacion === 'function' ? obtenerEvaluacion(entidadId, tipo, mes) : null;
+        // Enlace mapeado en el catálogo del mes: fijo/inamovible, no se edita por UI.
+        const urlMapeada = (window.videoLinks?.[mes] || {})[entidadId];
+        if (urlMapeada) {
+            alert('El video de este mes es fijo del sistema y no puede modificarse.');
+            return;
+        }
         const urlActual = evalActual && evalActual.videoUrl ? evalActual.videoUrl : '';
         const entidad = tipo === 'sucursal' ? 
             window.sucursales.find(s => s.id === entidadId)
@@ -487,6 +493,10 @@ async function manejarVideo(entidadId, tipo) {
         const existe = !!(urlLocal || urlMapeada);
 
         if (existe) {
+            // Enlace mapeado en el catálogo del mes: es fijo/inamovible — solo se ve.
+            if (urlMapeada) {
+                return verVideo(entidadId, tipo);
+            }
             // Si es admin autenticado, permitir editar el link con el mismo botón (sin botón extra)
             if (tienePermiso('admin') && window.firebaseAdminAuthenticated) {
                 const editar = confirm('¿Deseas editar el enlace de video?\n\nAceptar: editar\nCancelar: ver');
