@@ -3397,19 +3397,23 @@ function descargarEvaluacionPDF(entidadId, tipo, mod) {
             ${bonoInfo ? ` &nbsp;·&nbsp; <span class="bono">★ Bono Actitud de servicio: +${detalle && detalle.bono ? detalle.bono : ''} pts (${bonoInfo.otorgadoPor || 'Dirección de Operaciones'})</span>` : ''}
         </div>`;
 
+    // Solo parámetros que aplican a la entidad (los "No aplica" no se listan).
     const catOrden = Object.keys(filasPorCategoria).sort((a, b) =>
         filasPorCategoria[b].length - filasPorCategoria[a].length);
     let num = 0;
     catOrden.forEach(cid => {
+        const filasVisibles = filasPorCategoria[cid]
+            .map(p => ({ p, st: estadoDe(p) }))
+            .filter(f => f.st.cls !== 'na');
+        if (!filasVisibles.length) return;
         const nombre = (typeof getCategoriaName === 'function') ? getCategoriaName(cid) : cid;
         html += `<div class="bloque"><h2>${nombre}</h2><table><thead><tr>
             <th style="width:24px">#</th><th>Parámetro</th><th style="width:90px">Estado</th>
             <th style="width:50px">Peso</th><th style="width:32%">Observación</th></tr></thead><tbody>`;
-        filasPorCategoria[cid].forEach(p => {
+        filasVisibles.forEach(({ p, st }) => {
             num++;
-            const st = estadoDe(p);
             const obs = (st.cls === 'bad' && observaciones[p.id]) ? observaciones[p.id] : '';
-            html += `<tr class="${st.cls === 'na' ? 'na-row' : ''}">
+            html += `<tr>
                 <td>${num}</td><td><b>${p.nombre}</b><br><span style="font-size:9px;color:#888">${p.descripcion || ''}</span></td>
                 <td class="st ${st.cls}">${st.txt}</td><td style="text-align:center">${pesoDe(p)}</td><td>${obs}</td></tr>`;
         });
