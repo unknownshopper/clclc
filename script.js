@@ -3143,13 +3143,13 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
     const noCapturados = Math.max(0, totalFilasParametros - totalParametrosContados);
     
     let detallesHtml = `
-        <div class="modal" id="modalVerEvaluacion" style="display: block; z-index: 10000;">
-            <div class="modal-content" style="max-width: 800px; margin: 50px auto; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                <div class="modal-header" style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+        <div class="modal" id="modalVerEvaluacion" style="display: block; z-index: 10000; overflow-y: auto;">
+            <div class="modal-content" style="max-width: 800px; margin: 3vh auto; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: flex; flex-direction: column; max-height: 94vh;">
+                <div class="modal-header" style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
                     <h2 style="margin: 0; color: #333;"><i class="fas fa-eye"></i> Detalles de Evaluación</h2>
                     <button onclick="cerrarModalVerEvaluacion()" class="btn-close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
                 </div>
-                <div class="modal-body" style="padding: 20px;">
+                <div class="modal-body" style="padding: 20px; overflow-y: auto; flex: 1 1 auto; min-height: 0;">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                         <div>
                             <h3 style="color: #555; margin-bottom: 15px;">Información General</h3>
@@ -3236,7 +3236,7 @@ function verEvaluacion(entidadId, tipo, modalidad = 'kpi') {
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer" style="padding: 20px; border-top: 1px solid #eee; background: #f8f9fa; border-radius: 0 0 8px 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div class="modal-footer" style="padding: 20px; border-top: 1px solid #eee; background: #f8f9fa; border-radius: 0 0 8px 8px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
                     <div style="font-size: 12px; color: #6c757d;">
                         <i class="fas fa-calendar-alt" style="margin-right: 5px;"></i>
                         Evaluación del ${formatearMesLegible(window.mesSeleccionado)}
